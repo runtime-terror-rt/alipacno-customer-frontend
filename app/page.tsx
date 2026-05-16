@@ -2,64 +2,117 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <div
+      className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat flex flex-col md:flex-row relative overflow-hidden"
+      style={{
+        backgroundImage: "url('/customer/bg-image.png')",
+        backgroundPosition: "center 105px"
+      }}
+    >
+      {/* Gradient Glow - Absolute Page Corner */}
+      <div className="absolute -bottom-48 -left-48 w-[800px] h-[800px] z-0 opacity-100 mix-blend-screen pointer-events-none">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+          src="/customer/gradient.png"
+          alt="Glow"
+          fill
+          className="object-contain object-left-bottom"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+      </div>
+
+      {/* Left Section: Visuals (50%) */}
+      <div className="flex-1 relative flex items-center justify-center p-4 md:p-8 z-10 h-[400px] md:h-auto">
+
+
+        {/* Design Lines */}
+        <div className="absolute inset-0 z-0 opacity-70 pointer-events-none">
+          <Image
+            src="/customer/design.png"
+            alt="Design Lines"
+            fill
+            className="object-contain"
+          />
+        </div>
+
+        {/* Main Product Image */}
+        <div className="relative w-full max-w-[600px] h-full z-10 transform scale-90 md:scale-100">
+          <Image
+            src="/customer/login-image.png"
+            alt="Delicious Wrap"
+            fill
+            className="object-contain drop-shadow-2xl"
+            priority
+          />
+        </div>
+      </div>
+
+      {/* Right Section: Login Form (50%) */}
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8 z-10">
+        <div className="w-full max-w-[500px] bg-[#1E1E20] border border-white/10 rounded-2xl p-6 md:p-12 shadow-2xl">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/logo.png"
+              alt="Pacino's Logo"
+              width={180}
+              height={120}
+              className="object-contain"
+            />
+          </div>
+
+          <h2 className="text-3xl font-bold text-white text-center mb-10">Login to Account</h2>
+
+          <form className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="email">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                placeholder="enter your email"
+                className="w-full bg-zinc-800/50 border border-white/5 rounded-xl px-4 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="password">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                placeholder="enter your password"
+                className="w-full bg-zinc-800/50 border border-white/5 rounded-xl px-4 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 text-zinc-400 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#F9671A] focus:ring-0 focus:ring-offset-0" />
+                <span className="group-hover:text-zinc-200 transition-colors">Remember Password</span>
+              </label>
+              <a href="#" className="text-zinc-400 hover:text-[#F9671A] transition-colors">
+                Forget Password?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98]"
             >
-              Templates
+              Sign in
+            </button>
+          </form>
+
+          <p className="text-center text-zinc-400 mt-8">
+            Already have an account?{" "}
+            <a href="#" className="text-[#F9671A] font-semibold hover:underline">
+              Sign Up
             </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+            Here
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
