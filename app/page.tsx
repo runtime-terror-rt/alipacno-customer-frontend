@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const countryCodes = [
   { code: "+44", label: "UK", flag: "🇬🇧" },
@@ -53,6 +54,7 @@ const countryCodes = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -128,7 +130,7 @@ export default function Home() {
             Enter your phone number to receive a secure<br />login code.
           </p>
 
-          <form className="space-y-5">
+          <form onSubmit={(e) => { e.preventDefault(); router.push('/verify'); }} className="space-y-5">
             {/* Phone Number with country code dropdown */}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="phone">

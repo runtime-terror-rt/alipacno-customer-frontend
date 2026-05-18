@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignUp() {
+  const router = useRouter();
   return (
     <div
       className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
@@ -59,7 +63,7 @@ export default function SignUp() {
 
           <h2 className="text-2xl font-bold text-white text-center mb-5">Create to Account</h2>
 
-          <form className="space-y-3">
+          <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-3">
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="fullName">

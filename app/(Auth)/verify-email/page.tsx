@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function VerifyEmail() {
+  const router = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -130,6 +132,7 @@ export default function VerifyEmail() {
           {/* Verify Button */}
           <button
             type="button"
+            onClick={() => router.push('/home')}
             className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mb-8"
           >
             Verify
