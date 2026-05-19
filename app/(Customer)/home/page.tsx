@@ -101,14 +101,14 @@ export default function CustomerHome() {
 
   return (
     <div
-      className="h-screen w-screen bg-[#1E1E20] bg-cover bg-no-repeat bg-center overflow-hidden flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-2 select-none"
+      className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center overflow-x-hidden overflow-y-auto flex flex-col items-center justify-start lg:justify-center px-4 sm:px-6 lg:px-8 py-8 lg:py-8 select-none"
       style={{
         backgroundImage: "url('/customer/bg-image.png')",
         backgroundPosition: "center 105px",
       }}
     >
       {/* Main Content Container — Max width 1100px, Max height 850px, perfectly proportioned */}
-      <div className="w-full max-w-[1100px] h-full max-h-[850px] flex flex-col justify-between my-auto z-10">
+      <div className="w-full max-w-[1100px] h-full lg:max-h-[850px] flex flex-col justify-start lg:justify-between my-auto z-10 gap-6 lg:gap-0">
         {/* 1. Logo */}
      <div className="flex justify-center items-center flex-shrink-0">
   <Image
@@ -121,7 +121,7 @@ export default function CustomerHome() {
   />
 </div>
         {/* 2. Big Banner */}
-        <div className="w-full bg-gradient-to-r from-[#FFF8F4] to-[#FFB894] rounded-[16px] pl-6 sm:pl-10 pr-0 py-0 flex items-center justify-between relative shadow-xl overflow-hidden border border-[#2d2d2d] flex-shrink-0 my-1 mt-4 sm:mt-6 h-[140px] sm:h-[180px] md:h-[210px]"
+        <div className="w-full bg-gradient-to-r from-[#FFF8F4] to-[#FFB894] rounded-[16px] pl-4 sm:pl-10 pr-0 py-0 flex items-center justify-between relative shadow-xl overflow-hidden border border-[#2d2d2d] flex-shrink-0 my-1 lg:mt-6 h-[130px] sm:h-[180px] md:h-[210px]"
         
         style={{
   background: `linear-gradient(
@@ -137,38 +137,41 @@ export default function CustomerHome() {
 }}
         >
           {/* Left Text */}
-          <div className="flex-1 z-10 text-left py-4 sm:py-6">
-            <p className="text-[#1A1A1A] text-[13px] sm:text-[15px] md:text-[17px] font-medium mb-1.5 sm:mb-2 tracking-wide">Craving something delicious?</p>
-            <h1 className="text-[22px] sm:text-[32px] md:text-[40px] lg:text-[44px] font-bold text-[#1A1A1A] leading-[1.1] tracking-tight">
+          <div className="z-10 text-left py-2 sm:py-6 flex-1 pr-1 sm:pr-0">
+            <p className="text-[#1A1A1A] text-[9px] sm:text-[15px] md:text-[17px] font-medium mb-1 sm:mb-2 tracking-wide leading-tight">
+              Craving something delicious?
+            </p>
+            <h1 className="text-[12px] sm:text-[32px] md:text-[40px] lg:text-[44px] font-bold text-[#1A1A1A] leading-[1.2] tracking-tight whitespace-nowrap">
               Food ordering is now more
             </h1>
-            <h1 className="text-[22px] sm:text-[32px] md:text-[40px] lg:text-[44px] font-bold text-[#F9671A] leading-[1.1] tracking-tight">
+            <h1 className="text-[12px] sm:text-[32px] md:text-[40px] lg:text-[44px] font-bold text-[#F9671A] leading-[1.2] tracking-tight whitespace-nowrap">
               personalized and instant
             </h1>
           </div>
 
           {/* Right Images (Delivery Man & Woman Eating) */}
-          <div className="h-full flex items-end justify-end relative z-10 flex-shrink-0">
+          <div className="h-full flex items-end justify-end relative z-10 flex-shrink-0 w-[42%] sm:w-auto">
             {/* Delivery Man */}
             <img
               src="/customer/banner-men.png"
               alt="Delivery Man"
-              className="h-[88%] sm:h-[96%] w-auto object-contain object-bottom -mr-[15%] sm:-mr-[18%] z-0"
+              className="h-[85%] sm:h-[96%] w-auto object-contain object-bottom -mr-[45%] sm:-mr-[24%] z-0"
             />
             {/* Woman Eating */}
             <img
               src="/customer/banner-woman.png"
               alt="Woman Eating"
-              className="h-[96%] sm:h-[96%] w-auto object-contain object-bottom z-10"
+              className="h-[95%] sm:h-[96%] w-auto object-contain object-bottom z-10"
             />
           </div>
         </div>
 
         {/* 3. Choose how you'd like to enjoy your meal */}
-        <div className="w-full flex flex-col items-center space-y-2.5 sm:space-y-3 my-1 flex-shrink-0">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white text-center tracking-wide py-1">
-            Choose how you&apos;d like to enjoy your meal
-          </h2>
+        <div className="w-full flex flex-col items-center space-y-4 sm:space-y-5 my-1 flex-shrink-0 px-2 sm:px-0">
+        <h2 className="text-[22px] sm:text-xl md:text-2xl font-bold text-white text-center tracking-wide py-1 px-4 sm:px-0 leading-snug">
+  Choose how you&apos;d like <br className="block sm:hidden" /> 
+  to enjoy your meal
+</h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-4.5 w-full">
             {mealTypes.map((meal) => {
@@ -215,14 +218,14 @@ export default function CustomerHome() {
             Popular Right Now
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-4.5 w-full">
             {popularDishes.map((dish) => (
               <div
                 key={dish.id}
                 className="bg-[#2a2a2c] border border-white/5 rounded-[20px] overflow-hidden flex flex-col shadow-xl hover:border-white/20 transition-all duration-300 group cursor-pointer"
               >
                 {/* Image Container */}
-                <div className="relative w-full h-[140px] sm:h-[160px] md:h-[170px] bg-[#1E1E20] overflow-hidden">
+                <div className="relative w-full h-[180px] sm:h-[160px] md:h-[170px] bg-[#1E1E20] overflow-hidden">
                   {/* Rating Badge */}
                   <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 sm:px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-white z-10 shadow-md">
                     <span className="text-[#F9671A] text-xs">★</span> {dish.rating}
