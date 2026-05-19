@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const [pay, setPay] = useState("Card");
   const [loyalty, setLoyalty] = useState(false);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState("Cloud Gate (The Bean), Chicago");
   const [selectedBranch, setSelectedBranch] = useState("Cloud Gate (The Bean), Chicago");
 
@@ -56,9 +57,9 @@ export default function CheckoutPage() {
   ];
 
   return (
-    <div className="h-screen w-screen bg-[#1E1E20] flex text-white overflow-hidden font-sans select-none">
+    <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none">
       {/* 1. Left Sidebar (Same to Same as Menu Page) */}
-      <div className="w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex flex-col">
+      <div className="hidden lg:flex w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex-col">
         {/* Logo */}
         <div className="h-[90px] flex items-center justify-center px-6 mt-4">
           <Link href="/home">
@@ -97,19 +98,26 @@ export default function CheckoutPage() {
       </div>
 
       {/* Main Column */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header (Same to Same as Menu Page) */}
-        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-6 sm:px-8">
+        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-4 sm:px-8 z-10">
           <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
-            <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+            <div className="lg:hidden flex-shrink-0 mr-2">
+              <Link href="/home">
+                <Image src="/logo.png" alt="Logo" width={75} height={42} priority className="object-contain" />
+              </Link>
+            </div>
+            <div className="hidden lg:flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
+              <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
             <button className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -128,7 +136,7 @@ export default function CheckoutPage() {
               </svg>
               <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">1</span>
             </button>
-            <button onClick={() => router.push("/my-orders")} className="relative text-zinc-400 hover:text-white transition-colors mr-2 cursor-pointer">
+            <button onClick={() => router.push("/my-orders")} className="relative text-zinc-400 hover:text-white transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
                 <path d="M3 6h18"></path>
@@ -137,22 +145,40 @@ export default function CheckoutPage() {
               <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
             </button>
 
-            <div onClick={() => router.push("/profile")} className="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer group">
-              <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors">Charles Deo</span>
+            <div onClick={() => router.push("/profile")} className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-white/10 cursor-pointer group">
+              <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors hidden sm:inline">Charles Deo</span>
               <div className="w-8 h-8 rounded-full bg-zinc-700 overflow-hidden relative border border-white/10 group-hover:border-[#F9671A]/30 transition-colors">
                 <Image src="/customer/profile.png" alt="Avatar" fill className="object-cover" />
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:text-white transition-colors hidden sm:inline">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
+
+            {/* Burger Menu Trigger */}
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
           </div>
         </header>
 
+        {/* Mobile Delivery Bar - Only visible on lg:hidden */}
+        <div className="flex items-center gap-2 px-6 py-3 bg-[#1E1E20] border-b border-white/5 lg:hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span className="text-zinc-400 text-xs font-medium">Delivery:</span>
+          <span className="text-[#F9671A] text-xs font-semibold">Direct Street, Chicago</span>
+        </div>
+
         {/* Dashboard Content */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden relative">
           {/* Main Content Area: Checkout Form */}
-          <main className="flex-1 h-full px-6 sm:px-8 py-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <main className="flex-1 h-auto lg:h-full px-6 sm:px-8 py-6 overflow-visible lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {/* Back + Title */}
             <div className="flex items-center gap-3 mb-6">
               <button onClick={() => router.push("/menu")} className="text-white hover:text-zinc-300 transition-colors cursor-pointer flex items-center justify-center">
@@ -162,32 +188,69 @@ export default function CheckoutPage() {
             </div>
 
             {/* Your Order from Banner (No border, Regular Card bg style) */}
-            <div className="rounded-[20px] p-6 mb-6 flex items-center justify-between shadow-xl bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c]">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2 text-zinc-400 text-[12px] font-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                  Your Order from
+            <div className="rounded-[20px] p-5 sm:p-6 mb-6 shadow-xl bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c]">
+              {/* Mobile Layout */}
+              <div className="flex flex-col lg:hidden gap-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-white text-[13px] font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>
+                    Your Order from
+                  </div>
+                  <button onClick={() => setIsBranchModalOpen(true)} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md shadow-orange-600/20 transition-all cursor-pointer">
+                    Change Branch
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
                 </div>
-                <h2 className="text-[20px] font-bold text-white leading-tight">Cloud Gate (The Bean), Chicago</h2>
-                <div className="flex items-center gap-1.5 text-zinc-300 text-[13px] mt-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                  7 Elm Street, Woodstock, OX7 1ER
-                </div>
-                <div className="flex items-center gap-6 mt-1.5 text-zinc-400 text-[12px]">
-                  <span className="flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
-                    2.3 km away
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                    30 mins delivery
-                  </span>
+                
+                <h2 className="text-[16px] font-bold text-white leading-tight mt-0.5">Cloud Gate (The Bean), Chicago</h2>
+                
+                <div className="flex flex-col gap-2.5">
+                  <div className="flex items-start gap-2 text-[#d1d1d1] text-[13.5px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                    <span className="leading-tight">NW1 6XE,London,221B Baker Street,Marylebone</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 text-[#d1d1d1] text-[13px]">
+                    <span className="flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
+                      2.3 km away
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                      30 mins delivery
+                    </span>
+                  </div>
                 </div>
               </div>
-              <button onClick={() => setIsBranchModalOpen(true)} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[13px] font-bold px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-lg shadow-orange-600/20 transition-all cursor-pointer flex-shrink-0">
-                Change Branch
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-              </button>
+
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex items-center justify-between">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 text-zinc-400 text-[12px] font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                    Your Order from
+                  </div>
+                  <h2 className="text-[20px] font-bold text-white leading-tight">Cloud Gate (The Bean), Chicago</h2>
+                  <div className="flex items-center gap-1.5 text-zinc-300 text-[13px] mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                    7 Elm Street, Woodstock, OX7 1ER
+                  </div>
+                  <div className="flex items-center gap-6 mt-1.5 text-zinc-400 text-[12px]">
+                    <span className="flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
+                      2.3 km away
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                      30 mins delivery
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => setIsBranchModalOpen(true)} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[13px] font-bold px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-lg shadow-orange-600/20 transition-all cursor-pointer flex-shrink-0">
+                  Change Branch
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
             </div>
 
             {/* Your Information (No border on inputs) */}
@@ -309,7 +372,7 @@ export default function CheckoutPage() {
           </main>
 
           {/* Right Sidebar (Map & Order Summary - Same width and structure as Menu Page Cart) */}
-          <aside className="w-[340px] flex-shrink-0 border-l border-white/5 bg-[#1E1E20] flex flex-col h-full relative z-30">
+          <aside className="w-full lg:w-[340px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full relative z-30">
             {/* Map Section (No border on map container) */}
             <div className="p-6 pb-4 border-b border-white/5 mx-6 px-0 mb-4 flex flex-col gap-4 flex-shrink-0">
               <div className="border-b border-white/5 pb-3">
@@ -387,7 +450,7 @@ export default function CheckoutPage() {
       {/* Change Branch Modal Overlay - fixed z-20, right sidebar is z-30 so stays bright */}
       {isBranchModalOpen && (
         <div
-          className="fixed top-0 bottom-0 left-0 right-[340px] z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center pl-[240px] md:pl-[260px] p-4"
+          className="fixed top-0 bottom-0 left-0 right-0 lg:right-[340px] z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center lg:pl-[260px] p-4"
           onClick={() => setIsBranchModalOpen(false)}
         >
           <div
@@ -425,6 +488,62 @@ export default function CheckoutPage() {
             <button onClick={() => { setActiveBranch(selectedBranch); setIsBranchModalOpen(false); }} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[15px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer">
               Save Branch
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Drawer (Sidebar Categories) */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-[280px] max-w-[80vw] bg-[#1a1a1c] h-full flex flex-col shadow-2xl border-r border-white/5 z-10 transition-transform duration-300 translate-x-0">
+            {/* Header / Logo */}
+            <div className="h-[70px] flex items-center justify-between px-5 border-b border-white/5">
+              <Link href="/home" onClick={() => setIsMobileSidebarOpen(false)}>
+                <Image src="/logo.png" alt="Logo" width={90} height={50} priority className="object-contain" />
+              </Link>
+              <button 
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="text-zinc-400 hover:text-white transition-colors cursor-pointer bg-white/5 p-1.5 rounded-full border border-white/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Navigation / Categories */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
+              <h3 className="text-white font-bold text-[16px] mb-4 px-6 uppercase tracking-wider text-zinc-500">Menu Categories</h3>
+              <div className="flex flex-col">
+                {categories.map((cat, i) => {
+                  const isActive = activeCategory === cat.name;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setActiveCategory(cat.name);
+                        setIsMobileSidebarOpen(false);
+                      }}
+                      className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${
+                        isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
+                      }`}
+                    >
+                      <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
+                        {getCategoryIcon(cat.name)}
+                      </div>
+                      <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
+                        {cat.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}

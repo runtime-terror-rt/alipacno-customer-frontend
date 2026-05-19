@@ -84,7 +84,7 @@ export default function MenuPage() {
   ];
 
   return (
-    <div className="min-h-screen lg:h-screen w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-y-auto lg:overflow-hidden font-sans select-none">
+    <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none">
       {/* 1. Left Sidebar */}
       <div className="hidden lg:flex w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex-col">
         {/* Logo */}
@@ -126,9 +126,9 @@ export default function MenuPage() {
       </div>
 
       {/* Main Column */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-4 sm:px-8">
+        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-4 sm:px-8 z-10">
           <div className="flex items-center gap-2">
             <div className="lg:hidden flex-shrink-0 mr-2">
               <Link href="/home">
@@ -184,11 +184,11 @@ export default function MenuPage() {
             </div>
 
             {/* Burger Menu Trigger */}
-            <button 
+            <button
               onClick={() => setIsMobileSidebarOpen(true)}
               className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
             </button>
           </div>
         </header>
@@ -204,7 +204,7 @@ export default function MenuPage() {
         </div>
 
         {/* Dashboard Content */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-visible lg:overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden relative">
           {/* Main Content Area */}
           <main className="flex-1 h-auto lg:h-full px-4 sm:px-8 py-6 pb-20 overflow-visible lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {/* Banner */}
@@ -624,7 +624,7 @@ export default function MenuPage() {
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
@@ -636,7 +636,7 @@ export default function MenuPage() {
               <Link href="/home" onClick={() => setIsMobileSidebarOpen(false)}>
                 <Image src="/logo.png" alt="Logo" width={90} height={50} priority className="object-contain" />
               </Link>
-              <button 
+              <button
                 onClick={() => setIsMobileSidebarOpen(false)}
                 className="text-zinc-400 hover:text-white transition-colors cursor-pointer bg-white/5 p-1.5 rounded-full border border-white/10"
               >
@@ -657,9 +657,8 @@ export default function MenuPage() {
                         setActiveCategory(cat.name);
                         setIsMobileSidebarOpen(false);
                       }}
-                      className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${
-                        isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
-                      }`}
+                      className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
+                        }`}
                     >
                       <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
                         {getCategoryIcon(cat.name)}
