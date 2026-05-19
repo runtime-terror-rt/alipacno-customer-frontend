@@ -3,13 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 
 export default function MenuPage() {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState("Steaks");
   const [activeTag, setActiveTag] = useState("All Steaks");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [modalQty, setModalQty] = useState(1);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [cartItems, setCartItems] = useState([
     { id: 1, name: "Grilled chicken pieces", desc: "Medium Rare, Bone Marrow Butter", price: 48, qty: 1, image: "/customer/popular-1.png" },
@@ -81,9 +84,9 @@ export default function MenuPage() {
   ];
 
   return (
-    <div className="h-screen w-screen bg-[#1E1E20] flex text-white overflow-hidden font-sans select-none">
+    <div className="min-h-screen lg:h-screen w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-y-auto lg:overflow-hidden font-sans select-none">
       {/* 1. Left Sidebar */}
-      <div className="w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex flex-col">
+      <div className="hidden lg:flex w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex-col">
         {/* Logo */}
         <div className="h-[90px] flex items-center justify-center px-6 mt-4">
           <Link href="/home">
@@ -125,17 +128,24 @@ export default function MenuPage() {
       {/* Main Column */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-6 sm:px-8">
+        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
-            <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+            <div className="lg:hidden flex-shrink-0 mr-2">
+              <Link href="/home">
+                <Image src="/logo.png" alt="Logo" width={75} height={42} priority className="object-contain" />
+              </Link>
+            </div>
+            <div className="hidden lg:flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
+              <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
             <button className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -154,7 +164,7 @@ export default function MenuPage() {
               </svg>
               <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">1</span>
             </button>
-            <button className="relative text-zinc-400 hover:text-white transition-colors mr-2 cursor-pointer">
+            <button onClick={() => router.push("/my-orders")} className="relative text-zinc-400 hover:text-white transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
                 <path d="M3 6h18"></path>
@@ -163,41 +173,58 @@ export default function MenuPage() {
               <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
             </button>
 
-            <div className="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer">
-              <span className="text-sm font-medium text-white">Alan Cattach</span>
-              <div className="w-8 h-8 rounded-full bg-zinc-700 overflow-hidden relative border border-white/10">
-                {/* Dummy Avatar */}
-                <Image src="/customer/banner-men.png" alt="Avatar" fill className="object-cover" />
+            <div onClick={() => router.push("/profile")} className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-white/10 cursor-pointer group">
+              <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors hidden sm:inline">Charles Deo</span>
+              <div className="w-8 h-8 rounded-full bg-zinc-700 overflow-hidden relative border border-white/10 group-hover:border-[#F9671A]/30 transition-colors">
+                <Image src="/customer/profile.png" alt="Avatar" fill className="object-cover" />
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:text-white transition-colors hidden sm:inline">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
+
+            {/* Burger Menu Trigger */}
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
           </div>
         </header>
 
+        {/* Mobile Delivery Bar - Only visible on lg:hidden */}
+        <div className="flex items-center gap-2 px-6 py-3 bg-[#1E1E20] border-b border-white/5 lg:hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span className="text-zinc-400 text-xs font-medium">Delivery:</span>
+          <span className="text-[#F9671A] text-xs font-semibold">Direct Street, Chicago</span>
+        </div>
+
         {/* Dashboard Content */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-visible lg:overflow-hidden">
           {/* Main Content Area */}
-          <main className="flex-1 h-full px-6 sm:px-8 py-6 pb-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <main className="flex-1 h-auto lg:h-full px-4 sm:px-8 py-6 pb-20 overflow-visible lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {/* Banner */}
-            <div className="w-full bg-gradient-to-r from-[#FFF8F4] to-[#FFB894] rounded-[24px] pl-6 sm:pl-10 pr-0 py-0 flex items-center justify-between relative shadow-xl overflow-hidden border border-[#2d2d2d] flex-shrink-0 h-[160px] sm:h-[180px] md:h-[220px] mb-8"
+            <div className="w-full bg-gradient-to-r from-[#FFF8F4] to-[#FFB894] rounded-[24px] pl-4 sm:pl-10 pr-0 py-0 flex items-center justify-between relative shadow-xl overflow-hidden border border-[#2d2d2d] flex-shrink-0 h-[140px] sm:h-[180px] md:h-[220px] mb-8"
               style={{ background: 'linear-gradient(110deg, #1E1E20 0%, #1E1E20 45%, #6b2a0e 62%, #b05020 75%, #f5ece5 100%)' }}
             >
-              <div className="flex-1 z-10 text-left py-4 overflow-hidden pl-2">
-                <p className="text-zinc-400 text-[12px] sm:text-[16px] font-normal mb-1 whitespace-nowrap mt-6">
+              <div className="flex-1 z-10 text-left py-2 overflow-hidden pl-2">
+                <p className="text-zinc-400 text-[10px] sm:text-[16px] font-normal mb-1 whitespace-nowrap mt-2">
                   Order Restaurant food, takeaway and groceries.
                 </p>
 
-                <h1 className="text-white text-[26px] sm:text-[36px] md:text-[52px] leading-[1] tracking-tight font-normal whitespace-nowrap">
+                <h1 className="text-white text-[16px] sm:text-[36px] md:text-[52px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
                   Food ordering is now more
                 </h1>
 
-                <h1 className="text-[#F9671A] text-[28px] sm:text-[38px] md:text-[46px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
+                <h1 className="text-[#F9671A] text-[17px] sm:text-[38px] md:text-[46px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
                   personalized and instant
                 </h1>
 
-                <div className="relative max-w-[350px] mb-6 mt-3">
+                <div className="relative max-w-[280px] sm:max-w-[350px] mb-2 sm:mb-6 mt-2">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -207,15 +234,15 @@ export default function MenuPage() {
 
                   <input
                     type="text"
-                    placeholder="Are you hungry...."
-                    className="w-full rounded-full py-2.5 pl-9 pr-4 text-[13px] text-white placeholder:text-white/50 outline-none focus:ring-1 focus:ring-[#F9671A] whitespace-nowrap"
+                    placeholder="Find your favorite..."
+                    className="w-full rounded-full py-1.5 sm:py-2.5 pl-9 pr-4 text-[11px] sm:text-[13px] text-white placeholder:text-white/50 outline-none focus:ring-1 focus:ring-[#F9671A] whitespace-nowrap"
                     style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}
                   />
                 </div>
               </div>
 
-              <div className="h-full flex items-end justify-end relative z-10 flex-shrink-0 w-[240px] sm:w-[320px] md:w-[400px]">
-                <img src="/customer/banner-men.png" alt="Delivery Man" className="h-[90%] sm:h-[98%] w-auto object-contain object-bottom -mr-[24%] sm:-mr-[32%] z-0" />
+              <div className="h-full flex items-end justify-end relative z-10 flex-shrink-0 w-[140px] xs:w-[180px] sm:w-[320px] md:w-[400px]">
+                <img src="/customer/banner-men.png" alt="Delivery Man" className="h-[85%] sm:h-[98%] w-auto object-contain object-bottom -mr-[35%] sm:-mr-[32%] z-0" />
                 <img src="/customer/banner-woman.png" alt="Woman Eating" className="h-[90%] sm:h-[96%] w-auto object-contain object-bottom z-10" />
               </div>
             </div>
@@ -227,8 +254,8 @@ export default function MenuPage() {
                   key={tag}
                   onClick={() => setActiveTag(tag)}
                   className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${activeTag === tag
-                      ? "bg-[#F9671A] text-white shadow-lg shadow-orange-600/20"
-                      : "bg-white text-[#1A1A1A] hover:bg-zinc-200"
+                    ? "bg-[#F9671A] text-white shadow-lg shadow-orange-600/20"
+                    : "bg-white text-[#1A1A1A] hover:bg-zinc-200"
                     }`}
                 >
                   {tag}
@@ -247,7 +274,7 @@ export default function MenuPage() {
             </div>
 
             {/* Happy Hour Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
               {steaks.map(item => (
                 <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
                   <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
@@ -283,7 +310,7 @@ export default function MenuPage() {
             </div>
 
             {/* Most Popular Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {popularSteaks.map(item => (
                 <div key={`pop-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
                   <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
@@ -314,7 +341,7 @@ export default function MenuPage() {
           </main>
 
           {/* Right Sidebar (Cart) */}
-          <aside className="w-[340px] flex-shrink-0 border-l border-white/5 bg-[#1E1E20] flex flex-col h-full">
+          <aside className="w-full lg:w-[340px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full">
             <div className="p-6 pb-2 flex items-center justify-between border-b border-white/5 mx-6 px-0 mb-4 h-[70px] flex-shrink-0">
               <h2 className="text-[17px] font-bold text-white flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -329,7 +356,7 @@ export default function MenuPage() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 flex flex-col gap-6 scrollbar-hide">
+            <div className="flex-1 overflow-visible lg:overflow-y-auto px-6 flex flex-col gap-6 scrollbar-hide">
               {/* Cart Items */}
               <div className="flex flex-col gap-5">
                 {cartItems.length === 0 && (
@@ -406,7 +433,7 @@ export default function MenuPage() {
                 <span className="text-[16px] font-bold text-white">Total</span>
                 <span className="text-[18px] font-extrabold text-[#F9671A]">£{total.toFixed(2)}</span>
               </div>
-              <button className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer">
+              <button onClick={() => router.push("/checkout")} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer">
                 Proceed to checkout
               </button>
             </div>
@@ -415,7 +442,7 @@ export default function MenuPage() {
       </div>
       {/* Product Detail Modal */}
       {selectedProduct && (
-        <div className="fixed top-0 left-0 bottom-0 right-[340px] z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
+        <div className="fixed top-0 left-0 bottom-0 right-0 lg:right-[340px] z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
           <div className="relative w-full max-w-[600px] max-h-[90vh] bg-[#1a1a1c] border border-white/10 rounded-[24px] flex flex-col shadow-2xl">
             <button onClick={() => setSelectedProduct(null)} className="absolute top-5 right-5 text-zinc-400 hover:text-white bg-[#212124] p-1.5 rounded-full border border-white/10 z-20 transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
@@ -588,6 +615,62 @@ export default function MenuPage() {
               >
                 Add to Cart - £{(parseFloat(selectedProduct.price.replace('£', '')) * modalQty).toFixed(2)}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Drawer (Sidebar Categories) */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-[280px] max-w-[80vw] bg-[#1a1a1c] h-full flex flex-col shadow-2xl border-r border-white/5 z-10 transition-transform duration-300 translate-x-0">
+            {/* Header / Logo */}
+            <div className="h-[70px] flex items-center justify-between px-5 border-b border-white/5">
+              <Link href="/home" onClick={() => setIsMobileSidebarOpen(false)}>
+                <Image src="/logo.png" alt="Logo" width={90} height={50} priority className="object-contain" />
+              </Link>
+              <button 
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="text-zinc-400 hover:text-white transition-colors cursor-pointer bg-white/5 p-1.5 rounded-full border border-white/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Navigation / Categories */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
+              <h3 className="text-white font-bold text-[16px] mb-4 px-6 uppercase tracking-wider text-zinc-500">Menu Categories</h3>
+              <div className="flex flex-col">
+                {categories.map((cat, i) => {
+                  const isActive = activeCategory === cat.name;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setActiveCategory(cat.name);
+                        setIsMobileSidebarOpen(false);
+                      }}
+                      className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${
+                        isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
+                      }`}
+                    >
+                      <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
+                        {getCategoryIcon(cat.name)}
+                      </div>
+                      <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
+                        {cat.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
