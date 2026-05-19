@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [coverPhoto, setCoverPhoto] = useState("/customer/cover-image.png");
   const [profilePhoto, setProfilePhoto] = useState("/customer/profile.png");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -60,9 +61,9 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="h-screen w-screen bg-[#1E1E20] flex text-white overflow-hidden font-sans select-none relative">
+    <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none relative">
       {/* 1. Left Sidebar */}
-      <div className="w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex flex-col z-20">
+      <div className="hidden lg:flex w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/5 bg-[#1a1a1c] flex-col z-20">
         {/* Logo */}
         <div className="h-[90px] flex items-center justify-center px-6 mt-4">
           <Link href="/home">
@@ -101,20 +102,27 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Column */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         {/* Top Header */}
-        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-6 sm:px-8 relative z-10">
+        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-4 sm:px-8 relative z-10">
           <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
-            <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 ml-1 cursor-pointer"><path d="m6 9 6 6 6-6"/></svg>
+            <div className="lg:hidden flex-shrink-0 mr-2">
+              <Link href="/home">
+                <Image src="/logo.png" alt="Logo" width={75} height={42} priority className="object-contain" />
+              </Link>
+            </div>
+            
+            <div className="hidden lg:flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
+              <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
             <button className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -142,32 +150,40 @@ export default function ProfilePage() {
               <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
             </button>
 
-            <div onClick={() => router.push("/profile")} className="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer">
-              <span className="text-sm font-medium text-[#F9671A]">Charles Deo</span>
+            <div className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-white/10 cursor-pointer">
+              <span className="text-sm font-medium text-[#F9671A] hidden sm:inline">Charles Deo</span>
               <div className="w-8 h-8 rounded-full bg-zinc-700 overflow-hidden relative border border-[#F9671A]/30">
                 <Image src={profilePhoto} alt="Avatar" fill className="object-cover" />
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 hidden sm:inline">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
+            
+            {/* Burger Menu Trigger */}
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
           </div>
         </header>
 
         {/* Dashboard Content */}
-        <main className="flex-1 h-full px-6 sm:px-8 py-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        <main className="flex-1 h-full px-4 sm:px-8 py-6 lg:py-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           {isEditing ? (
-            <div className="px-2 max-w-[800px]">
+            <div className="max-w-[800px] mx-auto lg:mx-0">
               {/* Header */}
               <div className="flex items-center gap-3 mb-8 mt-2">
                 <button onClick={() => setIsEditing(false)} className="text-white hover:text-zinc-300 transition-colors cursor-pointer flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <h1 className="text-[22px] font-bold text-white">Edit profile</h1>
+                <h1 className="text-[18px] lg:text-[22px] font-bold text-white">Customer profile</h1>
               </div>
 
               {/* Avatar Section */}
-              <div className="mb-10 relative w-[100px] h-[100px]">
+              <div className="mb-10 relative w-[100px] h-[100px] mx-auto lg:mx-0 mt-4 lg:mt-0">
                 <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-[#1E1E20] relative shadow-lg">
                   <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
                 </div>
@@ -266,28 +282,39 @@ export default function ProfilePage() {
             </div>
           ) : (
             <>
-              <h1 className="text-[20px] font-bold text-white mb-6">Customer profile</h1>
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-6 lg:mb-8 mt-2">
+                <button onClick={() => router.push("/home")} className="lg:hidden text-white hover:text-zinc-300 transition-colors cursor-pointer flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h1 className="text-[18px] lg:text-[20px] font-bold text-white">Customer profile</h1>
+              </div>
 
           {/* Banner Container */}
           <div className="relative mb-[70px]">
             {/* Cover Photo */}
-            <div className="w-full h-[220px] rounded-[24px] overflow-hidden relative shadow-lg bg-[#1E1E20]">
+            <div className="w-full h-[180px] lg:h-[220px] rounded-[16px] lg:rounded-[24px] overflow-hidden relative shadow-lg bg-[#1E1E20]">
               {/* Background Texture */}
               <Image src="/customer/profile-bg.jpg" alt="Cover Texture" fill className="object-cover z-0 opacity-80" />
               {/* Food Image (smaller and on the right side) */}
-              <div className="absolute inset-0 flex items-center justify-end pr-[250px] z-10">
-                <div className="relative w-[450px] h-[220px]">
+              <div className="absolute inset-0 flex items-center justify-end pr-0 lg:pr-[250px] z-10">
+                <div className="relative w-[280px] lg:w-[450px] h-[180px] lg:h-[220px]">
                   <Image src={coverPhoto} alt="Cover Food" fill className="object-contain drop-shadow-2xl" />
                 </div>
               </div>
               <button 
                 onClick={() => document.getElementById('cover-upload-input')?.click()}
-                className="absolute bottom-4 right-4 bg-white text-[#F9671A] text-[13px] font-bold px-4 py-2 rounded-full flex items-center gap-2 cursor-pointer shadow-lg hover:bg-zinc-100 transition-colors z-20"
+                className="absolute bottom-3 right-3 lg:bottom-4 lg:right-4 bg-black/60 lg:bg-white text-white lg:text-[#F9671A] text-[12px] lg:text-[13px] font-bold p-2.5 lg:px-4 lg:py-2 rounded-full flex items-center gap-2 cursor-pointer shadow-lg hover:bg-black/80 lg:hover:bg-zinc-100 transition-colors z-20 backdrop-blur-md"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {/* Mobile Icon (Image) */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lg:hidden">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+                {/* Desktop Icon (Edit/Pen) */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="hidden lg:block">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
                 </svg>
-                Edit Cover Photo
+                <span className="hidden lg:inline">Edit Cover Photo</span>
               </button>
               <input 
                 id="cover-upload-input" 
@@ -298,20 +325,20 @@ export default function ProfilePage() {
               />
             </div>
 
-            {/* Profile Photo (Overlapping, larger, shifted right) */}
-            <div className="absolute -bottom-[65px] left-16 w-[160px] h-[160px] rounded-full border-[6px] border-[#1E1E20] overflow-hidden bg-zinc-800 z-30 shadow-xl">
+            {/* Profile Photo */}
+            <div className="absolute -bottom-[50px] lg:-bottom-[65px] left-4 lg:left-16 w-[100px] h-[100px] lg:w-[160px] lg:h-[160px] rounded-full border-[4px] lg:border-[6px] border-[#1E1E20] overflow-hidden bg-zinc-800 z-30 shadow-xl">
               <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
             </div>
           </div>
 
           {/* Profile Info & Edit Button */}
-          <div className="flex justify-between items-start mb-10 px-2">
-            <div className="pl-[250px] -mt-5">
-              <h2 className="text-[28px] font-bold text-[#F9671A] leading-tight">Charles Deo</h2>
-              <p className="text-[15px] text-zinc-400 italic">Food Lover</p>
+          <div className="flex justify-between items-center lg:items-start mb-8 lg:mb-10 px-2 mt-4 lg:mt-0">
+            <div className="lg:pl-[250px] lg:-mt-5 flex-1 min-w-0 pr-4">
+              <h2 className="text-[20px] lg:text-[28px] font-bold text-[#F9671A] leading-tight truncate">Charles Deo</h2>
+              <p className="text-[13px] lg:text-[15px] text-zinc-400 italic">Food Lover</p>
             </div>
-            <button onClick={() => setIsEditing(true)} className="border border-[#F9671A]/30 text-[#F9671A] hover:bg-[#F9671A]/10 text-[13px] font-bold px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors mr-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <button onClick={() => setIsEditing(true)} className="border border-[#F9671A]/30 text-[#F9671A] hover:bg-[#F9671A]/10 text-[12px] lg:text-[13px] font-bold px-4 py-2 lg:px-6 lg:py-2.5 rounded-full flex items-center gap-1.5 transition-colors flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
               </svg>
               Edit Profile
@@ -447,6 +474,62 @@ export default function ProfilePage() {
           )}
         </main>
       </div>
+      {/* Mobile Drawer (Sidebar Categories) */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-[280px] max-w-[80vw] bg-[#1a1a1c] h-full flex flex-col shadow-2xl border-r border-white/5 z-10 transition-transform duration-300 translate-x-0">
+            {/* Header / Logo */}
+            <div className="h-[70px] flex items-center justify-between px-5 border-b border-white/5">
+              <Link href="/home" onClick={() => setIsMobileSidebarOpen(false)}>
+                <Image src="/logo.png" alt="Logo" width={90} height={50} priority className="object-contain" />
+              </Link>
+              <button 
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="text-zinc-400 hover:text-white transition-colors cursor-pointer bg-white/5 p-1.5 rounded-full border border-white/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Navigation / Categories */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
+              <h3 className="text-white font-bold text-[16px] mb-4 px-6 uppercase tracking-wider text-zinc-500">Menu Categories</h3>
+              <div className="flex flex-col">
+                {categories.map((cat, i) => {
+                  const isActive = activeCategory === cat.name;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setActiveCategory(cat.name);
+                        setIsMobileSidebarOpen(false);
+                        router.push("/menu");
+                      }}
+                      className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${
+                        isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
+                      }`}
+                    >
+                      <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
+                        {getCategoryIcon(cat.name)}
+                      </div>
+                      <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
+                        {cat.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
