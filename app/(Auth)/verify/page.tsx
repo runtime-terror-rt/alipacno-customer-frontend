@@ -66,7 +66,7 @@ export default function VerifyPhone() {
 
   return (
     <div
-      className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
+      className="min-h-[100dvh] w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
       style={{
         backgroundImage: "url('/customer/bg-image.png')"
       }}
@@ -91,8 +91,8 @@ export default function VerifyPhone() {
         />
       </div>
 
-      {/* Left Section: Burger Visual — slightly higher */}
-      <div className="flex-none md:flex-1 relative flex items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+      {/* Left Section: Burger Visual — hidden on mobile */}
+      <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
         <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[-10px] lg:translate-y-[0px] md:translate-x-[-15px] lg:translate-x-[-40px]">
           <Image
             src="/customer/burger.png"
@@ -128,7 +128,7 @@ export default function VerifyPhone() {
           </p>
 
           {/* OTP Input Boxes */}
-          <div className="flex justify-center gap-3 mb-8">
+          <div className="flex justify-center gap-2 sm:gap-3 mb-8">
             {otp.map((digit, index) => {
               const placeholders = ["2", "8", "4", "", "", ""];
               return (
@@ -143,7 +143,7 @@ export default function VerifyPhone() {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-12 h-14 bg-transparent border border-white/15 rounded-lg text-center text-white text-xl font-bold focus:outline-none focus:border-[#F9671A] focus:ring-1 focus:ring-[#F9671A]/50 transition-all duration-300 placeholder:text-zinc-700"
+                  className="w-9 h-12 sm:w-12 sm:h-14 bg-transparent border border-white/15 rounded-lg text-center text-white text-lg sm:text-xl font-bold focus:outline-none focus:border-[#F9671A] focus:ring-1 focus:ring-[#F9671A]/50 transition-all duration-300 placeholder:text-zinc-700"
                   aria-label={`OTP digit ${index + 1}`}
                 />
               );

@@ -372,7 +372,7 @@ export default function CheckoutPage() {
           </main>
 
           {/* Right Sidebar (Map & Order Summary - Same width and structure as Menu Page Cart) */}
-          <aside className="w-full lg:w-[340px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full relative z-30">
+          <aside className="w-full lg:w-[355px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full relative z-30">
             {/* Map Section (No border on map container) */}
             <div className="p-6 pb-4 border-b border-white/5 mx-6 px-0 mb-4 flex flex-col gap-4 flex-shrink-0">
               <div className="border-b border-white/5 pb-3">
@@ -450,7 +450,7 @@ export default function CheckoutPage() {
       {/* Change Branch Modal Overlay - fixed z-20, right sidebar is z-30 so stays bright */}
       {isBranchModalOpen && (
         <div
-          className="fixed top-0 bottom-0 left-0 right-0 lg:right-[340px] z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center lg:pl-[260px] p-4"
+          className="fixed top-0 bottom-0 left-0 right-0 lg:right-[355px] z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center lg:pl-[260px] p-4"
           onClick={() => setIsBranchModalOpen(false)}
         >
           <div

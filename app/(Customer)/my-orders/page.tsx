@@ -194,11 +194,7 @@ export default function MyOrdersPage() {
                       <div className="text-[15px] font-bold text-zinc-300">
                         1x: <span className="text-[#F9671A]">£95.00</span>
                       </div>
-                      {/* Avatars */}
-                      <div className="flex -space-x-2">
-                        <div className="w-6 h-6 rounded-full border border-[#252527] bg-zinc-800 overflow-hidden relative z-10"><Image src="/customer/banner-men.png" alt="Avatar" fill className="object-cover" /></div>
-                        <div className="w-6 h-6 rounded-full border border-[#252527] bg-zinc-700 overflow-hidden relative z-0"><Image src="/customer/banner-woman.png" alt="Avatar" fill className="object-cover" /></div>
-                      </div>
+                  
                     </div>
                   </div>
                 </div>
@@ -418,7 +414,7 @@ export default function MyOrdersPage() {
           </main>
 
           {/* Right Sidebar */}
-          <aside className="w-full lg:w-[340px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full relative z-30">
+          <aside className="w-full lg:w-[355px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full relative z-30">
             {view === "list" ? (
               /* Notifications for List View */
               <div className="p-6 flex flex-col gap-4 overflow-y-auto">

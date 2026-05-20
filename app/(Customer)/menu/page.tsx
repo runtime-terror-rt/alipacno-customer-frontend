@@ -208,26 +208,26 @@ export default function MenuPage() {
           {/* Main Content Area */}
           <main className="flex-1 h-auto lg:h-full px-4 sm:px-8 py-6 pb-20 overflow-visible lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {/* Banner */}
-            <div className="w-full bg-gradient-to-r from-[#FFF8F4] to-[#FFB894] rounded-[24px] pl-4 sm:pl-10 pr-0 py-0 flex items-center justify-between relative shadow-xl overflow-hidden border border-[#2d2d2d] flex-shrink-0 h-[140px] sm:h-[180px] md:h-[220px] mb-8"
+            <div className="w-full bg-gradient-to-r from-[#FFF8F4] to-[#FFB894] rounded-[16px] sm:rounded-[24px] pl-3 sm:pl-10 pr-0 py-0 flex items-center justify-between relative shadow-xl overflow-hidden border border-[#2d2d2d] flex-shrink-0 h-[100px] min-[400px]:h-[120px] sm:h-[180px] md:h-[220px] mb-6 sm:mb-8"
               style={{ background: 'linear-gradient(110deg, #1E1E20 0%, #1E1E20 45%, #6b2a0e 62%, #b05020 75%, #f5ece5 100%)' }}
             >
-              <div className="flex-1 z-10 text-left py-2 overflow-hidden pl-2">
-                <p className="text-zinc-400 text-[10px] sm:text-[16px] font-normal mb-1 whitespace-nowrap mt-2">
+              <div className="flex-1 z-10 text-left py-1 sm:py-2 overflow-hidden pl-1 sm:pl-2">
+                <p className="text-zinc-400 text-[8px] min-[400px]:text-[10px] sm:text-[16px] font-normal mb-0.5 sm:mb-1 whitespace-nowrap mt-1 sm:mt-2">
                   Order Restaurant food, takeaway and groceries.
                 </p>
 
-                <h1 className="text-white text-[16px] sm:text-[36px] md:text-[52px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
+                <h1 className="text-white text-[12px] min-[400px]:text-[15px] sm:text-[36px] md:text-[52px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
                   Food ordering is now more
                 </h1>
 
-                <h1 className="text-[#F9671A] text-[17px] sm:text-[38px] md:text-[46px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
+                <h1 className="text-[#F9671A] text-[13px] min-[400px]:text-[16px] sm:text-[38px] md:text-[46px] leading-[1.1] tracking-tight font-normal whitespace-nowrap">
                   personalized and instant
                 </h1>
 
-                <div className="relative max-w-[280px] sm:max-w-[350px] mb-2 sm:mb-6 mt-2">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 flex items-center">
+                <div className="relative max-w-[180px] min-[400px]:max-w-[220px] sm:max-w-[350px] mb-1 sm:mb-6 mt-1.5 sm:mt-2">
+                  <span className="absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2 text-gray-400 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] sm:w-[15px] sm:h-[15px]">
                       <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
                     </svg>
                   </span>
@@ -235,13 +235,13 @@ export default function MenuPage() {
                   <input
                     type="text"
                     placeholder="Find your favorite..."
-                    className="w-full rounded-full py-1.5 sm:py-2.5 pl-9 pr-4 text-[11px] sm:text-[13px] text-white placeholder:text-white/50 outline-none focus:ring-1 focus:ring-[#F9671A] whitespace-nowrap"
+                    className="w-full rounded-full py-1 sm:py-2.5 pl-7 sm:pl-9 pr-3 sm:pr-4 text-[9px] sm:text-[13px] text-white placeholder:text-white/50 outline-none focus:ring-1 focus:ring-[#F9671A] whitespace-nowrap"
                     style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}
                   />
                 </div>
               </div>
 
-              <div className="h-full flex items-end justify-end relative z-10 flex-shrink-0 w-[140px] xs:w-[180px] sm:w-[320px] md:w-[400px]">
+              <div className="h-full flex items-end justify-end relative z-10 flex-shrink-0 w-[110px] min-[400px]:w-[140px] sm:w-[320px] md:w-[400px]">
                 <img src="/customer/banner-men.png" alt="Delivery Man" className="h-[85%] sm:h-[98%] w-auto object-contain object-bottom -mr-[35%] sm:-mr-[32%] z-0" />
                 <img src="/customer/banner-woman.png" alt="Woman Eating" className="h-[90%] sm:h-[96%] w-auto object-contain object-bottom z-10" />
               </div>
@@ -264,11 +264,11 @@ export default function MenuPage() {
             </div>
 
             {/* Happy Hour Section */}
-            <div className="flex items-center gap-4 mb-6">
-              <h2 className="text-[17px] font-bold text-white flex items-center">
-                Happy hour pricing: <span className="text-[#F9671A] ml-2">03h : 22m : 31s</span>
+            <div className="flex flex-row items-center justify-between sm:justify-start gap-2 sm:gap-4 mb-6">
+              <h2 className="text-[12px] min-[375px]:text-[13px] min-[400px]:text-[15px] sm:text-[17px] font-bold text-white flex items-center whitespace-nowrap">
+                Happy hour pricing: <span className="text-[#F9671A] ml-1 sm:ml-2">03h : 22m : 31s</span>
               </h2>
-              <div className="bg-[#3a2016] text-[#F9671A] border border-[#F9671A]/20 text-[11px] font-bold px-2.5 py-1 rounded-full">
+              <div className="bg-[#3a2016] text-[#F9671A] border border-[#F9671A]/20 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full whitespace-nowrap">
                 35% OFF
               </div>
             </div>
@@ -341,7 +341,7 @@ export default function MenuPage() {
           </main>
 
           {/* Right Sidebar (Cart) */}
-          <aside className="w-full lg:w-[340px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full">
+          <aside className="w-full lg:w-[355px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full">
             <div className="p-6 pb-2 flex items-center justify-between border-b border-white/5 mx-6 px-0 mb-4 h-[70px] flex-shrink-0">
               <h2 className="text-[17px] font-bold text-white flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -442,7 +442,7 @@ export default function MenuPage() {
       </div>
       {/* Product Detail Modal */}
       {selectedProduct && (
-        <div className="fixed top-0 left-0 bottom-0 right-0 lg:right-[340px] z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
+        <div className="fixed top-0 left-0 bottom-0 right-0 lg:right-[355px] z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
           <div className="relative w-full max-w-[600px] max-h-[90vh] bg-[#1a1a1c] border border-white/10 rounded-[24px] flex flex-col shadow-2xl">
             <button onClick={() => setSelectedProduct(null)} className="absolute top-5 right-5 text-zinc-400 hover:text-white bg-[#212124] p-1.5 rounded-full border border-white/10 z-20 transition-colors cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>

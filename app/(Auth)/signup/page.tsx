@@ -8,7 +8,7 @@ export default function SignUp() {
   const router = useRouter();
   return (
     <div
-      className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
+      className="min-h-[100dvh] w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
       style={{
         backgroundImage: "url('/customer/bg-image.png')"
       }}
@@ -33,8 +33,8 @@ export default function SignUp() {
         />
       </div>
 
-      {/* Left Section: Visuals (50%) — identical to login page */}
-      <div className="flex-none md:flex-1 relative flex items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+      {/* Left Section: Visuals (50%) — hidden on mobile */}
+      <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
         <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[20px] lg:translate-y-[40px] md:translate-x-[-15px] lg:translate-x-[-40px]">
           <Image
             src="/customer/signup-page.png"
