@@ -2,73 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import { CountrySelector, type CountryIso2, usePhoneInput } from "react-international-phone";
 import { useRouter } from "next/navigation";
 
-const countryCodes = [
-  { code: "+44", label: "UK", flag: "🇬🇧" },
-  { code: "+1", label: "US", flag: "🇺🇸" },
-  { code: "+1", label: "CA", flag: "🇨🇦" },
-  { code: "+91", label: "IN", flag: "🇮🇳" },
-  { code: "+880", label: "BD", flag: "🇧🇩" },
-  { code: "+92", label: "PK", flag: "🇵🇰" },
-  { code: "+61", label: "AU", flag: "🇦🇺" },
-  { code: "+49", label: "DE", flag: "🇩🇪" },
-  { code: "+33", label: "FR", flag: "🇫🇷" },
-  { code: "+39", label: "IT", flag: "🇮🇹" },
-  { code: "+34", label: "ES", flag: "🇪🇸" },
-  { code: "+81", label: "JP", flag: "🇯🇵" },
-  { code: "+82", label: "KR", flag: "🇰🇷" },
-  { code: "+86", label: "CN", flag: "🇨🇳" },
-  { code: "+55", label: "BR", flag: "🇧🇷" },
-  { code: "+52", label: "MX", flag: "🇲🇽" },
-  { code: "+971", label: "AE", flag: "🇦🇪" },
-  { code: "+966", label: "SA", flag: "🇸🇦" },
-  { code: "+90", label: "TR", flag: "🇹🇷" },
-  { code: "+234", label: "NG", flag: "🇳🇬" },
-  { code: "+27", label: "ZA", flag: "🇿🇦" },
-  { code: "+254", label: "KE", flag: "🇰🇪" },
-  { code: "+62", label: "ID", flag: "🇮🇩" },
-  { code: "+60", label: "MY", flag: "🇲🇾" },
-  { code: "+65", label: "SG", flag: "🇸🇬" },
-  { code: "+63", label: "PH", flag: "🇵🇭" },
-  { code: "+66", label: "TH", flag: "🇹🇭" },
-  { code: "+84", label: "VN", flag: "🇻🇳" },
-  { code: "+7", label: "RU", flag: "🇷🇺" },
-  { code: "+48", label: "PL", flag: "🇵🇱" },
-  { code: "+31", label: "NL", flag: "🇳🇱" },
-  { code: "+46", label: "SE", flag: "🇸🇪" },
-  { code: "+47", label: "NO", flag: "🇳🇴" },
-  { code: "+353", label: "IE", flag: "🇮🇪" },
-  { code: "+41", label: "CH", flag: "🇨🇭" },
-  { code: "+43", label: "AT", flag: "🇦🇹" },
-  { code: "+32", label: "BE", flag: "🇧🇪" },
-  { code: "+351", label: "PT", flag: "🇵🇹" },
-  { code: "+30", label: "GR", flag: "🇬🇷" },
-  { code: "+20", label: "EG", flag: "🇪🇬" },
-  { code: "+212", label: "MA", flag: "🇲🇦" },
-  { code: "+64", label: "NZ", flag: "🇳🇿" },
-  { code: "+54", label: "AR", flag: "🇦🇷" },
-  { code: "+57", label: "CO", flag: "🇨🇴" },
-  { code: "+56", label: "CL", flag: "🇨🇱" },
-];
+const getFlagEmoji = (countryCode: string) =>
+  countryCode
+    .toUpperCase()
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
 
 export default function Home() {
   const router = useRouter();
-  const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const [phone, setPhone] = useState("");
+  const { inputValue, handlePhoneValueChange, inputRef, country, setCountry } = usePhoneInput({
+    defaultCountry: "gb",
+    value: phone,
+    disableDialCodeAndPrefix: true,
+    onChange: (data) => {
+      setPhone(data.phone);
+    },
+  });
 
   return (
     <div
@@ -136,53 +89,39 @@ export default function Home() {
               <label className="block text-xs md:text-sm font-medium text-zinc-400 mb-2" htmlFor="phone">
                 Phone number
               </label>
-              <div className="flex gap-2">
+              <div className="pacino-phone-input">
                 {/* Country Code Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-1 sm:gap-1.5 bg-[#303031] border border-white/5 rounded-xl px-2 sm:px-3 py-3 text-zinc-300 text-xs sm:text-sm font-medium min-w-[70px] sm:min-w-[90px] justify-center cursor-pointer hover:border-[#F9671A]/50 transition-all duration-300"
-                  >
-                    <span>{selectedCountry.flag}</span>
-                    <span>{selectedCountry.code}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`w-3 h-3 text-zinc-500 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-
-                  {/* Dropdown List */}
-                  {dropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-[200px] max-h-[240px] overflow-y-auto bg-[#2a2a2c] border border-white/10 rounded-xl shadow-2xl z-50 scrollbar-thin">
-                      {countryCodes.map((country, i) => (
-                        <button
-                          key={`${country.label}-${i}`}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCountry(country);
-                            setDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors duration-150 cursor-pointer ${
-                            selectedCountry.label === country.label && selectedCountry.code === country.code
-                              ? "bg-[#F9671A]/15 text-[#F9671A]"
-                              : "text-zinc-300 hover:bg-white/5"
-                          }`}
-                        >
-                          <span className="text-base">{country.flag}</span>
-                          <span className="font-medium">{country.label}</span>
-                          <span className="text-zinc-500 ml-auto">{country.code}</span>
-                        </button>
-                      ))}
-                    </div>
+                <CountrySelector
+                  selectedCountry={country.iso2 as CountryIso2}
+                  onSelect={(selectedCountry) => {
+                    setCountry(selectedCountry.iso2, { focusOnInput: true });
+                  }}
+                  renderButtonWrapper={({ rootProps }) => (
+                    <button
+                      {...rootProps}
+                      type="button"
+                      className={`h-12 box-border flex items-center gap-1 sm:gap-1.5 bg-[#303031] border border-white/5 rounded-xl px-2 sm:px-3 text-zinc-300 text-xs sm:text-sm font-medium min-w-[78px] sm:min-w-[96px] justify-center cursor-pointer hover:border-[#F9671A]/50 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300 ${
+                        rootProps["aria-expanded"] ? "border-[#F9671A]/50" : ""
+                      }`}
+                    >
+                      <span>{getFlagEmoji(country.iso2)}</span>
+                      <span>+{country.dialCode}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`w-3 h-3 text-zinc-500 transition-transform duration-200 ${rootProps["aria-expanded"] ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   )}
-                </div>
+                />
 
                 {/* Phone Input */}
                 <input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={handlePhoneValueChange}
                   type="tel"
                   id="phone"
                   placeholder="enter your phone number"
-                  className="flex-1 min-w-0 bg-[#303031] border border-white/5 rounded-xl px-3 sm:px-4 py-3 text-white placeholder:text-zinc-600 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
+                  className="h-12 box-border flex-1 min-w-0 bg-[#303031] border border-white/5 rounded-xl px-3 sm:px-4 text-white placeholder:text-zinc-600 text-sm sm:text-base leading-none focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 />
               </div>
               <p className="text-zinc-600 text-[10px] md:text-xs mt-2 flex items-center gap-1">
