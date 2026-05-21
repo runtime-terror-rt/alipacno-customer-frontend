@@ -36,9 +36,9 @@ export default function Login() {
       {/* Left Section: Visuals (50%) — hidden on mobile */}
       <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
         {/* Main Product Image */}
-        <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[20px] lg:translate-y-[40px] md:translate-x-[-15px] lg:translate-x-[-40px]">
+        <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[-10px] lg:translate-y-[0px] md:translate-x-[-15px] lg:translate-x-[-40px]">
           <Image
-            src="/customer/login-image.png"
+            src="/customer/burger-2.png"
             alt="Delicious Wrap"
             fill
             className="object-contain drop-shadow-2xl"
@@ -65,7 +65,7 @@ export default function Login() {
 
           <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="email">
+              <label className="block text-sm font-medium text-white mb-2" htmlFor="email">
                 Email
               </label>
               <input
@@ -77,7 +77,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="password">
+              <label className="block text-sm font-medium text-white mb-2" htmlFor="password">
                 Password
               </label>
               <input
@@ -91,9 +91,9 @@ export default function Login() {
             <div className="flex items-center justify-between text-xs sm:text-sm">
               <label className="flex items-center gap-2 text-zinc-400 cursor-pointer group">
                 <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] checked:hover:bg-[#FFA175] checked:focus:bg-[#FFA175] focus:ring-0 focus:ring-offset-0" />
-                <span className="group-hover:text-zinc-200 transition-colors duration-300">Remember Password</span>
+                <span className="text-white transition-colors duration-300">Remember Password</span>
               </label>
-              <Link href="/forgot-password" className="text-zinc-400 hover:text-[#F9671A] transition-colors duration-300">
+              <Link href="/forgot-password" className="text-white hover:text-[#F9671A] transition-colors duration-300">
                 Forget Password?
               </Link>
             </div>
@@ -106,7 +106,7 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="text-center text-zinc-400 mt-8">
+          <p className="text-center text-white mt-8">
             Don't have an account?{" "}
             <Link href="/signup" className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300">
               Sign Up

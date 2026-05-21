@@ -79,14 +79,14 @@ export default function Home() {
           </div>
 
           {/* Subtitle */}
-          <p className="text-center text-zinc-400 text-xs md:text-sm mb-6 md:mb-9 leading-relaxed px-2">
+          <p className="text-center text-white text-xs md:text-sm mb-6 md:mb-9 leading-relaxed px-2">
             Enter your phone number to receive a secure<br className="hidden md:block" /> login code.
           </p>
 
           <form onSubmit={(e) => { e.preventDefault(); router.push('/verify'); }} className="space-y-5">
             {/* Phone Number with country code dropdown */}
             <div>
-              <label className="block text-xs md:text-sm font-medium text-zinc-400 mb-2" htmlFor="phone">
+              <label className="block text-xs md:text-sm font-medium text-white mb-2" htmlFor="phone">
                 Phone number
               </label>
               <div className="pacino-phone-input">
@@ -124,10 +124,10 @@ export default function Home() {
                   className="h-12 box-border flex-1 min-w-0 bg-[#303031] border border-white/5 rounded-xl px-3 sm:px-4 text-white placeholder:text-zinc-600 text-sm sm:text-base leading-none focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 />
               </div>
-              <p className="text-zinc-600 text-[10px] md:text-xs mt-2 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-                </svg>
+              <p className="text-[#FFF7F3] text-[10px] md:text-xs mt-2 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
+<path d="M5.25 8.75H6.41667V5.25H5.25V8.75ZM5.83333 4.08333C5.99861 4.08333 6.13715 4.02743 6.24896 3.91563C6.36076 3.80382 6.41667 3.66528 6.41667 3.5C6.41667 3.33472 6.36076 3.19618 6.24896 3.08437C6.13715 2.97257 5.99861 2.91667 5.83333 2.91667C5.66806 2.91667 5.52951 2.97257 5.41771 3.08437C5.3059 3.19618 5.25 3.33472 5.25 3.5C5.25 3.66528 5.3059 3.80382 5.41771 3.91563C5.52951 4.02743 5.66806 4.08333 5.83333 4.08333ZM5.83333 11.6667C5.02639 11.6667 4.26806 11.5135 3.55833 11.2073C2.84861 10.901 2.23125 10.4854 1.70625 9.96042C1.18125 9.43542 0.765625 8.81806 0.459375 8.10833C0.153125 7.39861 0 6.64028 0 5.83333C0 5.02639 0.153125 4.26806 0.459375 3.55833C0.765625 2.84861 1.18125 2.23125 1.70625 1.70625C2.23125 1.18125 2.84861 0.765625 3.55833 0.459375C4.26806 0.153125 5.02639 0 5.83333 0C6.64028 0 7.39861 0.153125 8.10833 0.459375C8.81806 0.765625 9.43542 1.18125 9.96042 1.70625C10.4854 2.23125 10.901 2.84861 11.2073 3.55833C11.5135 4.26806 11.6667 5.02639 11.6667 5.83333C11.6667 6.64028 11.5135 7.39861 11.2073 8.10833C10.901 8.81806 10.4854 9.43542 9.96042 9.96042C9.43542 10.4854 8.81806 10.901 8.10833 11.2073C7.39861 11.5135 6.64028 11.6667 5.83333 11.6667ZM5.83333 10.5C7.13611 10.5 8.23958 10.0479 9.14375 9.14375C10.0479 8.23958 10.5 7.13611 10.5 5.83333C10.5 4.53056 10.0479 3.42708 9.14375 2.52292C8.23958 1.61875 7.13611 1.16667 5.83333 1.16667C4.53056 1.16667 3.42708 1.61875 2.52292 2.52292C1.61875 3.42708 1.16667 4.53056 1.16667 5.83333C1.16667 7.13611 1.61875 8.23958 2.52292 9.14375C3.42708 10.0479 4.53056 10.5 5.83333 10.5Z" fill="#FFF7F3"/>
+</svg>
                 Message and data rates may apply.
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function Home() {
             {/* OR CONTINUE WITH divider */}
             <div className="flex items-center">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[11px] font-semibold tracking-widest text-white/80 uppercase px-4 py-1.5 rounded-lg" style={{backgroundColor: '#59321E'}}>
+              <span className="text-[11px] font-semibold tracking-widest text-white uppercase px-4 py-1.5 rounded-lg" style={{backgroundColor: '#59321E'}}>
                 OR CONTINUE WITH
               </span>
               <div className="flex-1 h-px bg-white/10" />
@@ -144,9 +144,9 @@ export default function Home() {
             {/* Email Button → navigates to /login */}
             <Link
               href="/login"
-              className="w-full flex items-center justify-center gap-2.5 bg-transparent border border-white/10 hover:border-[#F9671A]/50 text-zinc-300 hover:text-white font-medium py-3 rounded-xl transition-all duration-300"
+              className="w-full flex items-center justify-center gap-2.5 bg-transparent border border-white/10 hover:border-[#F9671A]/50 text-[#626262] hover:text-white font-medium py-3 rounded-xl transition-all duration-300"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#626262]" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
                 <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
               </svg>
@@ -163,7 +163,7 @@ export default function Home() {
           </form>
 
           {/* Footer */}
-          <p className="text-center text-zinc-400 mt-8">
+          <p className="text-center text-white mt-8">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300">
               Sign Up
