@@ -60,7 +60,7 @@ export default function MenuPage() {
     { name: "Steaks", icon: "/customer/menu/steaks.svg" },
     { name: "Starters", icon: "/customer/menu/starters.svg" },
     { name: "Sides", icon: "/customer/menu/sides.svg" },
-    { name: "Drinks", icon: "/customer/menu/drinks.svg", hasDropdown: true },
+    { name: "Drinks", icon: "/customer/menu/drinks.svg" },
     { name: "Desserts", icon: "/customer/menu/desserts.svg" },
     { name: "Lunch Special", icon: "/customer/menu/lunch.svg" },
   ];
