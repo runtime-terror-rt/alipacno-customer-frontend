@@ -169,7 +169,7 @@ export default function VerifyPhone() {
             onClick={() => router.push('/home')}
             className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mb-6"
           >
-           Login
+           Verify
           </button>
 
           {/* Resend Timer */}
