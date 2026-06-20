@@ -1,10 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignUp() {
+  const router = useRouter();
   return (
     <div
-      className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
+      className="min-h-[100dvh] w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
       style={{
         backgroundImage: "url('/customer/bg-image.png')"
       }}
@@ -29,8 +33,8 @@ export default function SignUp() {
         />
       </div>
 
-      {/* Left Section: Visuals (50%) — identical to login page */}
-      <div className="flex-none md:flex-1 relative flex items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+      {/* Left Section: Visuals (50%) — hidden on mobile */}
+      {/* <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
         <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[20px] lg:translate-y-[40px] md:translate-x-[-15px] lg:translate-x-[-40px]">
           <Image
             src="/customer/signup-page.png"
@@ -40,7 +44,20 @@ export default function SignUp() {
             priority
           />
         </div>
-      </div>
+      </div> */}
+
+      {/* Left Section: Visuals (50%) — hidden on mobile */}
+                 <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+                   <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[520px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-x-[-20px] lg:translate-x-[-60px]">
+                     <Image
+                       src="/customer/signup-page.png"
+                       alt="Delicious Loaded Fries"
+                       fill
+                       className="object-contain drop-shadow-2xl"
+                       priority
+                     />
+                   </div>
+                 </div>
 
       {/* Right Section: Signup Form (50%) — matches login layout */}
       <div className="flex-1 flex items-center justify-center p-4 md:p-8 z-10">
@@ -59,10 +76,10 @@ export default function SignUp() {
 
           <h2 className="text-2xl font-bold text-white text-center mb-5">Create to Account</h2>
 
-          <form className="space-y-3">
+          <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-3">
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="fullName">
+              <label className="block text-sm font-medium text-white mb-1.5" htmlFor="fullName">
                 Full name
               </label>
               <input
@@ -75,7 +92,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="email">
+              <label className="block text-sm font-medium text-white mb-1.5" htmlFor="email">
                 Email
               </label>
               <input
@@ -88,7 +105,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="phone">
+              <label className="block text-sm font-medium text-white mb-1.5" htmlFor="phone">
                 Phone number
               </label>
               <input
@@ -101,7 +118,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="password">
+              <label className="block text-sm font-medium text-white mb-1.5" htmlFor="password">
                 Password
               </label>
               <input
@@ -114,7 +131,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="confirmPassword">
+              <label className="block text-sm font-medium text-white mb-1.5" htmlFor="confirmPassword">
                 Confirm password
               </label>
               <input
@@ -127,7 +144,7 @@ export default function SignUp() {
             </div>
 
             {/* Opt-ins — styled same as login's remember/forgot row */}
-            <div className="space-y-2 pt-1">
+            <div className="space-y-4 pt-1">
               <label className="flex items-start gap-2 text-zinc-400 cursor-pointer group text-xs sm:text-sm">
                 <input
                   type="checkbox"
@@ -135,13 +152,15 @@ export default function SignUp() {
                   required
                   className="mt-0.5 w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] focus:ring-0 focus:ring-offset-0 transition-all"
                 />
-                <span className="group-hover:text-zinc-200 transition-colors duration-300 leading-snug">
+                {/* <span className="group-hover:text-zinc-200 transition-colors duration-300 leading-snug">
                   I agree to the{" "}
                   <a href="#" className="text-[#F9671A] hover:underline font-semibold transition-colors">
                     Terms of Service
                   </a>{" "}
                   and grant permission to process my account data.
-                </span>
+                </span> */}
+
+                <span className="text-zinc-400 ">I agree to opt in to marketing permissions.</span>
               </label>
             </div>
 
@@ -155,7 +174,7 @@ export default function SignUp() {
           </form>
 
           {/* Footer link — identical to login */}
-          <p className="text-center text-zinc-400 mt-6">
+          <p className="text-center text-white mt-6">
             Already have an account?{" "}
             <Link href="/" className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300">
               Sign In
