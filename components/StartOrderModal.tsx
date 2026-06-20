@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 export default function StartOrderModal({ onClose }: { onClose: () => void }) {
@@ -57,12 +58,7 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
       inputRef.current?.focus();
       return;
     }
-    try {
-      localStorage.setItem("pacino_postcode", trimmed);
-      localStorage.setItem("pacino_mode", chosenMode);
-    } catch (e) {
-      // ignore localStorage errors
-    }
+    // Do not persist postcode or mode so the popup will reappear on reload
     setClosing(true);
     setTimeout(() => onClose(), 180);
   }
@@ -77,20 +73,20 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby="pacino-start-title"
         aria-describedby="pacino-start-desc"
-        className={`relative bg-[#171717] rounded-2xl p-6 w-[92%] max-w-md text-center border border-white/10 shadow-lg transform transition-all ${closing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
+        className={`relative bg-[#1E1E20] rounded-2xl p-4 md:p-10 w-[92%] max-w-sm text-center border border-white/10 shadow-lg transform transition-all ${closing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
       >
-        <div className="mb-4">
-          <img src="/logo.png" alt="logo" className="mx-auto w-24" />
+        <div className="mb-3 w-21 h-14 mx-auto">
+          <Image src="/logo.png" alt="logo" width={84} height={56} className="w-full h-full" />
         </div>
-        <h3 id="pacino-start-title" className="text-orange-400 font-bold text-lg mb-2">START YOUR ORDER</h3>
-        <p id="pacino-start-desc" className="text-sm text-white/80 mb-4">Enter postcode to start your order</p>
+        <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl md:text-2xl mb-4">START YOUR <br/>ORDER</h3>
+       
 
         <input
           ref={inputRef}
           value={postcode}
           onChange={(e) => { setPostcode(e.target.value); setError(""); }}
-          placeholder="Enter postcode"
-          className="w-full mb-2 px-3 py-2 rounded-lg bg-[#262626] border border-white/10 text-white"
+          placeholder="Enter postcode to start your order"
+          className="w-full mb-5 placeholder:text-[#626262] placeholder:text-sm px-3 py-2 rounded-lg bg-[#262626] border border-white/10 text-white"
           aria-label="Postcode"
         />
         {error ? <p className="text-xs text-rose-400 mb-2">{error}</p> : null}
@@ -98,13 +94,13 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
         <div className="flex gap-3 mb-4">
           <button
             onClick={() => handleStart("collection")}
-            className={`flex-1 py-2 rounded-full ${"bg-[#303031] text-white"}`}
+            className={`flex-1 py-2 text-sm md:text-base rounded-full ${"bg-[#36363A] text-white"}`}
           >
             Collection
           </button>
           <button
             onClick={() => handleStart("delivery")}
-            className={`flex-1 py-2 rounded-full ${"bg-[#F9671A] text-white"}`}
+            className={`flex-1 py-2 text-sm md:text-base rounded-full ${"bg-[#F9671A] text-white"}`}
           >
             Delivery
           </button>
