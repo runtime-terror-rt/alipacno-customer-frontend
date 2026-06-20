@@ -6,13 +6,9 @@ import StartOrderModal from "./StartOrderModal";
 export default function StartOrderClient() {
   const [show, setShow] = useState(false);
 
+  // Always show the modal on each page load (client-side)
   useEffect(() => {
-    try {
-      const has = localStorage.getItem("pacino_postcode");
-      if (!has) setShow(true);
-    } catch (e) {
-      // ignore
-    }
+    setShow(true);
   }, []);
 
   if (!show) return null;
