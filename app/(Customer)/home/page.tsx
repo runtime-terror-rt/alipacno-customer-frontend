@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import StartOrderClient from "../../../components/StartOrderClient";
 
 export default function CustomerHome() {
   const router = useRouter();
@@ -227,12 +229,25 @@ export default function CustomerHome() {
         flex flex-col items-center justify-center
         px-4 sm:px-6 lg:px-8
         select-none
+        relative
       "
       style={{
         backgroundImage: "url('/customer/bg-image.png')",
         backgroundPosition: "center 105px",
       }}
     >
+      <StartOrderClient />
+
+      <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-50 flex items-center gap-2">
+        <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
+          Login
+        </Link>
+        <span className="text-[#F9671A] text-sm">/</span>
+        <Link href="/signup" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
+          Sign up
+        </Link>
+      </div>
+
       {/*
         Inner scroll container — handles overflow only when viewport is genuinely
         too short (e.g. landscape phone). Invisible scrollbar on all other devices.

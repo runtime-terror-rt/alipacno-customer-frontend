@@ -65,7 +65,7 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className={`absolute inset-0 bg-black/60 transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} onClick={onClose} />
+      <div className={`absolute inset-0 bg-black/60 transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} />
 
       <div
         ref={dialogRef}
@@ -81,15 +81,26 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
         <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl md:text-2xl mb-4">START YOUR <br/>ORDER</h3>
        
 
-        <input
-          ref={inputRef}
-          value={postcode}
-          onChange={(e) => { setPostcode(e.target.value); setError(""); }}
-          placeholder="Enter postcode to start your order"
-          className="w-full mb-5 placeholder:text-[#626262] placeholder:text-sm px-3 py-2 rounded-lg bg-[#262626] border border-white/10 text-white"
-          aria-label="Postcode"
-        />
-        {error ? <p className="text-xs text-rose-400 mb-2">{error}</p> : null}
+        <div className="mb-6 text-left">
+          <input
+            ref={inputRef}
+            value={postcode}
+            onChange={(e) => { setPostcode(e.target.value); setError(""); }}
+            placeholder="Enter postcode to start your order"
+            className={`w-full placeholder:text-[#626262] placeholder:text-sm px-4 py-3 rounded-xl bg-[#262626] border outline-none transition-all ${
+              error ? "border-rose-500 focus:border-rose-400" : "border-white/10 focus:border-[#F9671A]/50"
+            } text-white`}
+            aria-label="Postcode"
+          />
+          {error && (
+            <div className="flex items-center gap-1.5 mt-2 ml-1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-rose-400">
+                <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clipRule="evenodd" />
+              </svg>
+              <p className="text-xs text-rose-400 font-medium">{error}</p>
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-3 mb-4">
           <button

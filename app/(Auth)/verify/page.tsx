@@ -91,31 +91,18 @@ export default function VerifyPhone() {
         />
       </div>
 
-       {/* Left Section: Visuals (50%) — hidden on mobile */}
-           {/* <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
-             <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[20px] lg:translate-y-[40px] md:translate-x-[-15px] lg:translate-x-[-40px]">
-               <Image
-                 src="/customer/signup-page.png"
-                 alt="Delicious Loaded Fries"
-                 fill
-                 className="object-contain drop-shadow-2xl"
-                 priority
-               />
-             </div>
-           </div> */}
-
-           {/* Left Section: Visuals (50%) — hidden on mobile */}
-                      <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
-                        <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[520px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-x-[-20px] lg:translate-x-[-60px]">
-                          <Image
-                            src="/customer/signup-page.png"
-                            alt="Delicious Loaded Fries"
-                            fill
-                            className="object-contain drop-shadow-2xl"
-                            priority
-                          />
-                        </div>
-                      </div>
+      {/* Left Section: Burger Visual — hidden on mobile */}
+      <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+        <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[-10px] lg:translate-y-[0px] md:translate-x-[-15px] lg:translate-x-[-40px]">
+          <Image
+            src="/customer/burger.png"
+            alt="Delicious Burger"
+            fill
+            className="object-contain drop-shadow-2xl"
+            priority
+          />
+        </div>
+      </div>
 
       {/* Right Section: OTP Verification Form */}
       <div className="flex-1 flex items-center justify-center p-4 md:p-8 z-10">
@@ -136,7 +123,7 @@ export default function VerifyPhone() {
           <h2 className="text-2xl font-bold text-white text-center mb-4">Verify Phone Number</h2>
 
           {/* Subtitle */}
-          <p className="text-center text-white text-sm mb-8 leading-relaxed">
+          <p className="text-center text-zinc-400 text-sm mb-8 leading-relaxed">
             A 6-digit code has been sent to +1 (xxx) xxx-<br />xxxx
           </p>
 
@@ -169,40 +156,40 @@ export default function VerifyPhone() {
             onClick={() => router.push('/home')}
             className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mb-6"
           >
-           Verify
+           verify
           </button>
 
           {/* Resend Timer */}
           <div className="text-center mb-2">
             <p className="text-zinc-500 text-xs flex items-center justify-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
-  <path d="M7.75833 8.575L8.575 7.75833L6.41667 5.6V2.91667H5.25V6.06667L7.75833 8.575ZM5.83333 11.6667C5.02639 11.6667 4.26806 11.5135 3.55833 11.2073C2.84861 10.901 2.23125 10.4854 1.70625 9.96042C1.18125 9.43542 0.765625 8.81806 0.459375 8.10833C0.153125 7.39861 0 6.64028 0 5.83333C0 5.02639 0.153125 4.26806 0.459375 3.55833C0.765625 2.84861 1.18125 2.23125 1.70625 1.70625C2.23125 1.18125 2.84861 0.765625 3.55833 0.459375C4.26806 0.153125 5.02639 0 5.83333 0C6.64028 0 7.39861 0.153125 8.10833 0.459375C8.81806 0.765625 9.43542 1.18125 9.96042 1.70625C10.4854 2.23125 10.901 2.84861 11.2073 3.55833C11.5135 4.26806 11.6667 5.02639 11.6667 5.83333C11.6667 6.64028 11.5135 7.39861 11.2073 8.10833C10.901 8.81806 10.4854 9.43542 9.96042 9.96042C9.43542 10.4854 8.81806 10.901 8.10833 11.2073C7.39861 11.5135 6.64028 11.6667 5.83333 11.6667ZM5.83333 10.5C7.12639 10.5 8.22743 10.0455 9.13646 9.13646C10.0455 8.22743 10.5 7.12639 10.5 5.83333C10.5 4.54028 10.0455 3.43924 9.13646 2.53021C8.22743 1.62118 7.12639 1.16667 5.83333 1.16667C4.54028 1.16667 3.43924 1.62118 2.53021 2.53021C1.62118 3.43924 1.16667 4.54028 1.16667 5.83333C1.16667 7.12639 1.62118 8.22743 2.53021 9.13646C3.43924 10.0455 4.54028 10.5 5.83333 10.5Z" fill="#626262"/>
-</svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
+              </svg>
               Resend code in <span className="text-[#F9671A] font-semibold">{formatTime(timer)}</span>
             </p>
           </div>
 
           {/* Resend Code Link */}
-          <div className="text-center mb-4">
+          <div className="text-center mb-8">
             <button
               type="button"
               onClick={handleResend}
               disabled={timer > 0}
               className={`text-sm font-semibold transition-colors duration-300 cursor-pointer ${
                 timer > 0
-                  ? "text-[#F9671A] cursor-not-allowed"
+                  ? "text-zinc-600 cursor-not-allowed"
                   : "text-[#F9671A] hover:underline"
               }`}
             >
               Resend Code
             </button>
           </div>
-      <div className="border-t border-white/10 my-4 w-[calc(100%-8rem)] mx-auto"></div>
+
           {/* End-to-End Encrypted */}
-          <div className="flex items-center justify-center gap-2 text-white mb-18 ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="14" viewBox="0 0 11 14" fill="none">
-  <path d="M4.63333 9.03333L8.4 5.26667L7.45 4.31667L4.63333 7.13333L3.23333 5.73333L2.28333 6.68333L4.63333 9.03333ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 11.9333C6.48889 11.5667 7.44444 10.8333 8.2 9.73333C8.95555 8.63333 9.33333 7.41111 9.33333 6.06667V2.91667L5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 7.41111 1.71111 8.63333 2.46667 9.73333C3.22222 10.8333 4.17778 11.5667 5.33333 11.9333Z" fill="white"/>
-</svg>
+          <div className="flex items-center justify-center gap-2 text-zinc-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
+            </svg>
             <span className="text-[10px] font-semibold tracking-widest uppercase">END-TO-END ENCRYPTED VERIFICATION</span>
           </div>
         </div>

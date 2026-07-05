@@ -29,18 +29,18 @@ export default function ForgotPassword() {
         />
       </div>
 
-       {/* Left Section: Visuals (50%) — hidden on mobile */}
-           <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
-             <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[520px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-x-[-20px] lg:translate-x-[-60px]">
-               <Image
-                 src="/customer/signup-page.png"
-                 alt="Delicious Loaded Fries"
-                 fill
-                 className="object-contain drop-shadow-2xl"
-                 priority
-               />
-             </div>
-           </div>
+      {/* Left Section: Burger Visual — hidden on mobile */}
+      <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+        <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[-10px] lg:translate-y-[0px] md:translate-x-[-15px] lg:translate-x-[-40px]">
+          <Image
+            src="/customer/burger.png"
+            alt="Delicious Burger"
+            fill
+            className="object-contain drop-shadow-2xl"
+            priority
+          />
+        </div>
+      </div>
 
       {/* Right Section: Forgot Password Form */}
       <div className="flex-1 flex items-center justify-center p-4 md:p-8 z-10">
@@ -61,14 +61,14 @@ export default function ForgotPassword() {
           <h2 className="text-3xl font-bold text-white text-center mb-4">Forget Password?</h2>
 
           {/* Subtitle */}
-          <p className="text-center text-white text-sm mb-10 leading-relaxed">
+          <p className="text-center text-zinc-400 text-sm mb-10 leading-relaxed">
             Please enter your email to get verification code
           </p>
 
           <form className="space-y-6">
             {/* Email Address */}
             <div>
-              <label className="block text-sm font-medium text-white mb-2" htmlFor="email">
+              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="email">
                 Email address
               </label>
               <input
@@ -83,7 +83,7 @@ export default function ForgotPassword() {
             {/* Continue Button */}
             <button
               type="submit"
-              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mt-8 mb-0 lg:mb-12"
+              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mt-8"
             >
               Continue
             </button>
