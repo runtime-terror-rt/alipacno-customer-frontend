@@ -239,7 +239,7 @@ export default function CustomerHome() {
       <StartOrderClient />
 
       <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-50 flex items-center gap-2">
-        <Link href="/login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
+        <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
           Login
         </Link>
         <span className="text-[#F9671A] text-sm">/</span>
