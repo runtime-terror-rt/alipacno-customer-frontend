@@ -89,7 +89,7 @@ export default function PhoneLogin() {
               <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="phone">
                 Phone number
               </label>
-              <div className="pacino-phone-input">
+              <div className="flex items-center gap-2 w-full">
                 {/* Country Code Dropdown */}
                 <CountrySelector
                   selectedCountry={country.iso2 as CountryIso2}
