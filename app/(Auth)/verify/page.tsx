@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function VerifyPhone() {
+  const router = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(54);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -64,7 +66,7 @@ export default function VerifyPhone() {
 
   return (
     <div
-      className="min-h-screen w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
+      className="min-h-[100dvh] w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
       style={{
         backgroundImage: "url('/customer/bg-image.png')"
       }}
@@ -89,8 +91,8 @@ export default function VerifyPhone() {
         />
       </div>
 
-      {/* Left Section: Burger Visual — slightly higher */}
-      <div className="flex-none md:flex-1 relative flex items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
+      {/* Left Section: Burger Visual — hidden on mobile */}
+      <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
         <div className="relative w-full max-w-[260px] md:max-w-[380px] lg:max-w-[500px] h-full z-10 transform scale-100 md:scale-110 lg:scale-150 md:translate-y-[-10px] lg:translate-y-[0px] md:translate-x-[-15px] lg:translate-x-[-40px]">
           <Image
             src="/customer/burger.png"
@@ -121,12 +123,12 @@ export default function VerifyPhone() {
           <h2 className="text-2xl font-bold text-white text-center mb-4">Verify Phone Number</h2>
 
           {/* Subtitle */}
-          <p className="text-center text-zinc-400 text-sm mb-8 leading-relaxed">
+          <p className="text-center text-white text-base font-normal leading-6 mb-8">
             A 6-digit code has been sent to +1 (xxx) xxx-<br />xxxx
           </p>
 
           {/* OTP Input Boxes */}
-          <div className="flex justify-center gap-3 mb-8">
+          <div className="flex justify-center gap-2 sm:gap-3 mb-8">
             {otp.map((digit, index) => {
               const placeholders = ["2", "8", "4", "", "", ""];
               return (
@@ -141,7 +143,7 @@ export default function VerifyPhone() {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-12 h-14 bg-transparent border border-white/15 rounded-lg text-center text-white text-xl font-bold focus:outline-none focus:border-[#F9671A] focus:ring-1 focus:ring-[#F9671A]/50 transition-all duration-300 placeholder:text-zinc-700"
+                  className="w-9 h-12 sm:w-12 sm:h-14 bg-transparent border border-white/15 rounded-lg text-center text-white text-lg sm:text-xl font-bold focus:outline-none focus:border-[#F9671A] focus:ring-1 focus:ring-[#F9671A]/50 transition-all duration-300 placeholder:text-zinc-700"
                   aria-label={`OTP digit ${index + 1}`}
                 />
               );
@@ -151,6 +153,7 @@ export default function VerifyPhone() {
           {/* Login Button */}
           <button
             type="button"
+            onClick={() => router.push('/home')}
             className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mb-6"
           >
            verify
@@ -172,7 +175,7 @@ export default function VerifyPhone() {
               type="button"
               onClick={handleResend}
               disabled={timer > 0}
-              className={`text-sm font-semibold transition-colors duration-300 cursor-pointer ${
+              className={`text-center text-sm font-medium leading-[16.8px] tracking-[0.14px] transition-colors duration-300 cursor-pointer ${
                 timer > 0
                   ? "text-zinc-600 cursor-not-allowed"
                   : "text-[#F9671A] hover:underline"
@@ -183,11 +186,11 @@ export default function VerifyPhone() {
           </div>
 
           {/* End-to-End Encrypted */}
-          <div className="flex items-center justify-center gap-2 text-zinc-500">
+          <div className="flex items-center justify-center gap-2 text-white">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
               <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
             </svg>
-            <span className="text-[10px] font-semibold tracking-widest uppercase">END-TO-END ENCRYPTED VERIFICATION</span>
+            <span className="text-[10px] font-bold leading-[15px] tracking-[1px] uppercase">END-TO-END ENCRYPTED VERIFICATION</span>
           </div>
         </div>
       </div>
