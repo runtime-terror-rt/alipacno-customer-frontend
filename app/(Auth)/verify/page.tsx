@@ -123,7 +123,7 @@ export default function VerifyPhone() {
           <h2 className="text-2xl font-bold text-white text-center mb-4">Verify Phone Number</h2>
 
           {/* Subtitle */}
-          <p className="text-center text-zinc-400 text-sm mb-8 leading-relaxed">
+          <p className="text-center text-white text-base font-normal leading-6 mb-8">
             A 6-digit code has been sent to +1 (xxx) xxx-<br />xxxx
           </p>
 
@@ -175,7 +175,7 @@ export default function VerifyPhone() {
               type="button"
               onClick={handleResend}
               disabled={timer > 0}
-              className={`text-sm font-semibold transition-colors duration-300 cursor-pointer ${
+              className={`text-center text-sm font-medium leading-[16.8px] tracking-[0.14px] transition-colors duration-300 cursor-pointer ${
                 timer > 0
                   ? "text-zinc-600 cursor-not-allowed"
                   : "text-[#F9671A] hover:underline"
@@ -186,11 +186,11 @@ export default function VerifyPhone() {
           </div>
 
           {/* End-to-End Encrypted */}
-          <div className="flex items-center justify-center gap-2 text-zinc-500">
+          <div className="flex items-center justify-center gap-2 text-white">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
               <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
             </svg>
-            <span className="text-[10px] font-semibold tracking-widest uppercase">END-TO-END ENCRYPTED VERIFICATION</span>
+            <span className="text-[10px] font-bold leading-[15px] tracking-[1px] uppercase">END-TO-END ENCRYPTED VERIFICATION</span>
           </div>
         </div>
       </div>

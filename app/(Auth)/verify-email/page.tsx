@@ -102,7 +102,7 @@ export default function VerifyEmail() {
           <h2 className="text-3xl font-bold text-white text-center mb-4">Check your email</h2>
 
           {/* Subtitle */}
-          <p className="text-center text-zinc-400 text-sm mb-8 leading-relaxed">
+          <p className="text-center text-white text-base font-normal leading-[25.6px] mb-8">
             We sent a code to your email address @. Please check<br />your email for the 5 digit code.
           </p>
 
@@ -139,11 +139,11 @@ export default function VerifyEmail() {
           </button>
 
           {/* Resend */}
-          <p className="text-center text-zinc-400 text-sm">
+          <p className="text-center text-white text-base font-normal leading-normal">
             You have not received the email?{" "}
             <button
               type="button"
-              className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300"
+              className="text-[#F9671A] text-sm font-medium leading-[16.8px] tracking-[0.14px] text-center hover:underline cursor-pointer transition-colors duration-300"
             >
               Resend
             </button>

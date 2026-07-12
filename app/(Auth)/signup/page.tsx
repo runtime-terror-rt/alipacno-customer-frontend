@@ -66,7 +66,7 @@ export default function SignUp() {
           <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-3">
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="fullName">
+              <label className="block text-base font-medium text-white leading-[24px] mb-1.5" htmlFor="fullName">
                 Full name
               </label>
               <input
@@ -79,7 +79,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="email">
+              <label className="block text-base font-medium text-white leading-[24px] mb-1.5" htmlFor="email">
                 Email
               </label>
               <input
@@ -92,7 +92,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="phone">
+              <label className="block text-base font-medium text-white leading-[24px] mb-1.5" htmlFor="phone">
                 Phone number
               </label>
               <input
@@ -105,7 +105,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="password">
+              <label className="block text-base font-medium text-white leading-[24px] mb-1.5" htmlFor="password">
                 Password
               </label>
               <input
@@ -118,7 +118,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="confirmPassword">
+              <label className="block text-base font-medium text-white leading-[24px] mb-1.5" htmlFor="confirmPassword">
                 Confirm password
               </label>
               <input
@@ -131,20 +131,16 @@ export default function SignUp() {
             </div>
 
             {/* Opt-ins — styled same as login's remember/forgot row */}
-            <div className="space-y-2 pt-1">
-              <label className="flex items-start gap-2 text-zinc-400 cursor-pointer group text-xs sm:text-sm">
+            <div className="space-y-2 pt-1 flex justify-start">
+              <label className="flex items-center justify-start gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
                   id="termsPermission"
                   required
-                  className="mt-0.5 w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] focus:ring-0 focus:ring-offset-0 transition-all"
+                  className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] focus:ring-0 focus:ring-offset-0 transition-all shrink-0"
                 />
-                <span className="group-hover:text-zinc-200 transition-colors duration-300 leading-snug">
-                  I agree to the{" "}
-                  <a href="#" className="text-[#F9671A] hover:underline font-semibold transition-colors">
-                    Terms of Service
-                  </a>{" "}
-                  and grant permission to process my account data.
+                <span className="text-[#FFF7F3]/50 text-left text-base font-normal leading-normal transition-colors duration-300 group-hover:text-white/80">
+                 I agree to opt in to marketing permissions.
                 </span>
               </label>
             </div>
@@ -159,7 +155,7 @@ export default function SignUp() {
           </form>
 
           {/* Footer link — identical to login */}
-          <p className="text-center text-zinc-400 mt-6">
+          <p className="text-center text-white text-base font-normal leading-normal mt-6">
             Already have an account?{" "}
             <Link href="/phone-login" className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300">
               Sign In

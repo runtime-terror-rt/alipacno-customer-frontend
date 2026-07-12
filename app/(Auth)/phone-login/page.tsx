@@ -79,14 +79,14 @@ export default function PhoneLogin() {
           </div>
 
           {/* Subtitle */}
-          <p className="text-center text-zinc-400 text-xs md:text-sm mb-6 md:mb-9 leading-relaxed px-2">
+          <p className="text-center text-white text-base font-normal leading-[31px] mb-6 md:mb-9 px-2">
             Enter your phone number to receive a secure<br className="hidden md:block" /> login code.
           </p>
 
           <form onSubmit={(e) => { e.preventDefault(); router.push('/verify'); }} className="space-y-5">
             {/* Phone Number with country code dropdown */}
             <div>
-              <label className="block text-xs md:text-sm font-medium text-zinc-400 mb-2" htmlFor="phone">
+              <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="phone">
                 Phone number
               </label>
               <div className="pacino-phone-input">
@@ -124,7 +124,7 @@ export default function PhoneLogin() {
                   className="h-12 box-border flex-1 min-w-0 bg-[#303031] border border-white/5 rounded-xl px-3 sm:px-4 text-white placeholder:text-zinc-600 text-sm sm:text-base leading-none focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 />
               </div>
-              <p className="text-zinc-600 text-[10px] md:text-xs mt-2 flex items-center gap-1">
+              <p className="text-[#FFF7F3] text-xs font-normal leading-[14.4px] mt-2 flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
                 </svg>
@@ -163,7 +163,7 @@ export default function PhoneLogin() {
           </form>
 
           {/* Footer */}
-          <p className="text-center text-zinc-400 mt-8">
+          <p className="text-center text-white text-base font-normal leading-normal mt-8">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300">
               Sign Up

@@ -68,7 +68,7 @@ export default function ForgotPassword() {
           <form className="space-y-6">
             {/* Email Address */}
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="email">
+              <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="email">
                 Email address
               </label>
               <input

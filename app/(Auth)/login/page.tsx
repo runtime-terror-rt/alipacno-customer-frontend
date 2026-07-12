@@ -65,7 +65,7 @@ export default function Login() {
 
           <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="email">
+              <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="email">
                 Email
               </label>
               <input
@@ -77,7 +77,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="password">
+              <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="password">
                 Password
               </label>
               <input
@@ -89,11 +89,11 @@ export default function Login() {
             </div>
 
             <div className="flex items-center justify-between text-xs sm:text-sm">
-              <label className="flex items-center gap-2 text-zinc-400 cursor-pointer group">
+              <label className="flex items-center gap-2 text-white text-base font-medium leading-[24px] cursor-pointer group">
                 <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] checked:hover:bg-[#FFA175] checked:focus:bg-[#FFA175] focus:ring-0 focus:ring-offset-0" />
                 <span className="group-hover:text-zinc-200 transition-colors duration-300">Remember Password</span>
               </label>
-              <Link href="/forgot-password" className="text-zinc-400 hover:text-[#F9671A] transition-colors duration-300">
+              <Link href="/forgot-password" className="text-right text-white text-base font-normal leading-normal hover:text-[#F9671A] transition-colors duration-300">
                 Forget Password?
               </Link>
             </div>
@@ -106,7 +106,7 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="text-center text-zinc-400 mt-8">
+          <p className="text-center text-white text-base font-normal leading-normal mt-8">
             Don't have an account?{" "}
             <Link href="/signup" className="text-[#F9671A] font-semibold hover:underline cursor-pointer transition-colors duration-300">
               Sign Up

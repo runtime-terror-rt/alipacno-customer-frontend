@@ -22,7 +22,7 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      try { prev?.focus(); } catch (e) {}
+      try { prev?.focus(); } catch (e) { }
     };
   }, [onClose]);
 
@@ -64,7 +64,7 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <div className={`absolute inset-0 bg-black/60 transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} />
 
       <div
@@ -78,8 +78,8 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
         <div className="mb-3 w-21 h-14 mx-auto">
           <Image src="/logo.png" alt="logo" width={84} height={56} className="w-full h-full" />
         </div>
-        <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl md:text-2xl mb-4">START YOUR <br/>ORDER</h3>
-       
+        <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl md:text-2xl mb-4">START YOUR <br />ORDER</h3>
+
 
         <div className="mb-6 text-left">
           <input
@@ -87,9 +87,8 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
             value={postcode}
             onChange={(e) => { setPostcode(e.target.value); setError(""); }}
             placeholder="Enter postcode to start your order"
-            className={`w-full placeholder:text-[#626262] placeholder:text-sm px-4 py-3 rounded-xl bg-[#262626] border outline-none transition-all ${
-              error ? "border-rose-500 focus:border-rose-400" : "border-white/10 focus:border-[#F9671A]/50"
-            } text-white`}
+            className={`w-full placeholder:text-[#626262] placeholder:text-sm px-4 py-3 rounded-xl bg-[#262626] border outline-none transition-all ${error ? "border-rose-500 focus:border-rose-400" : "border-white/10 focus:border-[#F9671A]/50"
+              } text-white`}
             aria-label="Postcode"
           />
           {error && (
@@ -117,7 +116,7 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-       
+
       </div>
     </div>
   );
