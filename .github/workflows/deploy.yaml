@@ -98,7 +98,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           script: |
-            docker restart caddy
+            sudo systemctl restart caddy
 
       - name: Verify Domain Health Check
         run: |
