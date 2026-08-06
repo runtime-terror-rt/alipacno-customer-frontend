@@ -4,6 +4,7 @@ import "react-international-phone/style.css";
 import "./globals.css";
 import Header from "../components/Header";
 import StartOrderClient from "../components/StartOrderClient";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ReduxProvider>{children}</ReduxProvider>
+        <Toaster position="top-right" />
       </body>
     </html>
   );
