@@ -1,13 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useVerifyOtpMutation, useResendOtpMutation } from "@/redux/features/api/authApi";
+import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/redux/features/slice/authSlice";
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dispatch = useDispatch();
+  const email = searchParams.get("email") || "";
+  
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [verifyOtpApi, { isLoading }] = useVerifyOtpMutation();
+  const [resendOtp, { isLoading: isResending }] = useResendOtpMutation();
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -103,7 +113,7 @@ export default function VerifyEmail() {
 
           {/* Subtitle */}
           <p className="text-center text-white text-base font-normal leading-[25.6px] mb-8">
-            We sent a code to your email address @. Please check<br />your email for the 5 digit code.
+            We sent a code to your email address {email || "@"}. Please check<br />your email for the 5 digit code.
           </p>
 
           {/* OTP Input Boxes — 5 digits */}
@@ -132,10 +142,46 @@ export default function VerifyEmail() {
           {/* Verify Button */}
           <button
             type="button"
-            onClick={() => router.push('/home')}
-            className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mb-8"
+            onClick={async () => {
+              const otpCode = otp.join("");
+              if (otpCode.length < 5) {
+                toast.error("Please enter a 5-digit code");
+                return;
+              }
+              if (!email) {
+                toast.error("Email address not found in URL");
+                return;
+              }
+              
+              try {
+                const res = await verifyOtpApi({ email, otp: otpCode }).unwrap();
+                const user = res?.data?.user || res?.user || res?.data;
+                const token = res?.data?.token || res?.token || res?.access_token || res?.data?.access_token;
+                
+                if (token) {
+                  dispatch(setCredentials({ user, token }));
+                }
+                
+                toast.success(res?.message || "OTP Verified Successfully!");
+                router.push('/home');
+              } catch (err: any) {
+                toast.error(err?.data?.message || "OTP verification failed. Please try again.");
+              }
+            }}
+            disabled={isLoading}
+            className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 mb-8 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Verify
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Verifying...
+              </>
+            ) : (
+              "Verify"
+            )}
           </button>
 
           {/* Resend */}
@@ -143,6 +189,19 @@ export default function VerifyEmail() {
             You have not received the email?{" "}
             <button
               type="button"
+              onClick={async () => {
+                if (!email) {
+                  toast.error("Email address not found.");
+                  return;
+                }
+                try {
+                  const res = await resendOtp({ email, type: "registration" }).unwrap();
+                  toast.success(res?.message || "OTP resent successfully!");
+                } catch (err: any) {
+                  toast.error(err?.data?.message || "Failed to resend OTP.");
+                }
+              }}
+              disabled={isResending}
               className="text-[#F9671A] text-sm font-medium leading-[16.8px] tracking-[0.14px] text-center hover:underline cursor-pointer transition-colors duration-300"
             >
               Resend
@@ -152,5 +211,13 @@ export default function VerifyEmail() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmail() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#1E1E20] flex items-center justify-center text-white">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
