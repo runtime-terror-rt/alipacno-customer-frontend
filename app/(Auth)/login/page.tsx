@@ -3,9 +3,42 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useLoginMutation } from "@/redux/features/api/authApi";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/redux/features/slice/authSlice";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [formData, setFormData] = useState({
+    login: "",
+    password: "",
+  });
+
+  const [loginApi, { isLoading }] = useLoginMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.login || !formData.password) {
+      toast.error("Please enter both email and password.");
+      return;
+    }
+    try {
+      const res = await loginApi(formData).unwrap();
+      const user = res?.data?.user || res?.user || res?.data;
+      const token = res?.data?.token || res?.token || res?.access_token || res?.data?.access_token;
+      
+      if (token) {
+        dispatch(setCredentials({ user, token }));
+      }
+      toast.success(res?.message || "Logged in successfully!");
+      router.push("/home");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Login failed. Please try again.");
+    }
+  };
   return (
     <div
       className="min-h-[100dvh] w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
@@ -63,7 +96,7 @@ export default function Login() {
 
           <h2 className="text-3xl font-bold text-white text-center mb-12">Login to Account</h2>
 
-          <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="email">
                 Email
@@ -71,6 +104,8 @@ export default function Login() {
               <input
                 type="email"
                 id="email"
+                value={formData.login}
+                onChange={(e) => setFormData({ ...formData, login: e.target.value })}
                 placeholder="enter your email"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
               />
@@ -83,6 +118,8 @@ export default function Login() {
               <input
                 type="password"
                 id="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="enter your password"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
               />
@@ -100,9 +137,20 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300"
+              disabled={isLoading}
+              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign in
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing In...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </form>
 

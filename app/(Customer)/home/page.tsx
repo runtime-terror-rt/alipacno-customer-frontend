@@ -5,9 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StartOrderClient from "../../../components/StartOrderClient";
+import { useAppSelector } from "../../../redux/hooks";
 
 export default function CustomerHome() {
   const router = useRouter();
+  const { token } = useAppSelector((state) => state.auth);
   const [selectedMealType, setSelectedMealType] = useState("delivery");
 
   const mealTypes = [
@@ -236,17 +238,19 @@ export default function CustomerHome() {
         backgroundPosition: "center 105px",
       }}
     >
-      <StartOrderClient />
+      {/* <StartOrderClient /> */}
 
-      <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-40 flex items-center gap-2">
-        <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
-          Login
-        </Link>
-        <span className="text-[#F9671A] text-sm">/</span>
-        <Link href="/signup" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
-          Sign up
-        </Link>
-      </div>
+      {!token && (
+        <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-40 flex items-center gap-2">
+          <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
+            Login
+          </Link>
+          <span className="text-[#F9671A] text-sm">/</span>
+          <Link href="/signup" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
+            Sign up
+          </Link>
+        </div>
+      )}
 
       {/*
         Inner scroll container — handles overflow only when viewport is genuinely

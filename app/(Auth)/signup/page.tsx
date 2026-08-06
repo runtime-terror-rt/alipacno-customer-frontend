@@ -3,9 +3,59 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRegisterMutation } from "@/redux/features/api/authApi";
+import { toast } from "react-hot-toast";
 
 export default function SignUp() {
   const router = useRouter();
+  const [registerApi, { isLoading }] = useRegisterMutation();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    password_confirmation: "",
+  });
+  const [error, setError] = useState("");
+  const [optIn, setOptIn] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (formData.password !== formData.password_confirmation) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!optIn) {
+      toast.error("You must agree to opt in to marketing permissions.");
+      return;
+    }
+
+    try {
+      const payload = {
+        ...formData,
+        user_type: "customer",
+        role_id: 8,
+        avatar: "",
+        user_image: "",
+      };
+
+      const res = await registerApi(payload).unwrap();
+      toast.success(res?.message || "Registration successful!");
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+    } catch (err: any) {
+      const errorMessage = err?.data?.message || "Registration failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    }
+  };
   return (
     <div
       className="min-h-[100dvh] w-full bg-[#1E1E20] bg-cover bg-no-repeat bg-center md:[background-position:75%_105px] flex flex-col md:flex-row relative overflow-hidden"
@@ -63,7 +113,7 @@ export default function SignUp() {
 
           <h2 className="text-2xl font-bold text-white text-center mb-5">Create to Account</h2>
 
-          <form onSubmit={(e) => { e.preventDefault(); router.push('/home'); }} className="space-y-3">
+          <form onSubmit={handleRegister} className="space-y-3">
 
             <div>
               <label className="block text-base font-medium text-white leading-[24px] mb-1.5" htmlFor="fullName">
@@ -72,6 +122,9 @@ export default function SignUp() {
               <input
                 type="text"
                 id="fullName"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 placeholder="enter your full name"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 required
@@ -85,6 +138,9 @@ export default function SignUp() {
               <input
                 type="email"
                 id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 placeholder="enter your email"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 required
@@ -98,6 +154,9 @@ export default function SignUp() {
               <input
                 type="tel"
                 id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
                 placeholder="enter your phone number"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 required
@@ -111,6 +170,9 @@ export default function SignUp() {
               <input
                 type="password"
                 id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 placeholder="enter password"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 required
@@ -124,6 +186,9 @@ export default function SignUp() {
               <input
                 type="password"
                 id="confirmPassword"
+                name="password_confirmation"
+                value={formData.password_confirmation}
+                onChange={handleChange}
                 placeholder="enter confirm password"
                 className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
                 required
@@ -136,7 +201,8 @@ export default function SignUp() {
                 <input
                   type="checkbox"
                   id="termsPermission"
-                  required
+                  checked={optIn}
+                  onChange={(e) => setOptIn(e.target.checked)}
                   className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] focus:ring-0 focus:ring-offset-0 transition-all shrink-0"
                 />
                 <span className="text-[#FFF7F3]/50 text-left text-base font-normal leading-normal transition-colors duration-300 group-hover:text-white/80">
@@ -148,9 +214,20 @@ export default function SignUp() {
             {/* Button — identical to login */}
             <button
               type="submit"
-              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300"
+              disabled={isLoading}
+              className="w-full bg-[#F9671A] hover:bg-[#e85a15] text-white font-bold py-4 rounded-full shadow-lg shadow-orange-600/20 transform transition-all active:scale-[0.98] cursor-pointer duration-300 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign Up
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing Up...
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </button>
           </form>
 

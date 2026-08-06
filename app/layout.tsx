@@ -4,6 +4,7 @@ import "react-international-phone/style.css";
 import "./globals.css";
 import Header from "../components/Header";
 import StartOrderClient from "../components/StartOrderClient";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { ReduxProvider } from "../redux/provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,7 +37,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <ReduxProvider>{children}</ReduxProvider>
+        <Toaster position="top-right" />
       </body>
     </html>
   );
