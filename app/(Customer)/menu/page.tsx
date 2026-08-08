@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
+import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -107,7 +108,9 @@ export default function MenuPage() {
     }
   };
 
-  const categories: { name: string; icon: string; hasDropdown?: boolean }[] = [
+  const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery({ per_page: 15, page: 1, search: "" });
+  
+  const fallbackCategories: { name: string; icon: string; hasDropdown?: boolean }[] = [
     { name: "Steaks", icon: "/customer/menu/steaks.svg" },
     { name: "Starters", icon: "/customer/menu/starters.svg" },
     { name: "Sides", icon: "/customer/menu/sides.svg" },
@@ -115,6 +118,20 @@ export default function MenuPage() {
     { name: "Desserts", icon: "/customer/menu/desserts.svg" },
     { name: "Lunch Special", icon: "/customer/menu/lunch.svg" },
   ];
+
+  const categories = categoriesData?.data?.length > 0 ? categoriesData.data : fallbackCategories;
+
+  const renderCategoryIcon = (cat: any, isActive: boolean) => {
+    const knownCategories = ["Steaks", "Starters", "Sides", "Drinks", "Desserts", "Lunch Special"];
+    if (knownCategories.includes(cat.name)) {
+      return getCategoryIcon(cat.name);
+    }
+    if (cat.icon) {
+      const imgSrc = cat.icon.startsWith('http') ? cat.icon : `${process.env.NEXT_PUBLIC_API_BASE_URL || ''}${cat.icon}`;
+      return <img src={imgSrc} alt={cat.name} className={`w-full h-full object-contain ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />;
+    }
+    return getCategoryIcon(cat.name);
+  };
 
   const steaks = [
     { id: 1, name: "Grilled chicken pieces", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/happypricing-1.png" },
@@ -149,7 +166,7 @@ export default function MenuPage() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
           <h3 className="text-white font-bold text-[18px] mb-4 pl-6">Menu Categories</h3>
           <div className="flex flex-col">
-            {categories.map((cat, i) => {
+            {categories.map((cat: any, i: number) => {
               const isActive = activeCategory === cat.name;
               return (
                 <button
@@ -159,7 +176,7 @@ export default function MenuPage() {
                     }`}
                 >
                   <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"}`}>
-                    {getCategoryIcon(cat.name)}
+                    {renderCategoryIcon(cat, isActive)}
                   </div>
                   <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"}`}>
                     {cat.name}
@@ -699,7 +716,7 @@ export default function MenuPage() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
               <h3 className="text-white font-bold text-[16px] mb-4 px-6 uppercase tracking-wider text-zinc-500">Menu Categories</h3>
               <div className="flex flex-col">
-                {categories.map((cat, i) => {
+                {categories.map((cat: any, i: number) => {
                   const isActive = activeCategory === cat.name;
                   return (
                     <button
@@ -712,7 +729,7 @@ export default function MenuPage() {
                         }`}
                     >
                       <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
-                        {getCategoryIcon(cat.name)}
+                        {renderCategoryIcon(cat, isActive)}
                       </div>
                       <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
                         {cat.name}
