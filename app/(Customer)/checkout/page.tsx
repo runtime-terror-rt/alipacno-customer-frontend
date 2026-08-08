@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutMap from "@/components/CheckoutMap";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function CheckoutPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState("Cloud Gate (The Bean), Chicago");
   const [selectedBranch, setSelectedBranch] = useState("Cloud Gate (The Bean), Chicago");
+  const [showCvc, setShowCvc] = useState(false);
 
   const branches = [
     { name: "Cloud Gate (The Bean), Chicago", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "2.3 km away", time: "30 mins delivery" },
@@ -413,7 +415,17 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="text-[12.5px] text-zinc-400 mb-1.5 block font-medium">CVC</label>
-                      <input defaultValue="555" type="password" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                      <div className="relative w-full">
+                        <input defaultValue="555" type={showCvc ? "text" : "password"} className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner pr-12" />
+                        <button
+                          type="button"
+                          onClick={() => setShowCvc(!showCvc)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors duration-200 flex items-center justify-center cursor-pointer"
+                          tabIndex={-1}
+                        >
+                          {showCvc ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
