@@ -5,6 +5,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useResetPasswordMutation } from "@/redux/features/api/authApi";
 import { toast } from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -16,6 +17,8 @@ function ResetPasswordContent() {
     password: "",
     password_confirmation: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
@@ -133,16 +136,26 @@ function ResetPasswordContent() {
               <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="password">
                 New Password
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter new password"
-                className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
-                required
-              />
+              <div className="relative w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter new password"
+                  className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300 pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors duration-200 flex items-center justify-center cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             {/* Confirm Password */}
@@ -150,16 +163,26 @@ function ResetPasswordContent() {
               <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="password_confirmation">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                id="password_confirmation"
-                name="password_confirmation"
-                value={formData.password_confirmation}
-                onChange={handleChange}
-                placeholder="Confirm new password"
-                className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
-                required
-              />
+              <div className="relative w-full">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="password_confirmation"
+                  name="password_confirmation"
+                  value={formData.password_confirmation}
+                  onChange={handleChange}
+                  placeholder="Confirm new password"
+                  className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300 pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors duration-200 flex items-center justify-center cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             {/* Submit Button */}
