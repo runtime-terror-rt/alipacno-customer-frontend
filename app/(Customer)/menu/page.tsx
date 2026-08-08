@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
+import { useGetMenuItemsQuery } from "../../../redux/features/api/menuItemsApi";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -133,6 +134,33 @@ export default function MenuPage() {
     return getCategoryIcon(cat.name);
   };
 
+  const activeCategoryObj = categories?.find((c: any) => c.name === activeCategory);
+  const activeCategoryId = activeCategoryObj?.id;
+
+  const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery(
+    { category_id: activeCategoryId, per_page: 50 },
+    { skip: !activeCategoryId }
+  );
+
+  const getImageUrl = (url: string) => {
+    if (!url) return "/placeholder.png";
+    if (url.startsWith("http")) return url;
+    if (url.startsWith("/customer")) return url;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const formatItem = (item: any) => ({
+    ...item,
+    id: item.id,
+    name: item.name,
+    price: `£${item.discount_price || item.price || 0}`,
+    oldPrice: (item.original_price && item.original_price !== item.price) ? `£${item.original_price}` : "",
+    rating: item.rating ? parseFloat(item.rating).toFixed(1) : "0.0",
+    image: getImageUrl(item.image_url || item.image)
+  });
+
+  const apiMenuItems = (menuItemsData?.data || []).map(formatItem);
+
   const steaks = [
     { id: 1, name: "Grilled chicken pieces", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/happypricing-1.png" },
     { id: 2, name: "Ribeye Steak", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/happypricing-2.png" },
@@ -150,6 +178,14 @@ export default function MenuPage() {
     { id: 11, name: "Sirloin Steak", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/most-popular-7.png" },
     { id: 12, name: "Chateaubriand", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/most-popular-8.png" },
   ];
+
+  const happyHourItems = apiMenuItems.length > 0 
+    ? apiMenuItems.filter((item: any) => item.is_happy_hour_eligible === 1) 
+    : steaks;
+
+  const popularItems = apiMenuItems.length > 0 
+    ? (apiMenuItems.filter((item: any) => item.is_popular === 1).length > 0 ? apiMenuItems.filter((item: any) => item.is_popular === 1) : apiMenuItems) 
+    : popularSteaks;
 
   return (
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none">
@@ -343,7 +379,7 @@ export default function MenuPage() {
 
             {/* Happy Hour Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              {steaks.map(item => (
+              {happyHourItems.map((item: any) => (
                 <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
                   <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
                     <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
@@ -370,7 +406,7 @@ export default function MenuPage() {
 
             {/* Most popular Steaks Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-[19px] font-bold text-white">Most popular Steaks</h2>
+              <h2 className="text-[19px] font-bold text-white">Most popular {activeCategory}</h2>
               <button className="bg-white/5 border border-white/10 text-white text-[12px] font-medium px-4 py-1.5 rounded-full flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer">
                 Sort
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></svg>
@@ -379,7 +415,7 @@ export default function MenuPage() {
 
             {/* Most Popular Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {popularSteaks.map(item => (
+              {popularItems.map((item: any) => (
                 <div key={`pop-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
                   <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
                     <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
