@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StartOrderClient from "../../../components/StartOrderClient";
 import { useAppSelector } from "../../../redux/hooks";
+import { useGetMenuItemsQuery } from "../../../redux/features/api/menuItemsApi";
 
 export default function CustomerHome() {
   const router = useRouter();
@@ -183,7 +184,18 @@ export default function CustomerHome() {
     },
   ];
 
-  const popularDishes = [
+  const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 4 });
+  const fetchedPopularDishes = menuResponse?.data || [];
+
+  const popularDishes = fetchedPopularDishes.length > 0 ? fetchedPopularDishes.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    price: `£${item.price || 0}`,
+    oldPrice: (item.original_price && item.original_price !== item.price) ? `£${item.original_price}` : "", 
+    unit: "/portion",
+    rating: item.rating ? parseFloat(item.rating).toFixed(1) : "4.5", 
+    image: item.image_url || "/customer/popular-1.png",
+  })) : [
     {
       id: 1,
       name: "Filet Mignon",

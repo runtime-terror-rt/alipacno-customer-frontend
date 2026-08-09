@@ -6,9 +6,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutMap from "@/components/CheckoutMap";
 import { Eye, EyeOff } from "lucide-react";
+import { useGetCartQuery, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
+import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
+import { useCreateOrderMutation } from "../../../redux/features/api/ordersApi";
+import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/features/slice/authSlice";
+import { useLogoutMutation } from "../../../redux/features/api/authApi";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [logoutApi] = useLogoutMutation();
   const [activeCategory, setActiveCategory] = useState("Steaks");
   const [tip, setTip] = useState("No Tip");
   const [time, setTime] = useState("ASAP");
@@ -16,26 +25,97 @@ export default function CheckoutPage() {
   const [loyalty, setLoyalty] = useState(false);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [activeBranch, setActiveBranch] = useState("Cloud Gate (The Bean), Chicago");
-  const [selectedBranch, setSelectedBranch] = useState("Cloud Gate (The Bean), Chicago");
+  const [activeBranchId, setActiveBranchId] = useState<number | null>(null);
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [showCvc, setShowCvc] = useState(false);
 
-  const branches = [
-    { name: "Cloud Gate (The Bean), Chicago", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "2.3 km away", time: "30 mins delivery" },
-    { name: "The High Line, New York City", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "5.7 km away", time: "45 mins delivery" },
-    { name: "Golden Gate Bridge, San Francisco", address: "Tower Bridge, London, UK SE1 2UP", dist: "10.2 km away", time: "1 hour delivery" },
-  ];
-  const currentBranch = branches.find(b => b.name === activeBranch) || branches[0];
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
 
-  const cartItems = [
-    { id: 1, name: "Filet Mignon", desc: "Medium Rare, Bone Marrow Butter", price: 48, img: "/customer/most-popular-1.png" },
-    { id: 2, name: "Bibimbap Ric...", desc: "Medium Rare, Bone Marrow Butter", price: 48, img: "/customer/most-popular-2.png" },
+  const [cardName, setCardName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExp, setCardExp] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+
+  const { data: categoriesRes } = useGetCategoriesQuery({ all: 1 });
+  const categoriesList = categoriesRes?.data || categoriesRes || [];
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      dispatch(logout());
+      router.push('/login');
+    }
+  };
+
+  const { data: branchesRes } = useGetBranchesQuery();
+  
+  const defaultBranches = [
+    { id: 1, name: "Cloud Gate (The Bean), Chicago", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "2.3 km away", time: "30 mins delivery" },
+    { id: 2, name: "The High Line, New York City", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "5.7 km away", time: "45 mins delivery" },
+    { id: 3, name: "Golden Gate Bridge, San Francisco", address: "Tower Bridge, London, UK SE1 2UP", dist: "10.2 km away", time: "1 hour delivery" },
   ];
 
-  const subtotal = cartItems.reduce((s, i) => s + i.price, 0);
-  const vat = 2.00;
+  const branches = branchesRes?.data && branchesRes.data.length > 0 ? branchesRes.data : defaultBranches;
+  
+  const currentBranch = branches.find((b: any) => b.id === (activeBranchId || branches[0]?.id)) || branches[0];
+  const modalSelectedBranch = branches.find((b: any) => b.id === selectedBranchId) || currentBranch;
+
+  const { data: cartData } = useGetCartQuery();
+  const [createOrderMut, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
+
+  const cartItems = (cartData?.items || cartData?.data?.items || []).map((item: any) => {
+    const descArr = [
+      (item.size || item.size)?.name,
+      (item.cooking_preference || item.cookingPreference)?.name,
+      (item.spice_level || item.spiceLevel)?.name,
+      item.toppings?.length > 0 ? `Toppings: ${item.toppings.map((t:any) => t.topping?.name).join(', ')}` : null,
+      item.special_instructions ? `Note: ${item.special_instructions}` : null
+    ].filter(Boolean);
+
+    return {
+      id: item.id,
+      menuItem: item.menu_item || item.menuItem,
+      name: (item.menu_item || item.menuItem)?.name,
+      desc: descArr.join(' | '),
+      price: parseFloat(item.total_price || (parseFloat(item.unit_price) * item.quantity) || 0),
+      img: (item.menu_item || item.menuItem)?.image_url || "/placeholder.png",
+    };
+  });
+
   const tipAmt = tip === "£2" ? 2 : tip === "£5" ? 5 : tip === "£10" ? 10 : 0;
-  const total = subtotal + vat + tipAmt;
+
+  const handlePlaceOrder = async () => {
+    try {
+      const cartId = cartData?.id || cartData?.data?.id;
+      if (!cartId) return;
+
+      await createOrderMut({
+        cart_id: cartId,
+        branch_id: currentBranch?.id,
+        order_type: "delivery", 
+        payment_method: pay.toLowerCase() === "card" ? "card" : "cash",
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        delivery_address: deliveryAddress,
+        tip: tipAmt,
+        use_loyalty_points: loyalty
+      }).unwrap();
+
+      router.push("/my-orders");
+    } catch (e) {
+      console.error("Order failed", e);
+    }
+  };
+
+  const subtotal = cartData?.subtotal || cartData?.data?.subtotal || cartItems.reduce((s: number, i: any) => s + i.price, 0);
+  const vat = cartData?.vat || cartData?.data?.vat || 2.00;
+  const baseTotal = cartData?.total || cartData?.data?.total || (cartItems.length > 0 ? subtotal + vat : 0);
+  const total = baseTotal + tipAmt;
 
   const getCategoryIcon = (name: string) => {
     switch (name) {
@@ -95,19 +175,28 @@ export default function CheckoutPage() {
         </svg>
       );
       default: return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10" /></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+        </svg>
       );
     }
   };
 
-  const categories: { name: string; icon: string; hasDropdown?: boolean }[] = [
-    { name: "Steaks", icon: "/customer/menu/steaks.svg" },
-    { name: "Starters", icon: "/customer/menu/starters.svg" },
-    { name: "Sides", icon: "/customer/menu/sides.svg" },
-    { name: "Drinks", icon: "/customer/menu/drinks.svg", hasDropdown: true },
-    { name: "Desserts", icon: "/customer/menu/desserts.svg" },
-    { name: "Lunch Special", icon: "/customer/menu/lunch.svg" },
-  ];
+  const renderCategoryIcon = (cat: any, isActive: boolean) => {
+    const knownCategories = ["Steaks", "Starters", "Sides", "Drinks", "Desserts", "Lunch Special"];
+    if (knownCategories.includes(cat.name)) {
+      return getCategoryIcon(cat.name);
+    }
+    if (cat.icon) {
+      const imgSrc = cat.icon.startsWith('http') ? cat.icon : `${process.env.NEXT_PUBLIC_API_BASE_URL || ''}${cat.icon}`;
+      return <img src={imgSrc} alt={cat.name} className={`w-full h-full object-contain ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />;
+    }
+    return getCategoryIcon(cat.name);
+  };
+
+  // Categories are now dynamically loaded from categoriesList
 
   return (
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none">
@@ -124,29 +213,38 @@ export default function CheckoutPage() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
           <h3 className="text-white font-bold text-[18px] mb-4 pl-6">Menu Categories</h3>
           <div className="flex flex-col">
-            {categories.map((cat, i) => {
+            {categoriesList.map((cat: any, i: number) => {
               const isActive = activeCategory === cat.name;
               return (
                 <button
                   key={i}
-                  onClick={() => setActiveCategory(cat.name)}
+                  onClick={() => router.push(`/menu?category=${encodeURIComponent(cat.name)}`)}
                   className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"}`}
                 >
                   <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"}`}>
-                    {getCategoryIcon(cat.name)}
+                    {renderCategoryIcon(cat, isActive)}
                   </div>
                   <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"}`}>
                     {cat.name}
                   </span>
-                  {cat.hasDropdown && (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`ml-2 ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  )}
                 </button>
               );
             })}
           </div>
+        </div>
+        {/* Logout Button */}
+        <div className="p-6 border-t border-white/5 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors duration-200 group cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 transition-transform group-hover:-translate-x-1">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span className="font-medium text-[16px]">Logout</span>
+          </button>
         </div>
       </div>
 
@@ -255,12 +353,12 @@ export default function CheckoutPage() {
                   </button>
                 </div>
 
-                <h2 className="text-[16px] font-bold text-white leading-tight mt-0.5">Cloud Gate (The Bean), Chicago</h2>
+                <h2 className="text-[16px] font-bold text-white leading-tight mt-0.5">{currentBranch?.name || "Loading..."}</h2>
 
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-start gap-2 text-[#d1d1d1] text-[13.5px]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                    <span className="leading-tight">NW1 6XE,London,221B Baker Street,Marylebone</span>
+                    <span className="leading-tight">{currentBranch?.address || "Loading..."}</span>
                   </div>
 
                   <div className="flex items-center gap-4 text-[#d1d1d1] text-[13px]">
@@ -283,10 +381,10 @@ export default function CheckoutPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                     Your Order from
                   </div>
-                  <h2 className="text-[20px] font-bold text-white leading-tight">Cloud Gate (The Bean), Chicago</h2>
+                  <h2 className="text-[20px] font-bold text-white leading-tight">{currentBranch?.name || "Loading..."}</h2>
                   <div className="flex items-center gap-1.5 text-zinc-300 text-[13px] mt-0.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                    7 Elm Street, Woodstock, OX7 1ER
+                    {currentBranch?.address || "Loading..."}
                   </div>
                   <div className="flex items-center gap-6 mt-1.5 text-zinc-400 text-[12px]">
                     <span className="flex items-center gap-1.5">
@@ -312,16 +410,16 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-3">
                 <div>
                   <label className="text-[12px] text-zinc-400 mb-1.5 block">Name</label>
-                  <input defaultValue="Alan Cattach" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="e.g. Alan Cattach" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
                 <div>
                   <label className="text-[12px] text-zinc-400 mb-1.5 block">Phone Number</label>
-                  <input defaultValue="+1 0123456789" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="e.g. +1 0123456789" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
                 <div>
                   <label className="text-[12px] text-zinc-400 mb-1.5 block">Delivery Address</label>
                   <div className="relative">
-                    <input defaultValue="NW1 6XE, London, 221B Baker Street, Marylebone" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 pr-10 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="e.g. NW1 6XE, London" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 pr-10 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3.5 top-1/2 -translate-y-1/2">
                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
                     </svg>
@@ -383,7 +481,11 @@ export default function CheckoutPage() {
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
                     )
                   },
-
+                  {
+                    id: "Cash", label: "Cash", icon: (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                    )
+                  }
                 ].map(pm => (
                   <button
                     key={pm.id}
@@ -402,21 +504,21 @@ export default function CheckoutPage() {
                   <h4 className="text-[14px] font-bold text-white mb-1">Card details</h4>
                   <div>
                     <label className="text-[12.5px] text-zinc-400 mb-1.5 block font-medium">Cardholder name</label>
-                    <input defaultValue="Alan Cattach" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <input value={cardName} onChange={e => setCardName(e.target.value)} placeholder="e.g. Alan Cattach" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                   </div>
                   <div>
                     <label className="text-[12.5px] text-zinc-400 mb-1.5 block font-medium">Card Number</label>
-                    <input defaultValue="123*********5" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <input value={cardNumber} onChange={e => setCardNumber(e.target.value)} placeholder="e.g. 1234 5678 9101 1121" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[12.5px] text-zinc-400 mb-1.5 block font-medium">Expire Date</label>
-                      <input defaultValue="17 Oct, 2028" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                      <input value={cardExp} onChange={e => setCardExp(e.target.value)} placeholder="MM/YY" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                     </div>
                     <div>
                       <label className="text-[12.5px] text-zinc-400 mb-1.5 block font-medium">CVC</label>
                       <div className="relative w-full">
-                        <input defaultValue="555" type={showCvc ? "text" : "password"} className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner pr-12" />
+                        <input value={cardCvc} onChange={e => setCardCvc(e.target.value)} type={showCvc ? "text" : "password"} placeholder="e.g. 123" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner pr-12" />
                         <button
                           type="button"
                           onClick={() => setShowCvc(!showCvc)}
@@ -457,10 +559,12 @@ export default function CheckoutPage() {
 
               {/* Items List */}
               <div className="flex flex-col gap-4 mb-6">
-                {cartItems.map(item => (
+                {cartItems.map((item: any) => {
+                  const catName = item.menuItem?.category?.name || categoriesList.find((c: any) => c.id === item.menuItem?.category_id)?.name || item.category || 'Burgers';
+                  return (
                   <div key={item.id} className="flex items-center gap-3 bg-[#212124] p-3 rounded-[16px] shadow-sm">
                     <div className="w-[52px] h-[52px] rounded-[12px] overflow-hidden flex-shrink-0 relative bg-[#28282b]">
-                      <Image src={item.img} alt={item.name} fill className="object-cover" />
+                      <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-[14px] font-bold text-white truncate mb-0.5">{item.name}</h4>
@@ -468,7 +572,8 @@ export default function CheckoutPage() {
                     </div>
                     <span className="text-[#F9671A] text-[15px] font-extrabold flex-shrink-0 pl-2">£{item.price}</span>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -501,9 +606,9 @@ export default function CheckoutPage() {
                 <span className="text-[18px] font-extrabold text-[#F9671A]">£{total.toFixed(2)}</span>
               </div>
 
-              <button onClick={() => router.push("/my-orders")} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer flex items-center justify-center gap-2">
-                Place Order
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+              <button onClick={handlePlaceOrder} disabled={isCreatingOrder} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                {isCreatingOrder ? "Processing..." : "Place Order"}
+                {!isCreatingOrder && <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>}
               </button>
             </div>
           </aside>
@@ -528,28 +633,25 @@ export default function CheckoutPage() {
             </div>
             <p className="text-[14px] text-zinc-400 mb-5">Select Branch</p>
             <div className="flex flex-col gap-3 mb-6">
-              {branches.map(b => {
-                const sel = selectedBranch === b.name;
+              {branches.map((b: any) => {
+                const sel = modalSelectedBranch?.id === b.id;
                 return (
-                  <div key={b.name} onClick={() => setSelectedBranch(b.name)} className={`p-5 rounded-[20px] cursor-pointer relative flex flex-col gap-1.5 transition-all ${sel ? "bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] shadow-lg" : "bg-[#212124] hover:bg-[#252528]"}`}>
+                  <div key={b.id} onClick={() => setSelectedBranchId(b.id)} className={`p-5 rounded-[20px] cursor-pointer relative flex flex-col gap-1.5 transition-all ${sel ? "bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] shadow-lg" : "bg-[#212124] hover:bg-[#252528]"}`}>
                     <div className="flex items-center justify-between">
                       <h4 className="text-[16px] font-bold text-white pr-8">{b.name}</h4>
                       {sel && <div className="absolute top-5 right-5 w-5 h-5 bg-[#F9671A] rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>}
                     </div>
                     <div className="flex items-center gap-1.5 text-zinc-300 text-[13px]">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                      {b.address}
-                    </div>
-                    <div className="flex items-center gap-6 text-zinc-400 text-[12px]">
-                      <span className="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>{b.dist}</span>
-                      <span className="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>{b.time}</span>
+                      {b.address || "Address not specified"}
                     </div>
                   </div>
                 );
               })}
             </div>
-            <button onClick={() => { setActiveBranch(selectedBranch); setIsBranchModalOpen(false); }} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[15px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer">
-              Save Branch
+            
+            <button onClick={() => { setActiveBranchId(selectedBranchId); setIsBranchModalOpen(false); }} className="w-full mt-auto py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer flex items-center justify-center">
+              Confirm Branch
             </button>
           </div>
         </div>
