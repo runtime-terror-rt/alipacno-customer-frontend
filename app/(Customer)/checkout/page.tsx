@@ -6,13 +6,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutMap from "@/components/CheckoutMap";
 import { Eye, EyeOff } from "lucide-react";
-import { useGetCartQuery } from "../../../redux/features/api/cartApi";
+import { useGetCartQuery, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
 import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
 import { useCreateOrderMutation } from "../../../redux/features/api/ordersApi";
 import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/features/slice/authSlice";
+import { useLogoutMutation } from "../../../redux/features/api/authApi";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [logoutApi] = useLogoutMutation();
   const [activeCategory, setActiveCategory] = useState("Steaks");
   const [tip, setTip] = useState("No Tip");
   const [time, setTime] = useState("ASAP");
@@ -35,6 +40,17 @@ export default function CheckoutPage() {
 
   const { data: categoriesRes } = useGetCategoriesQuery({ all: 1 });
   const categoriesList = categoriesRes?.data || categoriesRes || [];
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      dispatch(logout());
+      router.push('/login');
+    }
+  };
 
   const { data: branchesRes } = useGetBranchesQuery();
   
@@ -215,6 +231,20 @@ export default function CheckoutPage() {
               );
             })}
           </div>
+        </div>
+        {/* Logout Button */}
+        <div className="p-6 border-t border-white/5 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors duration-200 group cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 transition-transform group-hover:-translate-x-1">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span className="font-medium text-[16px]">Logout</span>
+          </button>
         </div>
       </div>
 

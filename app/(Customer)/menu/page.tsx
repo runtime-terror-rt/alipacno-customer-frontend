@@ -8,10 +8,15 @@ import { Star } from "lucide-react";
 import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
 import { useGetMenuItemsQuery, useGetMenuItemQuery } from "../../../redux/features/api/menuItemsApi";
 import { useGetCartQuery, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/features/slice/authSlice";
+import { useLogoutMutation } from "../../../redux/features/api/authApi";
 
 export default function MenuPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const searchParams = useSearchParams();
+  const [logoutApi] = useLogoutMutation();
   const categoryParam = searchParams.get('category');
   
   const [activeCategory, setActiveCategory] = useState<string | null>(categoryParam || null);
@@ -32,6 +37,18 @@ export default function MenuPage() {
     setSelectedToppings([]);
     setSpecialInstructions("");
   }, [selectedProduct]);
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      // Always clear local state and redirect
+      dispatch(logout());
+      router.push('/login');
+    }
+  };
 
   const { data: cartData, refetch: refetchCart } = useGetCartQuery();
   const [addCartItemMut] = useAddCartItemMutation();
@@ -329,6 +346,20 @@ export default function MenuPage() {
               );
             })}
           </div>
+        </div>
+        {/* Logout Button */}
+        <div className="p-6 border-t border-white/5 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors duration-200 group cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 transition-transform group-hover:-translate-x-1">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span className="font-medium text-[16px]">Logout</span>
+          </button>
         </div>
       </div>
 

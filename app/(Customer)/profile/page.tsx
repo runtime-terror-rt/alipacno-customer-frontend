@@ -4,9 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/features/slice/authSlice";
+import { useLogoutMutation } from "../../../redux/features/api/authApi";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [logoutApi] = useLogoutMutation();
   const [activeCategory, setActiveCategory] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [coverPhoto, setCoverPhoto] = useState("/customer/cover-image.png");
@@ -97,19 +103,40 @@ export default function ProfilePage() {
         </svg>
       );
       default: return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10" /></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+        </svg>
       );
     }
   };
 
-  const categories: { name: string; icon: string; hasDropdown?: boolean }[] = [
-    { name: "Steaks", icon: "/customer/menu/steaks.svg" },
-    { name: "Starters", icon: "/customer/menu/starters.svg" },
-    { name: "Sides", icon: "/customer/menu/sides.svg" },
-    { name: "Drinks", icon: "/customer/menu/drinks.svg" },
-    { name: "Desserts", icon: "/customer/menu/desserts.svg" },
-    { name: "Lunch Special", icon: "/customer/menu/lunch.svg" },
-  ];
+  const renderCategoryIcon = (cat: any, isActive: boolean) => {
+    const knownCategories = ["Steaks", "Starters", "Sides", "Drinks", "Desserts", "Lunch Special"];
+    if (knownCategories.includes(cat.name)) {
+      return getCategoryIcon(cat.name);
+    }
+    if (cat.icon) {
+      const imgSrc = cat.icon.startsWith('http') ? cat.icon : `${process.env.NEXT_PUBLIC_API_BASE_URL || ''}${cat.icon}`;
+      return <img src={imgSrc} alt={cat.name} className={`w-full h-full object-contain ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />;
+    }
+    return getCategoryIcon(cat.name);
+  };
+
+  const { data: categoriesRes } = useGetCategoriesQuery({ all: 1 });
+  const categoriesList = categoriesRes?.data || categoriesRes || [];
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      dispatch(logout());
+      router.push('/login');
+    }
+  };
 
   return (
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none relative">
@@ -126,29 +153,38 @@ export default function ProfilePage() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
           <h3 className="text-white font-bold text-[18px] mb-4 pl-6">Menu Categories</h3>
           <div className="flex flex-col">
-            {categories.map((cat, i) => {
+            {categoriesList.map((cat: any, i: number) => {
               const isActive = activeCategory === cat.name;
               return (
                 <button
                   key={i}
-                  onClick={() => router.push("/menu")}
+                  onClick={() => router.push(`/menu?category=${encodeURIComponent(cat.name)}`)}
                   className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"}`}
                 >
                   <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"}`}>
-                    {getCategoryIcon(cat.name)}
+                    {renderCategoryIcon(cat, isActive)}
                   </div>
                   <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"}`}>
                     {cat.name}
                   </span>
-                  {cat.hasDropdown && (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`ml-2 ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  )}
                 </button>
               );
             })}
           </div>
+        </div>
+        {/* Logout Button */}
+        <div className="p-6 border-t border-white/5 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors duration-200 group cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 transition-transform group-hover:-translate-x-1">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span className="font-medium text-[16px]">Logout</span>
+          </button>
         </div>
       </div>
 
