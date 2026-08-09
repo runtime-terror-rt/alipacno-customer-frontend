@@ -426,7 +426,7 @@ export default function CustomerHome() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-4.5 w-full">
-            {popularDishes.map((dish) => (
+            {popularDishes.map((dish: any) => (
               <div
                 key={dish.id}
                 className="bg-[#2a2a2c] border border-white/5 rounded-[20px] overflow-hidden flex flex-col shadow-xl hover:border-white/20 transition-all duration-300 group cursor-pointer"

@@ -40,7 +40,7 @@ export default function MenuPage() {
 
   const handleLogout = async () => {
     try {
-      await logoutApi().unwrap();
+      await logoutApi({}).unwrap();
     } catch (error) {
       console.error('Logout API error:', error);
     } finally {
@@ -116,10 +116,10 @@ export default function MenuPage() {
     }
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const subtotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.qty), 0);
   const vat = 2.00;
   const total = cartItems.length > 0 ? subtotal + vat : 0;
-  const totalItems = cartItems.reduce((sum, item) => sum + item.qty, 0);
+  const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.qty, 0);
 
   const getCategoryIcon = (name: string) => {
     switch (name) {
@@ -611,7 +611,7 @@ export default function MenuPage() {
                 {cartItems.length === 0 && (
                   <div className="text-zinc-500 text-center py-4 text-sm font-medium">Cart is empty.</div>
                 )}
-                {cartItems.map(item => (
+                {cartItems.map((item: any) => (
                   <div key={`cart-${item.id}`} className="flex gap-3">
                     <div className="w-[60px] h-[60px] rounded-[12px] bg-[#2a2a2c] overflow-hidden flex-shrink-0 relative">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />

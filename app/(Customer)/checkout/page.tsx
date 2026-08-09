@@ -43,7 +43,7 @@ export default function CheckoutPage() {
 
   const handleLogout = async () => {
     try {
-      await logoutApi().unwrap();
+      await logoutApi({}).unwrap();
     } catch (error) {
       console.error('Logout API error:', error);
     } finally {
@@ -685,20 +685,20 @@ export default function CheckoutPage() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
               <h3 className="text-white font-bold text-[16px] mb-4 px-6 uppercase tracking-wider text-zinc-500">Menu Categories</h3>
               <div className="flex flex-col">
-                {categories.map((cat, i) => {
+                {categoriesList.map((cat: any, i: number) => {
                   const isActive = activeCategory === cat.name;
                   return (
                     <button
                       key={i}
                       onClick={() => {
-                        setActiveCategory(cat.name);
+                        router.push(`/menu?category=${encodeURIComponent(cat.name)}`);
                         setIsMobileSidebarOpen(false);
                       }}
                       className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
                         }`}
                     >
                       <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
-                        {getCategoryIcon(cat.name)}
+                        {renderCategoryIcon(cat, isActive)}
                       </div>
                       <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
                         {cat.name}
