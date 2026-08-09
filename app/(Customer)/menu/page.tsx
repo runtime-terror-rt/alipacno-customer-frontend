@@ -2,43 +2,101 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Star } from "lucide-react";
 import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
-import { useGetMenuItemsQuery } from "../../../redux/features/api/menuItemsApi";
+import { useGetMenuItemsQuery, useGetMenuItemQuery } from "../../../redux/features/api/menuItemsApi";
+import { useGetCartQuery, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
 
 export default function MenuPage() {
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState("Steaks");
-  const [activeTag, setActiveTag] = useState("All Steaks");
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get('category');
+  
+  const [activeCategory, setActiveCategory] = useState<string | null>(categoryParam || null);
+  const [activeTagId, setActiveTagId] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [modalQty, setModalQty] = useState(1);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<any>(null);
+  const [selectedCookingPref, setSelectedCookingPref] = useState<any>(null);
+  const [selectedSpiceLevel, setSelectedSpiceLevel] = useState<any>(null);
+  const [selectedToppings, setSelectedToppings] = useState<any[]>([]);
+  const [specialInstructions, setSpecialInstructions] = useState("");
 
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: "Grilled chicken pieces", desc: "Medium Rare, Bone Marrow Butter", price: 48, qty: 1, image: "/customer/popular-1.png" },
-    { id: 3, name: "Vegetable Stir Fry", desc: "Medium Rare, Bone Marrow Butter", price: 48, qty: 1, image: "/customer/popular-3.png" },
-  ]);
+  useEffect(() => {
+    setSelectedSize(null);
+    setSelectedCookingPref(null);
+    setSelectedSpiceLevel(null);
+    setSelectedToppings([]);
+    setSpecialInstructions("");
+  }, [selectedProduct]);
 
-  const addToCart = (item: any, explicitQty: number = 1) => {
-    setCartItems(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, qty: i.qty + explicitQty } : i);
+  const { data: cartData, refetch: refetchCart } = useGetCartQuery();
+  const [addCartItemMut] = useAddCartItemMutation();
+  const [updateCartItemMut] = useUpdateCartItemMutation();
+  const [removeCartItemMut] = useRemoveCartItemMutation();
+
+  const cartItems = (cartData?.items || cartData?.data?.items || []).map((item: any) => {
+    const descArr = [
+      (item.size || item.size)?.name,
+      (item.cooking_preference || item.cookingPreference)?.name,
+      (item.spice_level || item.spiceLevel)?.name,
+      item.toppings?.length > 0 ? `Toppings: ${item.toppings.map((t:any) => t.topping?.name).join(', ')}` : null,
+      item.special_instructions ? `Note: ${item.special_instructions}` : null
+    ].filter(Boolean);
+
+    return {
+      id: item.id, // the cart_item id
+      menuItemId: item.menu_item_id,
+      name: (item.menu_item || item.menuItem)?.name,
+      desc: descArr.join(' | '),
+      price: parseFloat(item.unit_price || (item.menu_item || item.menuItem)?.price || 0),
+      qty: item.quantity,
+      image: (item.menu_item || item.menuItem)?.image_url || "/placeholder.png",
+    };
+  });
+
+  const addToCart = async (item: any, explicitQty: number = 1, options: any = {}) => {
+    try {
+      const cartId = cartData?.id || cartData?.data?.id;
+      if (!cartId) {
+        console.error("Cart not initialized yet");
+        return;
       }
-      return [...prev, { id: item.id, name: item.name, desc: "Medium Rare, Bone Marrow Butter", price: parseFloat(item.price.replace('£', '')), qty: explicitQty, image: item.image }];
-    });
+
+      await addCartItemMut({ 
+        cart_id: cartId,
+        menu_item_id: item.id, 
+        quantity: explicitQty,
+        size_id: options.size_id,
+        cooking_preference_id: options.cooking_preference_id,
+        spice_level_id: options.spice_level_id,
+        toppings: options.toppings,
+        special_instructions: options.special_instructions
+      }).unwrap();
+      
+      refetchCart();
+    } catch (e) {
+      console.error("Failed to add to cart", e);
+    }
   };
 
-  const updateQty = (id: number, delta: number) => {
-    setCartItems(prev => prev.map(i => {
-      if (i.id === id) {
-        const newQty = Math.max(0, i.qty + delta);
-        return { ...i, qty: newQty };
+  const updateQty = async (id: number, delta: number) => {
+    const item = cartItems.find((i: any) => i.id === id);
+    if (!item) return;
+    const newQty = item.qty + delta;
+    try {
+      if (newQty <= 0) {
+        await removeCartItemMut(id).unwrap();
+      } else {
+        await updateCartItemMut({ id, quantity: newQty }).unwrap();
       }
-      return i;
-    }).filter(i => i.qty > 0));
+      refetchCart();
+    } catch (e) {
+      console.error("Failed to update cart qty", e);
+    }
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -109,7 +167,7 @@ export default function MenuPage() {
     }
   };
 
-  const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery({ per_page: 15, page: 1, search: "" });
+  const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery({ all: 1 });
   
   const fallbackCategories: { name: string; icon: string; hasDropdown?: boolean }[] = [
     { name: "Steaks", icon: "/customer/menu/steaks.svg" },
@@ -121,6 +179,23 @@ export default function MenuPage() {
   ];
 
   const categories = categoriesData?.data?.length > 0 ? categoriesData.data : fallbackCategories;
+
+  useEffect(() => {
+    // If there's no active category set yet, we set it to the first available one
+    if (!activeCategory && categories?.length > 0) {
+      setActiveCategory(categories[0].name);
+    }
+  }, [categories]);
+
+  // Handle URL param changes dynamically without locking
+  useEffect(() => {
+    if (categoryParam) {
+      setActiveCategory(categoryParam);
+      // We don't need to replaceState anymore because we initialized state with categoryParam
+      // and if the user clicks another category, setActiveCategory will just update the state
+      // while the URL might still have ?category=... which is fine for deep linking
+    }
+  }, [categoryParam]);
 
   const renderCategoryIcon = (cat: any, isActive: boolean) => {
     const knownCategories = ["Steaks", "Starters", "Sides", "Drinks", "Desserts", "Lunch Special"];
@@ -136,10 +211,34 @@ export default function MenuPage() {
 
   const activeCategoryObj = categories?.find((c: any) => c.name === activeCategory);
   const activeCategoryId = activeCategoryObj?.id;
+  // Reset active tag when category changes
+  useEffect(() => {
+    setActiveTagId(null);
+  }, [activeCategoryId]);
 
   const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery(
     { category_id: activeCategoryId, per_page: 50 },
     { skip: !activeCategoryId }
+  );
+
+  const { data: popularMenuItemsData } = useGetMenuItemsQuery(
+    { category_id: activeCategoryId, is_popular: 1, per_page: 8 },
+    { skip: !activeCategoryId }
+  );
+
+  const { data: happyHourMenuItemsData } = useGetMenuItemsQuery(
+    { category_id: activeCategoryId, is_happy_hour_eligible: 1, per_page: 4 },
+    { skip: !activeCategoryId }
+  );
+
+  const { data: productDetails, isLoading: isLoadingDetails } = useGetMenuItemQuery(
+    selectedProduct?.id,
+    { skip: !selectedProduct?.id }
+  );
+
+  const { data: activeTagDetails, isFetching: isFetchingActiveTag } = useGetMenuItemQuery(
+    activeTagId!,
+    { skip: !activeTagId }
   );
 
   const getImageUrl = (url: string) => {
@@ -179,13 +278,17 @@ export default function MenuPage() {
     { id: 12, name: "Chateaubriand", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/most-popular-8.png" },
   ];
 
-  const happyHourItems = apiMenuItems.length > 0 
-    ? apiMenuItems.filter((item: any) => item.is_happy_hour_eligible === 1) 
-    : steaks;
+  const happyHourItems = activeTagId
+    ? (activeTagDetails && activeTagDetails.is_happy_hour_eligible === 1 ? [formatItem(activeTagDetails)] : [])
+    : happyHourMenuItemsData?.data
+      ? happyHourMenuItemsData.data.map(formatItem)
+      : [];
 
-  const popularItems = apiMenuItems.length > 0 
-    ? (apiMenuItems.filter((item: any) => item.is_popular === 1).length > 0 ? apiMenuItems.filter((item: any) => item.is_popular === 1) : apiMenuItems) 
-    : popularSteaks;
+  const popularItems = activeTagId
+    ? (activeTagDetails ? [formatItem(activeTagDetails)].filter((item: any) => item.id) : [])
+    : popularMenuItemsData?.data
+      ? popularMenuItemsData.data.map(formatItem)
+      : [];
 
   return (
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none">
@@ -353,16 +456,27 @@ export default function MenuPage() {
 
             {/* Tags */}
             <div className="flex items-center gap-3 mb-6 overflow-x-auto scrollbar-hide pb-2">
-              {["All Steaks", "Grass Fed", "Wagyu Selection", "Dry Aged"].map(tag => (
+              <button
+                onClick={() => setActiveTagId(null)}
+                className={`px-5 py-2.5 min-w-max rounded-full text-[14px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                  activeTagId === null
+                    ? "bg-white text-black shadow-md"
+                    : "bg-[#212124] text-white hover:bg-[#2a2a2c] border border-white/5"
+                }`}
+              >
+                All Items
+              </button>
+              {apiMenuItems.map((item: any) => (
                 <button
-                  key={tag}
-                  onClick={() => setActiveTag(tag)}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${activeTag === tag
-                    ? "bg-[#F9671A] text-white shadow-lg shadow-orange-600/20"
-                    : "bg-white text-[#1A1A1A] hover:bg-zinc-200"
-                    }`}
+                  key={item.id}
+                  onClick={() => setActiveTagId(item.id)}
+                  className={`px-5 py-2.5 min-w-max rounded-full text-[14px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                    activeTagId === item.id
+                      ? "bg-white text-black shadow-md"
+                      : "bg-[#212124] text-white hover:bg-[#2a2a2c] border border-white/5"
+                  }`}
                 >
-                  {tag}
+                  {item.name}
                 </button>
               ))}
             </div>
@@ -576,126 +690,106 @@ export default function MenuPage() {
               </div>
 
               {/* Choose Size */}
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-[16px] font-bold text-white">Choose Size</h3>
-                  <span className="text-[#F9671A] bg-[#F9671A]/10 text-[10px] font-extrabold px-2 py-0.5 rounded-full">Required</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="relative p-3.5 rounded-[16px] bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] cursor-pointer flex flex-col shadow-lg">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[15px] font-bold text-white">Regular</span>
-                      <div className="w-5 h-5 bg-[#F9671A] rounded-full flex items-center justify-center shadow-md"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    </div>
-                    <span className="text-[12px] text-zinc-300">5-inch</span>
+              {(productDetails?.data?.sizes || selectedProduct?.sizes)?.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <h3 className="text-[16px] font-bold text-white">Choose Size</h3>
+                    <span className="text-[#F9671A] bg-[#F9671A]/10 text-[10px] font-extrabold px-2 py-0.5 rounded-full">Required</span>
                   </div>
-                  <div className="relative p-3.5 rounded-[16px] border border-white/5 bg-[#212124] hover:border-white/10 cursor-pointer flex flex-col transition-all">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[15px] font-bold text-white">Medium</span>
-                      <div className="w-5 h-5 rounded-full border border-zinc-500"></div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] text-zinc-400">8-inch</span>
-                      <span className="text-[12px] text-[#F9671A] font-semibold">+£4.00</span>
-                    </div>
-                  </div>
-                  <div className="relative p-3.5 rounded-[16px] border border-white/5 bg-[#212124] hover:border-white/10 cursor-pointer flex flex-col transition-all">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[15px] font-bold text-white">Large</span>
-                      <div className="w-5 h-5 rounded-full border border-zinc-500"></div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] text-zinc-400">12-inch</span>
-                      <span className="text-[12px] text-[#F9671A] font-semibold">+£8.00</span>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {(productDetails?.data?.sizes || selectedProduct?.sizes).map((size: any) => {
+                      const isSelected = selectedSize?.id === size.id;
+                      return (
+                        <div key={size.id} onClick={() => setSelectedSize(size)} className={`relative p-3.5 rounded-[16px] cursor-pointer flex flex-col transition-all ${isSelected ? 'bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] shadow-lg border border-[#F9671A]/30' : 'border border-white/5 bg-[#212124] hover:border-white/10'}`}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[15px] font-bold text-white">{size.name}</span>
+                            {isSelected ? (
+                              <div className="w-5 h-5 bg-[#F9671A] rounded-full flex items-center justify-center shadow-md"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border border-zinc-500"></div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] text-zinc-400">{size.size_description}</span>
+                            {parseFloat(size.extra_price) > 0 && (
+                              <span className="text-[12px] text-[#F9671A] font-semibold">+£{size.extra_price}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Cooking Preference */}
-              <div className="mb-8">
-                <h3 className="text-[16px] font-bold text-white mb-4">Cooking Preference</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white text-[13px] font-semibold shadow-md">
-                    <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    Rare
-                  </button>
-                  {["Medium-Rare", "Medium", "Medium-Well", "Well-Done"].map(opt => (
-                    <button key={opt} className="px-4 py-2.5 rounded-full border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white text-[13px] font-semibold transition-colors">{opt}</button>
-                  ))}
+              {(productDetails?.data?.cooking_preferences || selectedProduct?.cooking_preferences)?.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-[16px] font-bold text-white mb-4">Cooking Preference</h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {(productDetails?.data?.cooking_preferences || selectedProduct?.cooking_preferences).map((pref: any) => {
+                      const isSelected = selectedCookingPref?.id === pref.id;
+                      return (
+                        <button key={pref.id} onClick={() => setSelectedCookingPref(pref)} className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold transition-colors ${isSelected ? 'bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white shadow-md border border-[#F9671A]/30' : 'border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white'}`}>
+                          {isSelected && <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>}
+                          {pref.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Spice Level */}
-              <div className="mb-8">
-                <h3 className="text-[16px] font-bold text-white mb-4">Spice Level</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white text-[13px] font-semibold shadow-md">
-                    <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    Mild
-                  </button>
-                  {["Medium", "Hot"].map(opt => (
-                    <button key={opt} className="px-4 py-2.5 rounded-full border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white text-[13px] font-semibold transition-colors">{opt}</button>
-                  ))}
+              {(productDetails?.data?.spice_levels || selectedProduct?.spice_levels)?.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-[16px] font-bold text-white mb-4">Spice Level</h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {(productDetails?.data?.spice_levels || selectedProduct?.spice_levels).map((spice: any) => {
+                      const isSelected = selectedSpiceLevel?.id === spice.id;
+                      return (
+                        <button key={spice.id} onClick={() => setSelectedSpiceLevel(spice)} className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold transition-colors ${isSelected ? 'bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white shadow-md border border-[#F9671A]/30' : 'border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white'}`}>
+                          {isSelected && <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>}
+                          {spice.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Modify Toppings */}
-              <div className="mb-8">
-                <h3 className="text-[16px] font-bold text-white mb-4">Modify Toppings</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white text-[13px] font-semibold shadow-md">
-                    <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                    Truffle Butter <span className="text-zinc-300 font-medium">+£4.00</span>
-                  </button>
-                  {[
-                    { n: "Foie Gras", p: "+£4.00" },
-                    { n: "Crispy Bacon", p: "+£4.00" },
-                    { n: "Fried Egg", p: "+£4.00" }
-                  ].map(opt => (
-                    <button key={opt.n} className="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white text-[13px] font-semibold transition-colors">
-                      {opt.n} <span className="text-zinc-500 font-medium">{opt.p}</span>
-                    </button>
-                  ))}
+              {(productDetails?.data?.toppings || selectedProduct?.toppings)?.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-[16px] font-bold text-white mb-4">Modify Toppings</h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {(productDetails?.data?.toppings || selectedProduct?.toppings).map((topping: any) => {
+                      const isSelected = selectedToppings.some((t: any) => t.id === topping.id);
+                      return (
+                        <button key={topping.id} onClick={() => {
+                          if (isSelected) {
+                            setSelectedToppings(selectedToppings.filter((t: any) => t.id !== topping.id));
+                          } else {
+                            setSelectedToppings([...selectedToppings, topping]);
+                          }
+                        }} className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[13px] font-semibold transition-colors ${isSelected ? 'bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white shadow-md border border-[#F9671A]/30' : 'border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white'}`}>
+                          {isSelected && <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>}
+                          {topping.name} {parseFloat(topping.price) > 0 && <span className={isSelected ? 'text-zinc-300 font-medium' : 'text-zinc-500 font-medium'}>+£{topping.price}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Add Extras */}
-              <div className="mb-8">
-                <h3 className="text-[16px] font-bold text-white mb-4">Add Extras</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {[
-                    { n: "Garlic Bread", p: "+£4.00" },
-                    { n: "Béarnaise Sauce", p: "+£4.00" },
-                    { n: "Lobster Tail", p: "+£4.00" },
-                    { n: "Mashed Potatoes", p: "+£4.00" },
-                    { n: "French Fries", p: "+£4.00" }
-                  ].map(opt => (
-                    <button key={opt.n} className="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white text-[13px] font-semibold transition-colors">
-                      {opt.n} <span className="text-zinc-500 font-medium">{opt.p}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              {/* Remove Ingredients */}
-              <div className="mb-8">
-                <h3 className="text-[16px] font-bold text-white mb-4">Remove Ingredients</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] text-white text-[13px] font-semibold shadow-md">
-                    No Pepper
-                    <div className="w-4 h-4 bg-[#F9671A] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></div>
-                  </button>
-                  {["No Butter", "No Salt", "No Herbs"].map(opt => (
-                    <button key={opt} className="px-4 py-2.5 rounded-full border border-white/5 bg-[#212124] text-zinc-300 hover:border-white/10 hover:text-white text-[13px] font-semibold transition-colors">{opt}</button>
-                  ))}
-                </div>
-              </div>
 
               {/* Special Instructions */}
               <div>
                 <h3 className="text-[16px] font-bold text-white mb-4">Special Instructions</h3>
                 <textarea
+                  value={specialInstructions}
+                  onChange={(e) => setSpecialInstructions(e.target.value)}
                   placeholder="Any special requests?"
                   className="w-full bg-[#212124] border border-white/5 rounded-2xl p-4 text-[13px] text-white placeholder-zinc-500 outline-none focus:border-[#F9671A]/50 transition-colors resize-none h-[100px]"
                 ></textarea>
@@ -714,10 +808,21 @@ export default function MenuPage() {
                 </button>
               </div>
               <button
-                onClick={() => { addToCart(selectedProduct, modalQty); setSelectedProduct(null); }}
+                onClick={() => {
+                  const opts = {
+                    size_id: selectedSize?.id,
+                    cooking_preference_id: selectedCookingPref?.id,
+                    spice_level_id: selectedSpiceLevel?.id,
+                    toppings: selectedToppings.map((t:any) => t.id),
+                    special_instructions: specialInstructions.trim() || undefined
+                  };
+                  
+                  addToCart(selectedProduct, modalQty, opts);
+                  setSelectedProduct(null);
+                }}
                 className="flex-1 bg-[#F9671A] text-white py-3.5 rounded-full font-bold text-[15px] hover:bg-[#ff7a33] transition shadow-lg shadow-orange-600/20 cursor-pointer "
               >
-                Add to Cart - £{(parseFloat(selectedProduct.price.replace('£', '')) * modalQty).toFixed(2)}
+                Add to Cart - £{(parseFloat((selectedProduct.price || "").replace('£', '')) * modalQty).toFixed(2)}
               </button>
             </div>
           </div>
