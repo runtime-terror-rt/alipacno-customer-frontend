@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CountrySelector, type CountryIso2, usePhoneInput } from "react-international-phone";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,12 @@ const getFlagEmoji = (countryCode: string) =>
 
 export default function PhoneLogin() {
   const router = useRouter();
+
+  // Redirect to email login while phone login is disabled
+  useEffect(() => {
+    router.replace("/login");
+  }, [router]);
+
   const [phone, setPhone] = useState("");
   const { inputValue, handlePhoneValueChange, inputRef, country, setCountry } = usePhoneInput({
     defaultCountry: "gb",
