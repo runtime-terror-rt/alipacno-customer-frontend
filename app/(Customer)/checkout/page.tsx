@@ -112,9 +112,11 @@ export default function CheckoutPage() {
     }
   };
 
-  const subtotal = cartData?.subtotal || cartData?.data?.subtotal || cartItems.reduce((s: number, i: any) => s + i.price, 0);
-  const vat = cartData?.vat || cartData?.data?.vat || 2.00;
-  const baseTotal = cartData?.total || cartData?.data?.total || (cartItems.length > 0 ? subtotal + vat : 0);
+  const cartObj = cartData?.data || cartData || {};
+  const subtotal = parseFloat(cartObj.subtotal || 0);
+  const vat = parseFloat(cartObj.vat || 0);
+  const loyaltyDiscount = parseFloat(cartObj.discount || 0);
+  const baseTotal = parseFloat(cartObj.total || 0);
   const total = baseTotal + tipAmt;
 
   const getCategoryIcon = (name: string) => {
@@ -586,7 +588,7 @@ export default function CheckoutPage() {
                   ["Delivery", "Free"],
                   ["Incl. VAT", `£${vat.toFixed(2)}`],
                   ["Rider's Tip", tipAmt > 0 ? `£${tipAmt.toFixed(2)}` : "00.00"],
-                  ["Loyalty discount", "00.00"]
+                  ["Loyalty discount", loyaltyDiscount > 0 ? `-£${loyaltyDiscount.toFixed(2)}` : "00.00"]
                 ].map(([l, v]) => (
                   <div key={l} className="flex justify-between items-center text-[13px]">
                     <span className="text-zinc-400">{l}</span>

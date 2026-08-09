@@ -116,9 +116,12 @@ export default function MenuPage() {
     }
   };
 
-  const subtotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.qty), 0);
-  const vat = 2.00;
-  const total = cartItems.length > 0 ? subtotal + vat : 0;
+  const cartObj = cartData?.data || cartData || {};
+  const subtotal = parseFloat(cartObj.subtotal || 0);
+  const vat = parseFloat(cartObj.vat || 0);
+  const total = parseFloat(cartObj.total || 0);
+  const loyaltyPointsEarned = cartObj.loyalty_points || 0;
+  const loyaltyDiscount = parseFloat(cartObj.discount || 0);
   const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.qty, 0);
 
   const getCategoryIcon = (name: string) => {
@@ -523,31 +526,38 @@ export default function MenuPage() {
             </div>
 
             {/* Happy Hour Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              {happyHourItems.map((item: any) => (
-                <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
-                  <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
-                    <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
-                      <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
-                    </div>
+            {happyHourItems.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                {happyHourItems.map((item: any) => (
+                  <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
+                    <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
+                      <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
+                        <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+                      </div>
 
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
-                    <div className="flex items-center gap-1.5 text-xs mb-4">
-                      <span className="font-extrabold text-[#F9671A]">{item.price}</span>
-                      <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
-                      <span className="text-zinc-400 text-[11px]">/portion</span>
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
                     </div>
-                    <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-                      Add to cart
-                    </button>
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
+                      <div className="flex items-center gap-1.5 text-xs mb-4">
+                        <span className="font-extrabold text-[#F9671A]">{item.price}</span>
+                        <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
+                        <span className="text-zinc-400 text-[11px]">/portion</span>
+                      </div>
+                      <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                        Add to cart
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 mb-10 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <p className="text-zinc-400 font-medium text-sm">No happy hour items available.</p>
+              </div>
+            )}
 
             {/* Most popular Steaks Header */}
             <div className="flex items-center justify-between mb-6">
@@ -559,33 +569,40 @@ export default function MenuPage() {
             </div>
 
             {/* Most Popular Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {popularItems.map((item: any) => (
-                <div key={`pop-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
-                  <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
-                    <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
-                      <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+            {popularItems.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {popularItems.map((item: any) => (
+                  <div key={`pop-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
+                    <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
+                      <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
+                        <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+                      </div>
+                      <button className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors text-white shadow-lg cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                      </button>
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
                     </div>
-                    <button className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors text-white shadow-lg cursor-pointer">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-                    </button>
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
-                    <div className="flex items-center gap-1.5 text-xs mb-4">
-                      <span className="font-extrabold text-[#F9671A]">{item.price}</span>
-                      <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
-                      <span className="text-zinc-400 text-[11px]">/portion</span>
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
+                      <div className="flex items-center gap-1.5 text-xs mb-4">
+                        <span className="font-extrabold text-[#F9671A]">{item.price}</span>
+                        <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
+                        <span className="text-zinc-400 text-[11px]">/portion</span>
+                      </div>
+                      <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                        Add to cart
+                      </button>
                     </div>
-                    <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-                      Add to cart
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                <p className="text-zinc-400 font-medium text-sm">No popular items found for this category.</p>
+              </div>
+            )}
 
           </main>
 
@@ -646,7 +663,7 @@ export default function MenuPage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#F9671A" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </div>
                 <div>
-                  <h4 className="text-[13px] font-bold text-white mb-0.5">You'll earn 5 loyalty points</h4>
+                  <h4 className="text-[13px] font-bold text-white mb-0.5">You'll earn {loyaltyPointsEarned} loyalty points</h4>
                   <p className="text-[10px] text-zinc-400">1 point per £10 spends - 100 points = £1 discount</p>
                 </div>
               </div>
@@ -669,7 +686,7 @@ export default function MenuPage() {
                 </div>
                 <div className="flex justify-between items-center text-[13px]">
                   <span className="text-zinc-400">Loyalty discount</span>
-                  <span className="font-medium text-white">00.00</span>
+                  <span className="font-medium text-white">{loyaltyDiscount > 0 ? `-£${loyaltyDiscount.toFixed(2)}` : "00.00"}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] mt-1">
                   <span className="text-zinc-400">Use loyalty ponints</span>
