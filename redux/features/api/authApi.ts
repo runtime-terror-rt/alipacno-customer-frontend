@@ -50,6 +50,28 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
       }),
     }),
+    getMe: builder.query<any, void>({
+      query: () => "/api/v1/auth/me",
+      providesTags: ['Profile'],
+    }),
+    updateUser: builder.mutation({
+      query: ({ id, data }) => {
+        if (data instanceof FormData) {
+          data.append("_method", "PUT");
+          return {
+            url: `/api/v1/users/${id}`,
+            method: "POST",
+            body: data,
+          };
+        }
+        return {
+          url: `/api/v1/users/${id}`,
+          method: "PUT",
+          body: data,
+        };
+      },
+      invalidatesTags: ['Profile'],
+    }),
   }),
 });
 
@@ -60,5 +82,7 @@ export const {
   useResetPasswordMutation,
   useResendOtpMutation,
   useLoginMutation,
-  useLogoutMutation
+  useLogoutMutation,
+  useGetMeQuery,
+  useUpdateUserMutation
 } = authApi;
