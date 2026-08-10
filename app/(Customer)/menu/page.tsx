@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Star } from "lucide-react";
 import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
+import { useGetSubcategoriesQuery } from "../../../redux/features/api/subcategoriesApi";
 import { useGetMenuItemsQuery, useGetMenuItemQuery } from "../../../redux/features/api/menuItemsApi";
 import { useGetCartQuery, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
 import { useDispatch } from "react-redux";
@@ -20,6 +21,8 @@ export default function MenuPage() {
   const categoryParam = searchParams.get('category');
   
   const [activeCategory, setActiveCategory] = useState<string | null>(categoryParam || null);
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>('all');
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeTagId, setActiveTagId] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [modalQty, setModalQty] = useState(1);
@@ -236,18 +239,38 @@ export default function MenuPage() {
     setActiveTagId(null);
   }, [activeCategoryId]);
 
+  const { data: subcategoriesData } = useGetSubcategoriesQuery({});
+  const subcategoriesList = Array.isArray(subcategoriesData?.data) ? subcategoriesData.data : (subcategoriesData?.data?.data || []);
+
   const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery(
-    { category_id: activeCategoryId, per_page: 50 },
+    { 
+      category_id: activeCategoryId, 
+      subcategory_id: activeSubcategory !== 'all' ? subcategoriesList.find((s: any) => s.name === activeSubcategory)?.id : undefined,
+      search: searchQuery || undefined,
+      per_page: 50 
+    },
     { skip: !activeCategoryId }
   );
 
   const { data: popularMenuItemsData } = useGetMenuItemsQuery(
-    { category_id: activeCategoryId, is_popular: 1, per_page: 8 },
+    { 
+      category_id: activeCategoryId, 
+      subcategory_id: activeSubcategory !== 'all' ? subcategoriesList.find((s: any) => s.name === activeSubcategory)?.id : undefined,
+      search: searchQuery || undefined,
+      is_popular: 1, 
+      per_page: 8 
+    },
     { skip: !activeCategoryId }
   );
 
   const { data: happyHourMenuItemsData } = useGetMenuItemsQuery(
-    { category_id: activeCategoryId, is_happy_hour_eligible: 1, per_page: 4 },
+    { 
+      category_id: activeCategoryId, 
+      subcategory_id: activeSubcategory !== 'all' ? subcategoriesList.find((s: any) => s.name === activeSubcategory)?.id : undefined,
+      search: searchQuery || undefined,
+      is_happy_hour_eligible: 1, 
+      per_page: 4 
+    },
     { skip: !activeCategoryId }
   );
 
@@ -278,7 +301,7 @@ export default function MenuPage() {
     image: getImageUrl(item.image_url || item.image)
   });
 
-  const apiMenuItems = (menuItemsData?.data || []).map(formatItem);
+  const apiMenuItems = (Array.isArray(menuItemsData?.data) ? menuItemsData.data : (menuItemsData?.data?.data || [])).map(formatItem);
 
   const steaks = [
     { id: 1, name: "Grilled chicken pieces", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/happypricing-1.png" },
@@ -298,17 +321,11 @@ export default function MenuPage() {
     { id: 12, name: "Chateaubriand", price: "£39.99", oldPrice: "£52.00", rating: "4.5", image: "/customer/most-popular-8.png" },
   ];
 
-  const happyHourItems = activeTagId
-    ? (activeTagDetails && activeTagDetails.is_happy_hour_eligible === 1 ? [formatItem(activeTagDetails)] : [])
-    : happyHourMenuItemsData?.data
-      ? happyHourMenuItemsData.data.map(formatItem)
-      : [];
+  const happyHourRaw = Array.isArray(happyHourMenuItemsData?.data) ? happyHourMenuItemsData.data : (happyHourMenuItemsData?.data?.data || []);
+  const happyHourItems = happyHourRaw.map(formatItem);
 
-  const popularItems = activeTagId
-    ? (activeTagDetails ? [formatItem(activeTagDetails)].filter((item: any) => item.id) : [])
-    : popularMenuItemsData?.data
-      ? popularMenuItemsData.data.map(formatItem)
-      : [];
+  const popularRaw = Array.isArray(popularMenuItemsData?.data) ? popularMenuItemsData.data : (popularMenuItemsData?.data?.data || []);
+  const popularItems = popularRaw.map(formatItem);
 
   return (
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none">
@@ -475,6 +492,8 @@ export default function MenuPage() {
 
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Are you hungry...."
                     className="w-full rounded-full py-1 sm:py-2.5 pl-7 sm:pl-9 pr-3 sm:pr-4 text-[9px] sm:text-[13px] text-white placeholder:text-white/50 outline-none focus:ring-1 focus:ring-[#F9671A] whitespace-nowrap"
                     style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}
@@ -488,24 +507,24 @@ export default function MenuPage() {
               </div>
             </div>
 
-            {/* Tags */}
+            {/* Subcategories (Tags) */}
             <div className="flex items-center gap-3 mb-6 overflow-x-auto scrollbar-hide pb-2">
               <button
-                onClick={() => setActiveTagId(null)}
+                onClick={() => setActiveSubcategory('all')}
                 className={`px-5 py-2.5 min-w-max rounded-full text-[14px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                  activeTagId === null
+                  activeSubcategory === 'all'
                     ? "bg-white text-black shadow-md"
                     : "bg-[#212124] text-white hover:bg-[#2a2a2c] border border-white/5"
                 }`}
               >
                 All Items
               </button>
-              {apiMenuItems.map((item: any) => (
+              {subcategoriesList.map((item: any) => (
                 <button
-                  key={item.id}
-                  onClick={() => setActiveTagId(item.id)}
+                  key={`sub-${item.id}`}
+                  onClick={() => setActiveSubcategory(item.name)}
                   className={`px-5 py-2.5 min-w-max rounded-full text-[14px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                    activeTagId === item.id
+                    activeSubcategory === item.name
                       ? "bg-white text-black shadow-md"
                       : "bg-[#212124] text-white hover:bg-[#2a2a2c] border border-white/5"
                   }`}

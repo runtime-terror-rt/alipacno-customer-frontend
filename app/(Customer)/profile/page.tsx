@@ -2,26 +2,106 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
-import { useLogoutMutation } from "../../../redux/features/api/authApi";
+import { useLogoutMutation, useGetMeQuery, useUpdateUserMutation } from "../../../redux/features/api/authApi";
 
 export default function ProfilePage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [logoutApi] = useLogoutMutation();
+  const { data: meRes, isLoading: isMeLoading } = useGetMeQuery();
+  const user = meRes?.user || meRes?.data || meRes;
+  const [updateUserApi, { isLoading: isUpdating }] = useUpdateUserMutation();
+
   const [activeCategory, setActiveCategory] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [coverPhoto, setCoverPhoto] = useState("/customer/cover-image.png");
   const [profilePhoto, setProfilePhoto] = useState("/customer/profile.png");
+  const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Form states
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    country: "UK",
+    post_code: "NW1 6XE",
+    city: "London",
+    address_line_1: "221B Baker Street",
+    address_line_2: "Marylebone",
+  });
+
+  useEffect(() => {
+    if (user) {
+      const getImageUrl = (path: string) => {
+        if (!path) return "";
+        if (path.startsWith("http")) return path;
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.pacinos.uk";
+        return `${baseUrl}/storage/${path}`;
+      };
+
+      if (user.avatar) setProfilePhoto(getImageUrl(user.avatar));
+      if (user.user_image) setCoverPhoto(getImageUrl(user.user_image));
+
+      const defaultAddress = user.addresses?.[0] || {};
+      setFormData((prev) => ({
+        ...prev,
+        name: user.name || "",
+        phone: user.phone || "",
+        email: user.email || "",
+        country: defaultAddress.country || "UK",
+        post_code: defaultAddress.postal_code || defaultAddress.post_code || "NW1 6XE",
+        city: defaultAddress.city || "London",
+        address_line_1: defaultAddress.address_line_1 || "221B Baker Street",
+        address_line_2: defaultAddress.address_line_2 || "Marylebone",
+      }));
+    }
+  }, [user]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const hasFiles = coverPhotoFile || profilePhotoFile;
+      let payload: any = {};
+      
+      if (hasFiles) {
+        payload = new FormData();
+        if (formData.name) payload.append("name", formData.name);
+        if (formData.email) payload.append("email", formData.email);
+        if (formData.phone) payload.append("phone", formData.phone);
+        if (profilePhotoFile) payload.append("avatar", profilePhotoFile);
+        if (coverPhotoFile) payload.append("user_image", coverPhotoFile);
+      } else {
+        if (formData.name) payload.name = formData.name;
+        if (formData.email) payload.email = formData.email;
+        if (formData.phone) payload.phone = formData.phone;
+      }
+
+      await updateUserApi({ id: user.id, data: payload }).unwrap();
+      setIsEditing(false);
+      setCoverPhotoFile(null);
+      setProfilePhotoFile(null);
+    } catch (error) {
+      console.error("Failed to update profile", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setCoverPhotoFile(file);
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         if (uploadEvent.target?.result) {
@@ -29,12 +109,24 @@ export default function ProfilePage() {
         }
       };
       reader.readAsDataURL(file);
+      
+      if (!isEditing && user?.id) {
+        try {
+          const payload = new FormData();
+          payload.append("user_image", file);
+          await updateUserApi({ id: user.id, data: payload }).unwrap();
+          setCoverPhotoFile(null);
+        } catch (error) {
+          console.error("Failed to update cover photo", error);
+        }
+      }
     }
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setProfilePhotoFile(file);
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         if (uploadEvent.target?.result) {
@@ -42,6 +134,17 @@ export default function ProfilePage() {
         }
       };
       reader.readAsDataURL(file);
+      
+      if (!isEditing && user?.id) {
+        try {
+          const payload = new FormData();
+          payload.append("avatar", file);
+          await updateUserApi({ id: user.id, data: payload }).unwrap();
+          setProfilePhotoFile(null);
+        } catch (error) {
+          console.error("Failed to update profile photo", error);
+        }
+      }
     }
   };
 
@@ -294,7 +397,7 @@ export default function ProfilePage() {
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13.5px] font-medium text-white">Name</label>
-                  <input defaultValue="Charles Deo" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input name="name" value={formData.name} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -304,39 +407,39 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13.5px] font-medium text-white">Phone Number</label>
-                    <input defaultValue="+1 0123456789" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <input name="phone" value={formData.phone} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13.5px] font-medium text-white">Email</label>
-                  <input defaultValue="Mehrabbozorgi.business@gmail.com" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13.5px] font-medium text-white">Country</label>
-                  <input defaultValue="UK" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input name="country" value={formData.country} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13.5px] font-medium text-white">Post code</label>
-                    <input defaultValue="NW1 6XE" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <input name="post_code" value={formData.post_code} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13.5px] font-medium text-white">City</label>
-                    <input defaultValue="London" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <input name="city" value={formData.city} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13.5px] font-medium text-white">Address line 1</label>
-                  <input defaultValue="221B Baker Street" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input name="address_line_1" value={formData.address_line_1} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13.5px] font-medium text-white">Address line 2</label>
-                  <input defaultValue="Marylebone" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                  <input name="address_line_2" value={formData.address_line_2} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
                 </div>
 
                 <h3 className="text-[17px] font-bold text-white mb-1 mt-6">Payment Information</h3>
@@ -361,8 +464,8 @@ export default function ProfilePage() {
                   <button onClick={() => setIsEditing(false)} className="border border-[#F9671A]/50 text-[#F9671A] hover:bg-[#F9671A]/10 text-[14px] font-bold px-8 py-3.5 rounded-full transition-colors flex-1 cursor-pointer">
                     Cancel
                   </button>
-                  <button onClick={() => setIsEditing(false)} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[14px] font-bold px-8 py-3.5 rounded-full transition-colors shadow-lg shadow-orange-600/20 flex-1 cursor-pointer">
-                    Save Changes
+                  <button onClick={handleSaveProfile} disabled={isUpdating} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[14px] font-bold px-8 py-3.5 rounded-full transition-colors shadow-lg shadow-orange-600/20 flex-1 cursor-pointer">
+                    {isUpdating ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </div>
@@ -421,7 +524,7 @@ export default function ProfilePage() {
               {/* Profile Info & Edit Button */}
               <div className="flex justify-between items-center lg:items-start mb-8 lg:mb-10 px-2 mt-4 lg:mt-0">
                 <div className="lg:pl-[240px] lg:-mt-5 flex-1 min-w-0 pr-4">
-                  <h2 className="text-[20px] lg:text-[28px] font-bold text-[#F9671A] leading-tight truncate">Charles Deo</h2>
+                  <h2 className="text-[20px] lg:text-[28px] font-bold text-[#F9671A] leading-tight truncate">{user?.name || "Loading..."}</h2>
                   <p className="text-[13px] lg:text-[15px] text-zinc-400 italic">Food Lover</p>
                 </div>
                 <button onClick={() => setIsEditing(true)} className="border border-[#F9671A]/30 text-[#F9671A] hover:bg-[#F9671A]/10 text-[12px] lg:text-[13px] font-bold px-4 py-2 lg:px-6 lg:py-2.5 rounded-full flex items-center gap-1.5 transition-colors flex-shrink-0">
@@ -444,15 +547,15 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex items-center gap-4 text-zinc-400 pb-5 border-b border-white/5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                      <span className="text-[14px]">Phone:+1 0123456789</span>
+                      <span className="text-[14px]">Phone: {user?.phone || "N/A"}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-zinc-400 pb-5 border-b border-white/5">
+                    <div className="flex items-center gap-4 text-zinc-400">
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-                      <span className="text-[14px]">Email:exmple@gmail.com</span>
+                      <span className="text-[14px]">Email: {user?.email || "N/A"}</span>
                     </div>
                     <div className="flex items-center gap-4 text-zinc-400">
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                      <span className="text-[14px]">Address: 7 Elm Street, Woodstock, OX7 1ER</span>
+                      <span className="text-[14px]">Address: {user?.addresses?.[0]?.address ? `${user.addresses[0].address}, ${user.addresses[0].postcode || ''}` : "N/A"}</span>
                     </div>
                   </div>
                 </div>
