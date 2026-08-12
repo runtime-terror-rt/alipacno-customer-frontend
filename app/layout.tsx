@@ -38,7 +38,31 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ReduxProvider>{children}</ReduxProvider>
-        <Toaster position="top-right" />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            className: 'text-sm font-medium',
+            style: {
+              borderRadius: '12px',
+              background: '#2a2a2c',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
+            },
+            success: {
+              iconTheme: {
+                primary: '#f9671a',
+                secondary: '#ffffff',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#ffffff',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

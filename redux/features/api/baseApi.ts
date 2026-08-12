@@ -8,8 +8,8 @@ export const baseApi = createApi({
     prepareHeaders: (headers, { getState, endpoint }) => {
       console.log("Preparing headers for API call, endpoint:", endpoint);
 
-      // Skip auth header for login and register endpoints
-      if (endpoint === "login" || endpoint === "register") {
+      // Skip auth header for login, register and getPages endpoints
+      if (endpoint === "login" || endpoint === "register" || endpoint === "getPages") {
         console.log(`Skipping authorization header for ${endpoint}`);
       } else {
         const token = (getState() as RootState).auth.token;
@@ -41,6 +41,8 @@ export const baseApi = createApi({
     "Profile",
     "Cart",
     "Orders",
+    "Wishlist",
+    "Pages"
   ], // Kept minimal as requested ("unnessecery jeno kicu na thake"), you can add more when needed.
 
   endpoints: () => ({}),
