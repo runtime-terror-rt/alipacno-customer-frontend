@@ -9,9 +9,12 @@ import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi
 import { useGetSubcategoriesQuery } from "../../../redux/features/api/subcategoriesApi";
 import { useGetMenuItemsQuery, useGetMenuItemQuery } from "../../../redux/features/api/menuItemsApi";
 import { useGetCartQuery, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
+import { useGetWishlistQuery, useToggleWishlistMutation } from "../../../redux/features/api/wishlistApi";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation } from "../../../redux/features/api/authApi";
+import { toast } from "react-hot-toast";
+import Header from "../components/Header";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -57,6 +60,29 @@ export default function MenuPage() {
   const [addCartItemMut] = useAddCartItemMutation();
   const [updateCartItemMut] = useUpdateCartItemMutation();
   const [removeCartItemMut] = useRemoveCartItemMutation();
+
+  const { data: wishlistData } = useGetWishlistQuery();
+  const [toggleWishlistMut] = useToggleWishlistMutation();
+
+  const wishlistItems = Array.isArray(wishlistData?.data) ? wishlistData.data : (wishlistData?.data?.data || []);
+
+  const isWishlisted = (id: number) => wishlistItems.some((item: any) => item.menu_item_id === id);
+
+  const toggleWishlist = async (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    const wasWishlisted = isWishlisted(item.id);
+    try {
+      await toggleWishlistMut({ menu_item_id: item.id }).unwrap();
+      if (wasWishlisted) {
+        toast.success(`${item.name} removed from wishlist!`);
+      } else {
+        toast.success(`${item.name} added to wishlist!`);
+      }
+    } catch (error) {
+      console.error("Failed to toggle wishlist", error);
+      toast.error("Failed to update wishlist");
+    }
+  };
 
   const cartItems = (cartData?.items || cartData?.data?.items || []).map((item: any) => {
     const descArr = [
@@ -239,8 +265,9 @@ export default function MenuPage() {
     setActiveTagId(null);
   }, [activeCategoryId]);
 
-  const { data: subcategoriesData } = useGetSubcategoriesQuery({});
-  const subcategoriesList = Array.isArray(subcategoriesData?.data) ? subcategoriesData.data : (subcategoriesData?.data?.data || []);
+  const { data: subcategoriesData } = useGetSubcategoriesQuery({ all: 1 });
+  const subcategoriesListRaw = Array.isArray(subcategoriesData?.data) ? subcategoriesData.data : (subcategoriesData?.data?.data || []);
+  const subcategoriesList = subcategoriesListRaw.filter((s: any) => s.category_id === activeCategoryId);
 
   const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery(
     { 
@@ -386,70 +413,22 @@ export default function MenuPage() {
       {/* Main Column */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-[70px] flex-shrink-0 border-b border-white/5 bg-[#1E1E20] flex items-center justify-between px-4 sm:px-8 z-10">
-          <div className="flex items-center gap-2">
-            <div className="lg:hidden flex-shrink-0 mr-2">
-              <Link href="/home">
-                <Image src="/logo.png" alt="Logo" width={75} height={42} priority className="object-contain" />
-              </Link>
+        <Header 
+          onProductClick={(product) => setSelectedProduct(product)} 
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
+        />
+          <header className="h-[70px] flex items-center justify-between px-6 border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <h1 className="text-[20px] font-bold">Menu</h1>
             </div>
-            <div className="hidden lg:flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
-              <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+            <div className="flex items-center gap-4">
+              <button 
+                className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+              </button>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-5">
-            <button className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.3-4.3"></path>
-              </svg>
-            </button>
-            <button className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-              </svg>
-            </button>
-            <button className="relative text-zinc-400 hover:text-white transition-colors cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
-              </svg>
-              <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">1</span>
-            </button>
-            <button onClick={() => router.push("/my-orders")} className="relative text-zinc-400 hover:text-white transition-colors cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                <path d="M3 6h18"></path>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
-              </svg>
-              <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
-            </button>
-
-            <div onClick={() => router.push("/profile")} className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-white/10 cursor-pointer group">
-              <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors hidden sm:inline">Charles Deo</span>
-              <div className="w-8 h-8 rounded-full bg-zinc-700 overflow-hidden relative border border-white/10 group-hover:border-[#F9671A]/30 transition-colors">
-                <Image src="/customer/profile.png" alt="Avatar" fill className="object-cover" />
-              </div>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:text-white transition-colors hidden sm:inline">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
-
-            {/* Burger Menu Trigger */}
-            <button
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-            </button>
-          </div>
-        </header>
+          </header>
 
         {/* Mobile Delivery Bar - Only visible on lg:hidden */}
         <div className="flex items-center gap-2 px-6 py-3 bg-[#1E1E20] border-b border-white/5 lg:hidden">
@@ -596,8 +575,10 @@ export default function MenuPage() {
                       <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
                         <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
                       </div>
-                      <button className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors text-white shadow-lg cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                      <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors shadow-lg cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isWishlisted(item.id) ? "#F9671A" : "currentColor"} stroke={isWishlisted(item.id) ? "#F9671A" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isWishlisted(item.id) ? "text-[#F9671A]" : "text-white"}>
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                        </svg>
                       </button>
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
                     </div>

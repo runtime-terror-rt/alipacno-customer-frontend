@@ -36,11 +36,6 @@ export default function SignUp() {
       return;
     }
 
-    if (!optIn) {
-      toast.error("You must agree to opt in to marketing permissions.");
-      return;
-    }
-
     try {
       const payload = {
         ...formData,
@@ -48,6 +43,7 @@ export default function SignUp() {
         role_id: 8,
         avatar: "",
         user_image: "",
+        terms_accepted: optIn,
       };
 
       const res = await registerApi(payload).unwrap();
@@ -229,7 +225,7 @@ export default function SignUp() {
                   className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-[#FFA175] accent-[#FFA175] checked:bg-[#FFA175] focus:ring-0 focus:ring-offset-0 transition-all shrink-0"
                 />
                 <span className="text-[#FFF7F3]/50 text-left text-base font-normal leading-normal transition-colors duration-300 group-hover:text-white/80">
-                 I agree to opt in to marketing permissions.
+                 I agree to the <Link href="/terms-conditions" className="text-[#F9671A] hover:underline">Terms & Conditions</Link>.
                 </span>
               </label>
             </div>
