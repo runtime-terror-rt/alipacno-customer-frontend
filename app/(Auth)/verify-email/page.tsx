@@ -13,6 +13,7 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const email = searchParams.get("email") || "";
+  const type = searchParams.get("type");
   
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -163,7 +164,11 @@ function VerifyEmailContent() {
                 }
                 
                 toast.success(res?.message || "OTP Verified Successfully!");
-                router.push('/home');
+                if (type === "forgot-password") {
+                  router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+                } else {
+                  router.push('/home');
+                }
               } catch (err: any) {
                 toast.error(err?.data?.message || "OTP verification failed. Please try again.");
               }
@@ -195,7 +200,7 @@ function VerifyEmailContent() {
                   return;
                 }
                 try {
-                  const res = await resendOtp({ email, type: "registration" }).unwrap();
+                  const res = await resendOtp({ email, type: type === "forgot-password" ? "forgot_password" : "registration" }).unwrap();
                   toast.success(res?.message || "OTP resent successfully!");
                 } catch (err: any) {
                   toast.error(err?.data?.message || "Failed to resend OTP.");

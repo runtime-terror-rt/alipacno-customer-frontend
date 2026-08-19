@@ -68,6 +68,28 @@ export default function Login() {
         />
       </div>
 
+      {/* Back to Home — top-left floating pill */}
+      <div className="absolute top-5 left-5 z-50">
+        <Link
+          href="/"
+          className="group flex items-center gap-2 bg-white/5 hover:bg-[#F9671A]/15 border border-white/10 hover:border-[#F9671A]/40 text-zinc-400 hover:text-white text-sm font-medium px-4 py-2 rounded-full backdrop-blur-sm transition-all duration-300"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-0.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Back to Home
+        </Link>
+      </div>
+
       {/* Left Section: Visuals (50%) — hidden on mobile */}
       <div className="hidden md:flex flex-none md:flex-1 relative items-center justify-center p-4 md:p-8 z-10 h-[220px] md:h-auto">
         {/* Main Product Image */}

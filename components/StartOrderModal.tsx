@@ -2,14 +2,40 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppSelector } from "../redux/hooks";
+import { useCreateCartMutation } from "../redux/features/api/cartApi";
+import { useGetBranchesQuery } from "../redux/features/api/branchesApi";
 
-export default function StartOrderModal({ onClose }: { onClose: () => void }) {
+const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
+  try {
+    // Using a free, reliable IP geolocation service (no API key or permissions needed)
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const data = await response.json();
+    if (data && data.latitude && data.longitude) {
+      return {
+        latitude: parseFloat(data.latitude),
+        longitude: parseFloat(data.longitude),
+      };
+    }
+  } catch (error) {
+    console.error("Failed to get location silently:", error);
+  }
+  return null;
+};
+
+export default function StartOrderModal({ onClose, initialMode }: { onClose: () => void, initialMode: string }) {
   const [postcode, setPostcode] = useState("");
-  const [mode] = useState<"delivery" | "collection">("delivery");
   const [error, setError] = useState("");
   const [closing, setClosing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  
+  const router = useRouter();
+  const { token } = useAppSelector((state) => state.auth);
+  const [createCart] = useCreateCartMutation();
+  const { data: branchesResponse } = useGetBranchesQuery();
 
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
@@ -50,22 +76,68 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  function handleStart(modeParam?: "delivery" | "collection") {
-    const chosenMode = modeParam ?? mode;
+  async function handleStart() {
+    if (isProcessing) return;
     const trimmed = postcode.trim();
     if (trimmed.length === 0) {
       setError("Please enter your postcode");
       inputRef.current?.focus();
       return;
     }
-    // Do not persist postcode or mode so the popup will reappear on reload
-    setClosing(true);
-    setTimeout(() => onClose(), 180);
+
+    setIsProcessing(true);
+    let location = { latitude: null as number | null, longitude: null as number | null };
+    try {
+      const loc = await getLocationSilently();
+      if (loc) {
+        location.latitude = loc.latitude;
+        location.longitude = loc.longitude;
+      }
+    } catch (err) {
+      console.error("Silent location fetch failed:", err);
+    }
+
+    const branches = branchesResponse?.data || [];
+    const branchId = branches.length > 0 ? branches[0].id : 1;
+
+    try {
+      const payload = {
+        order_type: initialMode,
+        delivery_postcode: trimmed,
+        branch_id: branchId,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      };
+      
+      console.log("Sending payload to /api/v1/carts:", payload);
+
+      const result = await createCart(payload).unwrap();
+      
+      // Save cart_id to localStorage for later use when adding items
+      const cartId = result?.data?.id || result?.id;
+      if (cartId) {
+        localStorage.setItem("cart_id", String(cartId));
+      }
+
+      setClosing(true);
+      setTimeout(() => {
+        onClose();
+        if (token) {
+          router.push("/menu");
+        } else {
+          router.push("/phone-login");
+        }
+      }, 180);
+    } catch (err) {
+      console.error("Failed to create cart:", err);
+      setError("Failed to start order. Please try again.");
+      setIsProcessing(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className={`absolute inset-0 bg-black/60 transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} />
+      <div className={`absolute inset-0 bg-black/60 transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} onClick={onClose} />
 
       <div
         ref={dialogRef}
@@ -79,7 +151,6 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
           <Image src="/logo.png" alt="logo" width={84} height={56} className="w-full h-full" />
         </div>
         <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl md:text-2xl mb-4">START YOUR <br />ORDER</h3>
-
 
         <div className="mb-6 text-left">
           <input
@@ -103,19 +174,13 @@ export default function StartOrderModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex gap-3 mb-4">
           <button
-            onClick={() => handleStart("collection")}
-            className={`flex-1 py-2 text-sm md:text-base rounded-full ${"bg-[#36363A] text-white"}`}
+            onClick={() => handleStart()}
+            disabled={isProcessing}
+            className={`flex-1 py-2 text-sm md:text-base rounded-full bg-[#F9671A] text-white ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            Collection
-          </button>
-          <button
-            onClick={() => handleStart("delivery")}
-            className={`flex-1 py-2 text-sm md:text-base rounded-full ${"bg-[#F9671A] text-white"}`}
-          >
-            Delivery
+            {isProcessing ? 'Processing...' : 'Continue'}
           </button>
         </div>
-
 
       </div>
     </div>

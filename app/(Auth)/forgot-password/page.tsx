@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     try {
       const res = await forgotPassword({ email }).unwrap();
       toast.success(res?.message || "Verification code sent to your email.");
-      router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      router.push(`/verify-email?email=${encodeURIComponent(email)}&type=forgot-password`);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong. Please try again.");
     }
