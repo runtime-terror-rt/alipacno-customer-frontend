@@ -13,7 +13,6 @@ function ResetPasswordContent() {
   const email = searchParams.get("email") || "";
 
   const [formData, setFormData] = useState({
-    otp: "",
     password: "",
     password_confirmation: "",
   });
@@ -43,8 +42,8 @@ function ResetPasswordContent() {
         ...formData,
       };
       const res = await resetPassword(payload).unwrap();
-      toast.success(res?.message || "Password reset successful! Please log in.");
-      router.push("/login");
+      toast.success(res?.message || "Password reset successful!");
+      router.push("/home");
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong. Please try again.");
     }
@@ -114,22 +113,6 @@ function ResetPasswordContent() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* OTP */}
-            <div>
-              <label className="block text-base font-medium text-white leading-[24px] mb-2" htmlFor="otp">
-                Verification Code (OTP)
-              </label>
-              <input
-                type="text"
-                id="otp"
-                name="otp"
-                value={formData.otp}
-                onChange={handleChange}
-                placeholder="Enter 5-digit code"
-                className="w-full bg-[#303031] border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F9671A]/50 transition-all duration-300"
-                required
-              />
-            </div>
 
             {/* New Password */}
             <div>

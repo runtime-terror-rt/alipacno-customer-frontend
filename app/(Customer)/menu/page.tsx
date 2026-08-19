@@ -34,14 +34,12 @@ export default function MenuPage() {
   const [selectedCookingPref, setSelectedCookingPref] = useState<any>(null);
   const [selectedSpiceLevel, setSelectedSpiceLevel] = useState<any>(null);
   const [selectedToppings, setSelectedToppings] = useState<any[]>([]);
-  const [specialInstructions, setSpecialInstructions] = useState("");
 
   useEffect(() => {
     setSelectedSize(null);
     setSelectedCookingPref(null);
     setSelectedSpiceLevel(null);
     setSelectedToppings([]);
-    setSpecialInstructions("");
   }, [selectedProduct]);
 
   const handleLogout = async () => {
@@ -98,7 +96,7 @@ export default function MenuPage() {
       menuItemId: item.menu_item_id,
       name: (item.menu_item || item.menuItem)?.name,
       desc: descArr.join(' | '),
-      price: parseFloat(item.unit_price || (item.menu_item || item.menuItem)?.price || 0),
+      price: parseFloat(item.total_price || (item.unit_price ? parseFloat(item.unit_price) * item.quantity : 0) || (item.menu_item || item.menuItem)?.price || 0),
       qty: item.quantity,
       image: (item.menu_item || item.menuItem)?.image_url || "/placeholder.png",
     };
@@ -106,9 +104,21 @@ export default function MenuPage() {
 
   const addToCart = async (item: any, explicitQty: number = 1, options: any = {}) => {
     try {
-      const cartId = cartData?.id || cartData?.data?.id;
+      // Read cart_id from localStorage (saved when cart was created on home page)
+      let cartId = null;
+      if (typeof window !== "undefined") {
+        const local = localStorage.getItem("cart_id");
+        if (local && local !== "undefined" && local !== "null") {
+          cartId = parseInt(local);
+        }
+      }
+      if (!cartId || isNaN(cartId)) {
+        cartId = cartData?.id || cartData?.data?.id;
+      }
+      
       if (!cartId) {
-        console.error("Cart not initialized yet");
+        console.error("Cart not initialized yet — please go back to home and select an order type.");
+        toast.error("No active cart. Please start a new order from home.");
         return;
       }
 
@@ -120,7 +130,6 @@ export default function MenuPage() {
         cooking_preference_id: options.cooking_preference_id,
         spice_level_id: options.spice_level_id,
         toppings: options.toppings,
-        special_instructions: options.special_instructions
       }).unwrap();
       
       refetchCart();
@@ -733,7 +742,15 @@ export default function MenuPage() {
                     <span>Estimated Time: <span className="text-[#F9671A]">25-30 mins</span></span>
                   </div>
                   <p className="text-[13px] text-zinc-400 leading-relaxed mb-4">Premium center-cut filet mignon grilled to perfection with garlic herb butter. Tender, juicy, and rich in flavor.</p>
-                  <div className="text-[24px] font-extrabold text-[#F9671A]">{selectedProduct.price}</div>
+                  <div className="text-[24px] font-extrabold text-[#F9671A]">
+                    {(() => {
+                      const basePrice = parseFloat((selectedProduct.price || "").replace('£', '')) || 0;
+                      const sizeExtra = selectedSize ? parseFloat(selectedSize.extra_price || 0) : 0;
+                      const toppingsExtra = selectedToppings.reduce((sum: number, t: any) => sum + parseFloat(t.price || 0), 0);
+                      const unitPrice = basePrice + sizeExtra + toppingsExtra;
+                      return `£${unitPrice.toFixed(2)}`;
+                    })()}
+                  </div>
                 </div>
               </div>
 
@@ -832,16 +849,7 @@ export default function MenuPage() {
 
 
 
-              {/* Special Instructions */}
-              <div>
-                <h3 className="text-[16px] font-bold text-white mb-4">Special Instructions</h3>
-                <textarea
-                  value={specialInstructions}
-                  onChange={(e) => setSpecialInstructions(e.target.value)}
-                  placeholder="Any special requests?"
-                  className="w-full bg-[#212124] border border-white/5 rounded-2xl p-4 text-[13px] text-white placeholder-zinc-500 outline-none focus:border-[#F9671A]/50 transition-colors resize-none h-[100px]"
-                ></textarea>
-              </div>
+
             </div>
 
             {/* Footer */}
@@ -862,7 +870,6 @@ export default function MenuPage() {
                     cooking_preference_id: selectedCookingPref?.id,
                     spice_level_id: selectedSpiceLevel?.id,
                     toppings: selectedToppings.map((t:any) => t.id),
-                    special_instructions: specialInstructions.trim() || undefined
                   };
                   
                   addToCart(selectedProduct, modalQty, opts);
@@ -870,7 +877,13 @@ export default function MenuPage() {
                 }}
                 className="flex-1 bg-[#F9671A] text-white py-3.5 rounded-full font-bold text-[15px] hover:bg-[#ff7a33] transition shadow-lg shadow-orange-600/20 cursor-pointer "
               >
-                Add to Cart - £{(parseFloat((selectedProduct.price || "").replace('£', '')) * modalQty).toFixed(2)}
+                {(() => {
+                  const basePrice = parseFloat((selectedProduct.price || "").replace('£', '')) || 0;
+                  const sizeExtra = selectedSize ? parseFloat(selectedSize.extra_price || 0) : 0;
+                  const toppingsExtra = selectedToppings.reduce((sum: number, t: any) => sum + parseFloat(t.price || 0), 0);
+                  const total = (basePrice + sizeExtra + toppingsExtra) * modalQty;
+                  return `Add to Cart - £${total.toFixed(2)}`;
+                })()}
               </button>
             </div>
           </div>
