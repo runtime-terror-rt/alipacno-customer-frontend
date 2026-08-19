@@ -6,10 +6,17 @@ export const cartApi = baseApi.injectEndpoints({
       query: () => "/api/v1/carts",
       providesTags: ["Cart"],
     }),
-    createCart: builder.mutation<any, void>({
-      query: () => ({
+    createCart: builder.mutation<any, {
+      order_type: string;
+      delivery_postcode?: string;
+      branch_id: number;
+      latitude?: number | null;
+      longitude?: number | null;
+    }>({
+      query: (body) => ({
         url: "/api/v1/carts",
         method: "POST",
+        body,
       }),
       invalidatesTags: ["Cart"],
     }),
@@ -20,7 +27,6 @@ export const cartApi = baseApi.injectEndpoints({
       size_id?: number;
       cooking_preference_id?: number;
       spice_level_id?: number;
-      special_instructions?: string;
       toppings?: number[];
     }>({
       query: (body) => ({

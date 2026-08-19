@@ -13,5 +13,5 @@ export default function StartOrderClient() {
 
   if (!show) return null;
 
-  return <StartOrderModal onClose={() => setShow(false)} />;
+  return <StartOrderModal onClose={() => setShow(false)} initialMode="delivery" />;
 }

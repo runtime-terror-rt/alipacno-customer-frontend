@@ -4,14 +4,69 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import StartOrderClient from "../../../components/StartOrderClient";
+import StartOrderModal from "../../../components/StartOrderModal";
 import { useAppSelector } from "../../../redux/hooks";
 import { useGetMenuItemsQuery } from "../../../redux/features/api/menuItemsApi";
+import { useCreateCartMutation } from "../../../redux/features/api/cartApi";
+import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
+
+const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
+  try {
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const data = await response.json();
+    if (data && data.latitude && data.longitude) {
+      return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
+    }
+  } catch (e) {}
+  return null;
+};
+
 
 export default function CustomerHome() {
   const router = useRouter();
   const { token } = useAppSelector((state) => state.auth);
   const [selectedMealType, setSelectedMealType] = useState("delivery");
+  const [pendingOrderType, setPendingOrderType] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const [createCart] = useCreateCartMutation();
+  const { data: branchesResponse } = useGetBranchesQuery();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleMealTypeClick = async (mealId: string) => {
+    if (isProcessing) return;
+    setSelectedMealType(mealId);
+
+    if (token) {
+      // Already logged in → skip modal, call API directly and go to menu
+      setIsProcessing(true);
+      const loc = await getLocationSilently();
+      const branches = branchesResponse?.data || [];
+      const branchId = branches.length > 0 ? branches[0].id : 1;
+      try {
+        const result = await createCart({
+          order_type: mealId,
+          branch_id: branchId,
+          latitude: loc?.latitude ?? null,
+          longitude: loc?.longitude ?? null,
+        }).unwrap();
+
+        // Save cart_id to localStorage for later use when adding items
+        const cartId = result?.data?.id || result?.id;
+        if (cartId) {
+          localStorage.setItem("cart_id", String(cartId));
+        }
+      } catch (e) {
+        console.error("Failed to create cart:", e);
+      }
+      setIsProcessing(false);
+      router.push("/menu");
+    } else {
+      // Not logged in → show modal
+      setPendingOrderType(mealId);
+      setShowModal(true);
+    }
+  };
 
   const mealTypes = [
     {
@@ -250,7 +305,12 @@ export default function CustomerHome() {
         backgroundPosition: "center 105px",
       }}
     >
-      {/* <StartOrderClient /> */}
+      {showModal && (
+        <StartOrderModal 
+          initialMode={pendingOrderType} 
+          onClose={() => setShowModal(false)}
+        />
+      )}
 
       {!token && (
         <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-40 flex items-center gap-2">
@@ -358,8 +418,7 @@ export default function CustomerHome() {
                 <div
                   key={meal.id}
                   onClick={() => {
-                    setSelectedMealType(meal.id);
-                    router.push("/menu");
+                    handleMealTypeClick(meal.id);
                   }}
                   className="relative rounded-[20px] p-4 sm:p-5 flex flex-col items-center text-center cursor-pointer transition-all duration-300"
                   style={{
