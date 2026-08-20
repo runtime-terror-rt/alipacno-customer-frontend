@@ -54,6 +54,40 @@ export const cartApi = baseApi.injectEndpoints({
   }),
 });
 
+export function extractCartData(res: any): { cartObj: any; items: any[] } {
+  if (!res) return { cartObj: {}, items: [] };
+
+  let rawCart = res;
+  if (res.data !== undefined) {
+    if (Array.isArray(res.data)) {
+      rawCart = res.data[0] || {};
+    } else {
+      rawCart = res.data;
+    }
+  } else if (Array.isArray(res)) {
+    rawCart = res[0] || {};
+  }
+
+  if (rawCart && rawCart.cart) {
+    rawCart = rawCart.cart;
+  }
+
+  const items = Array.isArray(rawCart?.items)
+    ? rawCart.items
+    : Array.isArray(rawCart?.cart_items)
+    ? rawCart.cart_items
+    : Array.isArray(rawCart?.data?.items)
+    ? rawCart.data.items
+    : Array.isArray(rawCart?.data)
+    ? rawCart.data
+    : [];
+
+  return {
+    cartObj: rawCart || {},
+    items,
+  };
+}
+
 export const {
   useGetCartQuery,
   useCreateCartMutation,

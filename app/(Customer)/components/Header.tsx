@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGetWishlistQuery, useToggleWishlistMutation } from "../../../redux/features/api/wishlistApi";
+import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
+import { useGetOrdersQuery } from "../../../redux/features/api/ordersApi";
+import { useGetMeQuery } from "../../../redux/features/api/authApi";
 import { toast } from "react-hot-toast";
 
 interface HeaderProps {
@@ -15,10 +18,25 @@ interface HeaderProps {
 export default function Header({ onProductClick, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  
+
   const { data: wishlistData } = useGetWishlistQuery();
   const [toggleWishlistMut] = useToggleWishlistMutation();
+  const { data: branchesRes } = useGetBranchesQuery();
+  const { data: ordersRes } = useGetOrdersQuery();
+  const { data: meRes } = useGetMeQuery();
+
   const wishlistItems = Array.isArray(wishlistData?.data) ? wishlistData.data : (wishlistData?.data?.data || []);
+  const branchesList = branchesRes?.data || [];
+  const nearestBranch = branchesList[0]?.name || "Pacino's Eltham";
+
+  const ordersList = ordersRes?.data || [];
+  const activeOrdersCount = ordersList.filter(
+    (o: any) => o.order_status !== "delivered" && o.order_status !== "cancelled"
+  ).length;
+
+  const user = meRes?.user || meRes?.data || meRes || {};
+  const userName = user.name || "Charles Deo";
+  const userAvatar = user.avatar_url || user.avatar || user.user_image_url || "/customer/profile.png";
 
   const getImageUrl = (url: string) => {
     if (!url) return "/placeholder.png";
@@ -50,12 +68,12 @@ export default function Header({ onProductClick, onMenuClick }: HeaderProps) {
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
           <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
-          <span className="text-[#F9671A] text-sm font-semibold ml-1">Cloud Gate (The Bean), Chicago</span>
+          <span className="text-[#F9671A] text-sm font-semibold ml-1">{nearestBranch}</span>
         </div>
       </div>
 
       <div className="flex items-center gap-3 sm:gap-5">
-        <button className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
+        <button onClick={() => router.push("/menu")} className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
@@ -115,13 +133,24 @@ export default function Header({ onProductClick, onMenuClick }: HeaderProps) {
             <path d="M3 6h18"></path>
             <path d="M16 10a4 4 0 0 1-8 0"></path>
           </svg>
-          <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
+          {activeOrdersCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{activeOrdersCount}</span>
+          )}
         </button>
 
         <div onClick={() => router.push("/profile")} className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-white/10 cursor-pointer group">
-          <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors hidden sm:inline">Charles Deo</span>
-          <div className="w-8 h-8 rounded-full bg-zinc-700 overflow-hidden relative border border-white/10 group-hover:border-[#F9671A]/30 transition-colors">
-            <Image src="/customer/profile.png" alt="Avatar" fill className="object-cover" />
+          <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors hidden sm:inline">{userName}</span>
+          <div className="w-8 h-8 rounded-full bg-[#F9671A] text-white font-bold text-xs flex items-center justify-center overflow-hidden relative border border-white/10 group-hover:border-[#F9671A]/30 transition-colors flex-shrink-0">
+            {user.avatar_url || user.avatar || user.user_image_url ? (
+              <Image src={userAvatar} alt="Avatar" fill className="object-cover" />
+            ) : (
+              <span>
+                {(() => {
+                  const parts = userName.trim().split(/\s+/);
+                  return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0]?.substring(0, 2).toUpperCase() || "U";
+                })()}
+              </span>
+            )}
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:text-white transition-colors hidden sm:inline">
             <polyline points="6 9 12 15 18 9"></polyline>

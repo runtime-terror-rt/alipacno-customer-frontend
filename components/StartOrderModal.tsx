@@ -113,11 +113,12 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
 
       const result = await createCart(payload).unwrap();
       
-      // Save cart_id to localStorage for later use when adding items
+      // Save cart_id and user_delivery_address to localStorage for later use
       const cartId = result?.data?.id || result?.id;
       if (cartId) {
         localStorage.setItem("cart_id", String(cartId));
       }
+      localStorage.setItem("user_delivery_address", trimmed);
 
       setClosing(true);
       setTimeout(() => {
