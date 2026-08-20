@@ -140,7 +140,7 @@ export default function CustomerHome() {
       ),
     },
     {
-      id: "dine-in",
+      id: "dine_in",
       title: "Dine-In",
       subtitle: "Reserve a table",
       icon: (
@@ -182,7 +182,7 @@ export default function CustomerHome() {
       ),
     },
     {
-      id: "table-order",
+      id: "table_order",
       title: "Table Order",
       subtitle: "Order from seat",
       icon: (
@@ -240,16 +240,23 @@ export default function CustomerHome() {
   ];
 
   const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 4 });
-  const fetchedPopularDishes = menuResponse?.data || [];
+  const fetchedPopularDishes = Array.isArray(menuResponse?.data) ? menuResponse.data : (menuResponse?.data?.data || []);
+
+  const getImageUrl = (url: string) => {
+    if (!url) return "/placeholder.png";
+    if (url.startsWith("http")) return url;
+    if (url.startsWith("/customer")) return url;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
 
   const popularDishes = fetchedPopularDishes.length > 0 ? fetchedPopularDishes.map((item: any) => ({
     id: item.id,
     name: item.name,
-    price: `£${item.price || 0}`,
+    price: `£${item.discount_price || item.price || 0}`,
     oldPrice: (item.original_price && item.original_price !== item.price) ? `£${item.original_price}` : "", 
     unit: "/portion",
     rating: item.rating ? parseFloat(item.rating).toFixed(1) : "4.5", 
-    image: item.image_url || "/customer/popular-1.png",
+    image: getImageUrl(item.image_url || item.image),
   })) : [
     {
       id: 1,

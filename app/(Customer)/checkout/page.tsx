@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutMap from "@/components/CheckoutMap";
 import { Eye, EyeOff } from "lucide-react";
@@ -14,6 +14,44 @@ import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation } from "../../../redux/features/api/authApi";
 import Header from "../components/Header";
+
+// Haversine formula to calculate distance between two coordinates in km
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
+  try {
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const data = await response.json();
+    if (data && data.latitude && data.longitude) {
+      return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
+    }
+  } catch (e) {}
+  return null;
+};
+
+const geocodeAddress = async (address: string): Promise<{latitude: number, longitude: number} | null> => {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+    }
+  } catch (e) {
+    console.error("Geocoding failed:", e);
+  }
+  return null;
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -29,6 +67,31 @@ export default function CheckoutPage() {
   const [activeBranchId, setActiveBranchId] = useState<number | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [showCvc, setShowCvc] = useState(false);
+  const [userLoc, setUserLoc] = useState<{latitude: number, longitude: number} | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
+
+  const { data: cartData, isLoading: isCartLoading } = useGetCartQuery();
+
+  useEffect(() => {
+    if (isCartLoading) return;
+
+    async function fetchLoc() {
+      // 1. Try to get exact location from the user's provided postcode
+      const postcode = cartData?.data?.delivery_postcode || cartData?.delivery_postcode;
+      if (postcode) {
+        const exactLoc = await geocodeAddress(`${postcode}, Bangladesh`);
+        if (exactLoc) {
+          setUserLoc(exactLoc);
+          return;
+        }
+      }
+
+      // 2. Fallback to GeoJS silently if no postcode exists or geocoding fails
+      const loc = await getLocationSilently();
+      if (loc) setUserLoc(loc);
+    }
+    fetchLoc();
+  }, [cartData, isCartLoading]);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -66,7 +129,42 @@ export default function CheckoutPage() {
   const currentBranch = branches.find((b: any) => b.id === (activeBranchId || branches[0]?.id)) || branches[0];
   const modalSelectedBranch = branches.find((b: any) => b.id === selectedBranchId) || currentBranch;
 
-  const { data: cartData } = useGetCartQuery();
+  useEffect(() => {
+    if (userLoc && branches && branches.length > 0) {
+      let minDistance = Infinity;
+      let closestId = branches[0].id;
+      let calculatedDist = null;
+
+      branches.forEach((b: any) => {
+        if (b.latitude && b.longitude) {
+          const dist = calculateDistance(
+            userLoc.latitude,
+            userLoc.longitude,
+            parseFloat(b.latitude),
+            parseFloat(b.longitude)
+          );
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestId = b.id;
+          }
+          if (currentBranch && b.id === currentBranch.id) {
+            calculatedDist = dist;
+          }
+        }
+      });
+
+      // Automatically select the closest branch if none was manually selected yet
+      if (!activeBranchId && closestId) {
+        setActiveBranchId(closestId);
+        setDistance(minDistance);
+      } else if (calculatedDist !== null) {
+        setDistance(calculatedDist);
+      }
+    } else {
+      setDistance(null);
+    }
+  }, [userLoc, branches, activeBranchId, currentBranch]);
+
   const [createOrderMut, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
 
   const cartItems = (cartData?.items || cartData?.data?.items || []).map((item: any) => {
@@ -304,7 +402,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-4 text-[#d1d1d1] text-[13px]">
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
-                      2.3 km away
+                      {distance !== null ? `${distance.toFixed(1)} km away` : "Locating..."}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
@@ -329,7 +427,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-6 mt-1.5 text-zinc-400 text-[12px]">
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
-                      2.3 km away
+                      {distance !== null ? `${distance.toFixed(1)} km away` : "Locating..."}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
@@ -483,8 +581,13 @@ export default function CheckoutPage() {
               <div className="border-b border-white/5 pb-3">
                 <h3 className="text-[17px] font-bold text-white">Map Location</h3>
               </div>
-              <div className="w-full h-[180px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
-                <CheckoutMap />
+              <div className="w-full h-[250px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
+                <CheckoutMap 
+                  distance={distance} 
+                  userLoc={userLoc} 
+                  branches={branches} 
+                  closestBranchId={currentBranch?.id} 
+                />
               </div>
             </div>
 
