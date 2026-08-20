@@ -16,6 +16,44 @@ import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/au
 import Header from "../components/Header";
 import { toast } from "react-hot-toast";
 
+// Haversine formula to calculate distance between two coordinates in km
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
+  try {
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const data = await response.json();
+    if (data && data.latitude && data.longitude) {
+      return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
+    }
+  } catch (e) {}
+  return null;
+};
+
+const geocodeAddress = async (address: string): Promise<{latitude: number, longitude: number} | null> => {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+    }
+  } catch (e) {
+    console.error("Geocoding failed:", e);
+  }
+  return null;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();

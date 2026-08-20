@@ -62,58 +62,163 @@ export default function CheckoutMap({
       {/* Background */}
       <rect width="680" height="450" fill="#3b3b3f" />
 
-      {/* Horizontal roads */}
-      <rect x="0" y="104" width="680" height="27" fill="#47474b" />
-      <rect x="0" y="212" width="680" height="27" fill="#47474b" />
-      <rect x="0" y="301" width="680" height="27" fill="#47474b" />
+import { useMemo, useCallback } from "react";
+import { GoogleMap, useJsApiLoader, OverlayView, Polyline } from '@react-google-maps/api';
 
-      {/* Vertical roads */}
-      <rect x="129" y="0" width="27" height="450" fill="#47474b" />
-      <rect x="314" y="0" width="27" height="450" fill="#47474b" />
-      <rect x="498" y="0" width="27" height="450" fill="#47474b" />
+const mapStyles = [
+  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#d59563" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#d59563" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#263c3f" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#6b9a76" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#38414e" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#212a37" }],
+  },
+  {
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9ca5b3" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#746855" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1f2835" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#f3d19c" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "geometry",
+    stylers: [{ color: "#2f3948" }],
+  },
+  {
+    featureType: "transit.station",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#d59563" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#17263c" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#515c6d" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.stroke",
+    stylers: [{ color: "#17263c" }],
+  },
+];
 
-      {/* City blocks — Row 1 */}
-      <rect x="0" y="0" width="127" height="102" rx="3" fill="#444447" />
-      <rect x="158" y="0" width="154" height="102" rx="3" fill="#444447" />
-      <rect x="343" y="0" width="153" height="102" rx="3" fill="#444447" />
-      <rect x="527" y="0" width="153" height="102" rx="3" fill="#444447" />
+function calcDist(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
-      {/* City blocks — Row 2 */}
-      <rect x="0" y="133" width="127" height="77" rx="3" fill="#444447" />
-      <rect x="158" y="133" width="154" height="77" rx="3" fill="#444447" />
-      <rect x="343" y="133" width="153" height="77" rx="3" fill="#444447" />
-      <rect x="527" y="133" width="153" height="77" rx="3" fill="#3e3e42" />
+export default function CheckoutMap({
+  distance,
+  userLoc,
+  branches,
+  closestBranchId
+}: {
+  distance?: number | null;
+  userLoc?: { latitude: number; longitude: number } | null;
+  branches?: any[];
+  closestBranchId?: number | null;
+}) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+  });
 
-      {/* City blocks — Row 3 */}
-      <rect x="0" y="241" width="127" height="58" rx="3" fill="#444447" />
-      <rect x="158" y="241" width="154" height="58" rx="3" fill="#3e3e42" />
-      <rect x="343" y="241" width="153" height="58" rx="3" fill="#444447" />
-      <rect x="527" y="241" width="153" height="58" rx="3" fill="#444447" />
+  const center = useMemo(() => {
+    if (userLoc) return { lat: userLoc.latitude, lng: userLoc.longitude };
+    return { lat: 40.7128, lng: -74.0060 }; // Default
+  }, [userLoc]);
 
-      {/* City blocks — Row 4 */}
-      <rect x="0" y="330" width="127" height="30" rx="3" fill="#444447" />
-      <rect x="158" y="330" width="154" height="30" rx="3" fill="#444447" />
-      <rect x="343" y="330" width="153" height="30" rx="3" fill="#444447" />
-      <rect x="527" y="330" width="153" height="30" rx="3" fill="#444447" />
+  // Create formatted branches
+  const markers = useMemo(() => {
+    if (!branches) return [];
+    
+    let minDistance = Infinity;
+    let actualClosestId: any = null;
 
-      {/* Orange dashed route */}
-      <polyline
-        points="64,44 64,104 327,104 327,212 562,212 562,294"
-        fill="none"
-        stroke="#F96A1C"
-        strokeWidth="5"
-        strokeDasharray="12,9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    const mapped = branches.filter(b => b.latitude && b.longitude).map((b, i) => {
+      const lat = parseFloat(b.latitude);
+      const lng = parseFloat(b.longitude);
+      let dist = null;
+      if (userLoc) {
+        dist = calcDist(userLoc.latitude, userLoc.longitude, lat, lng);
+        if (dist < minDistance) {
+          minDistance = dist;
+          actualClosestId = b.id;
+        }
+      }
+      return {
+        ...b,
+        lat,
+        lng,
+        dist,
+        number: i + 1
+      };
+    });
 
-      {/* Store pin — shadow */}
-      <ellipse cx="64" cy="90" rx="16" ry="5" fill="#000" opacity="0.25" />
+    return mapped.map(b => ({
+      ...b,
+      isClosest: userLoc ? b.id === actualClosestId : b.id === closestBranchId
+    }));
+  }, [branches, closestBranchId, userLoc]);
 
-      {/* Store pin — orange circle background */}
-      <circle cx="64" cy="48" r="30" fill="#F96A1C" />
-      {/* Store pin — pointer triangle */}
-      <polygon points="64,78 54,88 74,88" fill="#F96A1C" />
+  const onLoad = useCallback(function callback(map: google.maps.Map) {
+    if (userLoc && markers.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend({ lat: userLoc.latitude, lng: userLoc.longitude });
+      markers.forEach(m => bounds.extend({ lat: m.lat, lng: m.lng }));
+      map.fitBounds(bounds);
+    }
+  }, [userLoc, markers]);
 
       {/* Store icon */}
       <g transform="translate(46.5, 30.5) scale(2.5)">
