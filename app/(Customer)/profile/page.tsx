@@ -311,8 +311,18 @@ export default function ProfilePage() {
 
               {/* Avatar Section */}
               <div className="mb-10 relative w-[100px] h-[100px] mx-auto lg:mx-0 mt-4 lg:mt-0">
-                <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-[#1E1E20] relative shadow-lg">
-                  <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+                <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-[#1E1E20] relative shadow-lg bg-[#F9671A] text-white flex items-center justify-center font-extrabold text-2xl">
+                  {user?.avatar || user?.avatar_url || profilePhotoFile ? (
+                    <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+                  ) : (
+                    <span>
+                      {(() => {
+                        const nameStr = user?.name || formData.name || "User";
+                        const parts = nameStr.trim().split(/\s+/);
+                        return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0]?.substring(0, 2).toUpperCase() || "U";
+                      })()}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => document.getElementById('profile-upload-input')?.click()}
@@ -453,8 +463,18 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Profile Photo */}
-                <div className="absolute -bottom-[50px] lg:-bottom-[65px] left-4 lg:left-16 w-[100px] h-[100px] lg:w-[160px] lg:h-[160px] rounded-full border-[4px] lg:border-[6px] border-[#1E1E20] overflow-hidden bg-zinc-800 z-30 shadow-xl">
-                  <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+                <div className="absolute -bottom-[50px] lg:-bottom-[65px] left-4 lg:left-16 w-[100px] h-[100px] lg:w-[160px] lg:h-[160px] rounded-full border-[4px] lg:border-[6px] border-[#1E1E20] overflow-hidden bg-[#F9671A] text-white flex items-center justify-center font-extrabold text-3xl lg:text-5xl z-30 shadow-xl">
+                  {user?.avatar || user?.avatar_url || profilePhotoFile ? (
+                    <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+                  ) : (
+                    <span>
+                      {(() => {
+                        const nameStr = user?.name || "User";
+                        const parts = nameStr.trim().split(/\s+/);
+                        return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0]?.substring(0, 2).toUpperCase() || "U";
+                      })()}
+                    </span>
+                  )}
                 </div>
               </div>
 

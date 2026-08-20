@@ -2,18 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutMap from "@/components/CheckoutMap";
 import { Eye, EyeOff } from "lucide-react";
-import { useGetCartQuery, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
+import { useGetCartQuery, useUpdateCartItemMutation, useRemoveCartItemMutation, extractCartData } from "../../../redux/features/api/cartApi";
 import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
 import { useCreateOrderMutation } from "../../../redux/features/api/ordersApi";
 import { useGetBranchesQuery } from "@/redux/features/api/branchesApi";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
-import { useLogoutMutation } from "../../../redux/features/api/authApi";
+import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/authApi";
 import Header from "../components/Header";
+import { toast } from "react-hot-toast";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -29,6 +30,8 @@ export default function CheckoutPage() {
   const [activeBranchId, setActiveBranchId] = useState<number | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [showCvc, setShowCvc] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -38,6 +41,59 @@ export default function CheckoutPage() {
   const [cardNumber, setCardNumber] = useState("");
   const [cardExp, setCardExp] = useState("");
   const [cardCvc, setCardCvc] = useState("");
+
+  const { data: meRes } = useGetMeQuery();
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("user_delivery_address");
+      if (saved && saved.trim()) {
+        setDeliveryAddress(saved);
+      }
+    }
+    const user = meRes?.user || meRes?.data || meRes;
+    if (user) {
+      if (user.name) setCustomerName(user.name);
+      if (user.phone) setCustomerPhone(user.phone);
+      const defaultAddr = user.addresses?.[0]?.address || user.address || "";
+      if (defaultAddr && !deliveryAddress) setDeliveryAddress(defaultAddr);
+    }
+  }, [meRes]);
+
+  const handleDetectLocation = async () => {
+    setIsDetectingLocation(true);
+    try {
+      const { getUserLocation, reverseGeocode } = await import("@/utils/location");
+      const pos = await getUserLocation();
+      if (!pos) {
+        toast.error("Could not access location. Please allow location access or enter address manually.");
+        return;
+      }
+      const addr = await reverseGeocode(pos.latitude, pos.longitude);
+      if (addr) {
+        setDeliveryAddress(addr);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user_delivery_address", addr);
+        }
+        toast.success("Location detected!");
+      } else {
+        toast.error("Could not resolve address. Please enter manually.");
+      }
+    } catch (e) {
+      console.error("Location detection failed:", e);
+      toast.error("Location detection failed.");
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
+  const handleAddressChange = (val: string) => {
+    setDeliveryAddress(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user_delivery_address", val);
+    }
+  };
 
   const { data: categoriesRes } = useGetCategoriesQuery({ all: 1 });
   const categoriesList = categoriesRes?.data || categoriesRes || [];
@@ -56,9 +112,9 @@ export default function CheckoutPage() {
   const { data: branchesRes } = useGetBranchesQuery();
   
   const defaultBranches = [
-    { id: 1, name: "Cloud Gate (The Bean), Chicago", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "2.3 km away", time: "30 mins delivery" },
-    { id: 2, name: "The High Line, New York City", address: "7 Elm Street, Woodstock, OX7 1ER", dist: "5.7 km away", time: "45 mins delivery" },
-    { id: 3, name: "Golden Gate Bridge, San Francisco", address: "Tower Bridge, London, UK SE1 2UP", dist: "10.2 km away", time: "1 hour delivery" },
+    { id: 1, name: "Pacino's Eltham", address: "156 Well Hall Road, London SE9 6SN", latitude: 51.4554, longitude: 0.0538, dist: "1.2 km away", time: "20 mins delivery" },
+    { id: 2, name: "Pacino's Woodstock", address: "7 Elm Street, Woodstock, OX7 1ER", latitude: 51.8488, longitude: -1.3533, dist: "5.7 km away", time: "45 mins delivery" },
+    { id: 3, name: "Pacino's Tower Bridge", address: "Tower Bridge, London SE1 2UP", latitude: 51.5055, longitude: -0.0754, dist: "10.2 km away", time: "1 hour delivery" },
   ];
 
   const branches = branchesRes?.data && branchesRes.data.length > 0 ? branchesRes.data : defaultBranches;
@@ -66,40 +122,95 @@ export default function CheckoutPage() {
   const currentBranch = branches.find((b: any) => b.id === (activeBranchId || branches[0]?.id)) || branches[0];
   const modalSelectedBranch = branches.find((b: any) => b.id === selectedBranchId) || currentBranch;
 
+  // Auto-detect delivery address / user GPS and compute distance to selected branch
+  useEffect(() => {
+    let isMounted = true;
+    const calculateDistance = async () => {
+      const { getUserLocation, forwardGeocode, calculateDistanceKm, getBranchCoordinates } = await import("@/utils/location");
+      const branch = currentBranch as any;
+
+      let coords: { latitude: number; longitude: number } | null = null;
+      if (deliveryAddress && deliveryAddress.trim()) {
+        coords = await forwardGeocode(deliveryAddress);
+      }
+      if (!coords) {
+        coords = await getUserLocation();
+      }
+
+      if (isMounted) {
+        setUserLocation(coords);
+        const branchCoords = getBranchCoordinates(branch);
+        if (coords && branchCoords) {
+          const km = calculateDistanceKm(branchCoords.latitude, branchCoords.longitude, coords.latitude, coords.longitude);
+          setDistanceKm(km);
+        } else {
+          setDistanceKm(null);
+        }
+      }
+    };
+
+    calculateDistance();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentBranch?.id, (currentBranch as any)?.name, (currentBranch as any)?.address, deliveryAddress]);
+
+  const { formatDistance, formatDeliveryTime } = require("@/utils/location");
+  const distanceText = distanceKm != null ? formatDistance(distanceKm) : (currentBranch as any)?.dist || "Distance N/A";
+  const deliveryTimeText = distanceKm != null ? formatDeliveryTime(distanceKm) : (currentBranch as any)?.time || "Est. delivery time";
+
   const { data: cartData } = useGetCartQuery();
   const [createOrderMut, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
 
-  const cartItems = (cartData?.items || cartData?.data?.items || []).map((item: any) => {
+  const { cartObj, items: rawCartItems } = extractCartData(cartData);
+
+  const cartItems = rawCartItems.map((item: any) => {
     const descArr = [
       (item.size || item.size)?.name,
       (item.cooking_preference || item.cookingPreference)?.name,
       (item.spice_level || item.spiceLevel)?.name,
-      item.toppings?.length > 0 ? `Toppings: ${item.toppings.map((t:any) => t.topping?.name).join(', ')}` : null,
+      item.toppings?.length > 0 ? `Toppings: ${item.toppings.map((t:any) => t.topping?.name || t.name).join(', ')}` : null,
       item.special_instructions ? `Note: ${item.special_instructions}` : null
     ].filter(Boolean);
 
     return {
       id: item.id,
       menuItem: item.menu_item || item.menuItem,
-      name: (item.menu_item || item.menuItem)?.name,
+      name: (item.menu_item || item.menuItem)?.name || item.name || "Item",
       desc: descArr.join(' | '),
-      price: parseFloat(item.total_price || (parseFloat(item.unit_price) * item.quantity) || 0),
-      img: (item.menu_item || item.menuItem)?.image_url || "/placeholder.png",
+      price: parseFloat(item.total_price || (item.unit_price ? parseFloat(item.unit_price) * item.quantity : 0) || 0),
+      img: (item.menu_item || item.menuItem)?.image_url || (item.menu_item || item.menuItem)?.image || item.image || "/placeholder.png",
     };
   });
 
   const tipAmt = tip === "£2" ? 2 : tip === "£5" ? 5 : tip === "£10" ? 10 : 0;
 
   const handlePlaceOrder = async () => {
-    try {
-      const cartId = cartData?.id || cartData?.data?.id;
-      if (!cartId) return;
+    if (!customerName.trim()) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (!customerPhone.trim()) {
+      toast.error("Please enter your phone number.");
+      return;
+    }
+    if (!deliveryAddress.trim()) {
+      toast.error("Please enter your delivery address.");
+      return;
+    }
 
-      await createOrderMut({
+    try {
+      const cartId = cartObj?.id || cartData?.id || cartData?.data?.id;
+      if (!cartId) {
+        toast.error("Your cart is empty or expired.");
+        return;
+      }
+
+      const res = await createOrderMut({
         cart_id: cartId,
-        branch_id: currentBranch?.id,
+        branch_id: currentBranch?.id || 1,
         order_type: "delivery", 
-        payment_method: pay.toLowerCase() === "card" ? "card" : "cash",
+        payment_method: pay.toLowerCase() === "card" ? "stripe" : "cash",
         customer_name: customerName,
         customer_phone: customerPhone,
         delivery_address: deliveryAddress,
@@ -107,13 +218,19 @@ export default function CheckoutPage() {
         use_loyalty_points: loyalty
       }).unwrap();
 
-      router.push("/my-orders");
-    } catch (e) {
+      toast.success(res?.message || "Order placed successfully!");
+
+      if (res?.stripe?.url) {
+        window.location.href = res.stripe.url;
+      } else {
+        router.push("/my-orders");
+      }
+    } catch (e: any) {
       console.error("Order failed", e);
+      toast.error(e?.data?.message || e?.message || "Order placement failed. Please try again.");
     }
   };
 
-  const cartObj = cartData?.data || cartData || {};
   const subtotal = parseFloat(cartObj.subtotal || 0);
   const vat = parseFloat(cartObj.vat || 0);
   const loyaltyDiscount = parseFloat(cartObj.discount || 0);
@@ -263,7 +380,9 @@ export default function CheckoutPage() {
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
           <span className="text-zinc-400 text-xs font-medium">Delivery:</span>
-          <span className="text-[#F9671A] text-xs font-semibold">Direct Street, Chicago</span>
+          <span className="text-[#F9671A] text-xs font-semibold truncate max-w-[200px]">
+            {deliveryAddress || (isDetectingLocation ? "Detecting…" : "Enter address below")}
+          </span>
         </div>
 
         {/* Dashboard Content */}
@@ -304,11 +423,11 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-4 text-[#d1d1d1] text-[13px]">
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
-                      2.3 km away
+                      {distanceText}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                      30 mins delivery
+                      {deliveryTimeText}
                     </span>
                   </div>
                 </div>
@@ -329,11 +448,11 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-6 mt-1.5 text-zinc-400 text-[12px]">
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="7" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
-                      2.3 km away
+                      {distanceText}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                      30 mins delivery
+                      {deliveryTimeText}
                     </span>
                   </div>
                 </div>
@@ -359,11 +478,37 @@ export default function CheckoutPage() {
                 <div>
                   <label className="text-[12px] text-zinc-400 mb-1.5 block">Delivery Address</label>
                   <div className="relative">
-                    <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="e.g. NW1 6XE, London" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 pr-10 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
-                    </svg>
+                    <input value={deliveryAddress} onChange={e => handleAddressChange(e.target.value)} placeholder="e.g. NW1 6XE, London" className="w-full bg-[#212124] rounded-[12px] px-4 py-3 pr-10 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={isDetectingLocation}
+                      title="Detect my location"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#F9671A] hover:text-orange-400 transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      {isDetectingLocation ? (
+                        <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={isDetectingLocation}
+                    className="mt-1.5 text-[11px] text-[#F9671A] hover:underline cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    {isDetectingLocation ? "Detecting your location..." : "Use my current location"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -484,7 +629,14 @@ export default function CheckoutPage() {
                 <h3 className="text-[17px] font-bold text-white">Map Location</h3>
               </div>
               <div className="w-full h-[180px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
-                <CheckoutMap />
+                <CheckoutMap
+                  branchLat={(currentBranch as any)?.latitude}
+                  branchLng={(currentBranch as any)?.longitude}
+                  userLat={userLocation?.latitude}
+                  userLng={userLocation?.longitude}
+                  distanceText={distanceText}
+                  userAvatar={(meRes?.user || meRes?.data || meRes)?.avatar_url || (meRes?.user || meRes?.data || meRes)?.avatar || (meRes?.user || meRes?.data || meRes)?.user_image_url}
+                />
               </div>
             </div>
 
@@ -575,6 +727,16 @@ export default function CheckoutPage() {
             <div className="flex flex-col gap-3 mb-6">
               {branches.map((b: any) => {
                 const sel = modalSelectedBranch?.id === b.id;
+                // Calculate per-branch distance if user location and branch coords are available
+                let branchDistText = b.dist || "";
+                if (userLocation && b.latitude && b.longitude) {
+                  const { calculateDistanceKm } = require("@/utils/location");
+                  const km = calculateDistanceKm(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude);
+                  if (km != null) {
+                    const mins = Math.max(15, Math.round(km * 3) + 10);
+                    branchDistText = `${km} km away · ${mins} mins delivery`;
+                  }
+                }
                 return (
                   <div key={b.id} onClick={() => setSelectedBranchId(b.id)} className={`p-5 rounded-[20px] cursor-pointer relative flex flex-col gap-1.5 transition-all ${sel ? "bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] shadow-lg" : "bg-[#212124] hover:bg-[#252528]"}`}>
                     <div className="flex items-center justify-between">
@@ -585,6 +747,12 @@ export default function CheckoutPage() {
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
                       {b.address || "Address not specified"}
                     </div>
+                    {branchDistText && (
+                      <div className="flex items-center gap-1.5 text-[#F9671A] text-[12px] font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                        {branchDistText}
+                      </div>
+                    )}
                   </div>
                 );
               })}
