@@ -9,8 +9,13 @@ import { useGetBranchesQuery } from "../redux/features/api/branchesApi";
 
 const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
     // Using a free, reliable IP geolocation service (no API key or permissions needed)
-    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json", {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     const data = await response.json();
     if (data && data.latitude && data.longitude) {
       return {
@@ -19,7 +24,7 @@ const getLocationSilently = async (): Promise<{latitude: number, longitude: numb
       };
     }
   } catch (error) {
-    console.error("Failed to get location silently:", error);
+    // Ignore timeout or other errors silently
   }
   return null;
 };

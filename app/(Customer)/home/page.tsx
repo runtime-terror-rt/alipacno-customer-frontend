@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StartOrderModal from "../../../components/StartOrderModal";
@@ -12,12 +12,19 @@ import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
 
 const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
   try {
-    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json", {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     const data = await response.json();
     if (data && data.latitude && data.longitude) {
       return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore timeout or other errors silently
+  }
   return null;
 };
 
@@ -32,6 +39,12 @@ export default function CustomerHome() {
   const [createCart] = useCreateCartMutation();
   const { data: branchesResponse } = useGetBranchesQuery();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch by waiting until mounted to render token-dependent UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleMealTypeClick = async (mealId: string) => {
     if (isProcessing) return;
@@ -319,7 +332,7 @@ export default function CustomerHome() {
         />
       )}
 
-      {!token && (
+      {mounted && !token && (
         <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-40 flex items-center gap-2">
           <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
             Login
