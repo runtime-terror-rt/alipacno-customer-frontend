@@ -8,7 +8,7 @@ import { Star } from "lucide-react";
 import { useGetCategoriesQuery } from "../../../redux/features/api/categoriesApi";
 import { useGetSubcategoriesQuery } from "../../../redux/features/api/subcategoriesApi";
 import { useGetMenuItemsQuery, useGetMenuItemQuery } from "../../../redux/features/api/menuItemsApi";
-import { useGetCartQuery, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation } from "../../../redux/features/api/cartApi";
+import { useGetCartQuery, useCreateCartMutation, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation, extractCartData } from "../../../redux/features/api/cartApi";
 import { useGetWishlistQuery, useToggleWishlistMutation } from "../../../redux/features/api/wishlistApi";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
@@ -55,6 +55,7 @@ export default function MenuPage() {
   };
 
   const { data: cartData, refetch: refetchCart } = useGetCartQuery();
+  const [createCartMut] = useCreateCartMutation();
   const [addCartItemMut] = useAddCartItemMutation();
   const [updateCartItemMut] = useUpdateCartItemMutation();
   const [removeCartItemMut] = useRemoveCartItemMutation();
@@ -82,23 +83,25 @@ export default function MenuPage() {
     }
   };
 
-  const cartItems = (cartData?.items || cartData?.data?.items || []).map((item: any) => {
+  const { cartObj, items: rawCartItems } = extractCartData(cartData);
+
+  const cartItems = rawCartItems.map((item: any) => {
     const descArr = [
       (item.size || item.size)?.name,
       (item.cooking_preference || item.cookingPreference)?.name,
       (item.spice_level || item.spiceLevel)?.name,
-      item.toppings?.length > 0 ? `Toppings: ${item.toppings.map((t:any) => t.topping?.name).join(', ')}` : null,
+      item.toppings?.length > 0 ? `Toppings: ${item.toppings.map((t:any) => t.topping?.name || t.name).join(', ')}` : null,
       item.special_instructions ? `Note: ${item.special_instructions}` : null
     ].filter(Boolean);
 
     return {
       id: item.id, // the cart_item id
       menuItemId: item.menu_item_id,
-      name: (item.menu_item || item.menuItem)?.name,
+      name: (item.menu_item || item.menuItem)?.name || item.name || "Item",
       desc: descArr.join(' | '),
       price: parseFloat(item.total_price || (item.unit_price ? parseFloat(item.unit_price) * item.quantity : 0) || (item.menu_item || item.menuItem)?.price || 0),
-      qty: item.quantity,
-      image: (item.menu_item || item.menuItem)?.image_url || "/placeholder.png",
+      qty: item.quantity || 1,
+      image: (item.menu_item || item.menuItem)?.image_url || (item.menu_item || item.menuItem)?.image || item.image || "/placeholder.png",
     };
   });
 
@@ -113,12 +116,22 @@ export default function MenuPage() {
         }
       }
       if (!cartId || isNaN(cartId)) {
-        cartId = cartData?.id || cartData?.data?.id;
+        cartId = cartObj?.id || cartData?.id || cartData?.data?.id;
       }
       
       if (!cartId) {
-        console.error("Cart not initialized yet — please go back to home and select an order type.");
-        toast.error("No active cart. Please start a new order from home.");
+        const createRes = await createCartMut({ order_type: "delivery", branch_id: 1 }).unwrap();
+        const newCartId = createRes?.data?.id || createRes?.id;
+        if (newCartId) {
+          cartId = newCartId;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("cart_id", String(newCartId));
+          }
+        }
+      }
+
+      if (!cartId) {
+        toast.error("Could not initialize cart. Please try again.");
         return;
       }
 
@@ -132,9 +145,11 @@ export default function MenuPage() {
         toppings: options.toppings,
       }).unwrap();
       
+      toast.success(`${item.name} added to cart!`);
       refetchCart();
     } catch (e) {
       console.error("Failed to add to cart", e);
+      toast.error("Failed to add item to cart.");
     }
   };
 
@@ -154,7 +169,6 @@ export default function MenuPage() {
     }
   };
 
-  const cartObj = cartData?.data || cartData || {};
   const subtotal = parseFloat(cartObj.subtotal || 0);
   const vat = parseFloat(cartObj.vat || 0);
   const total = parseFloat(cartObj.total || 0);
@@ -426,18 +440,6 @@ export default function MenuPage() {
           onProductClick={(product) => setSelectedProduct(product)} 
           onMenuClick={() => setIsMobileSidebarOpen(true)}
         />
-          <header className="h-[70px] flex items-center justify-between px-6 border-b border-white/5">
-            <div className="flex items-center gap-4">
-              <h1 className="text-[20px] font-bold">Menu</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <button 
-                className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-              </button>
-            </div>
-          </header>
 
         {/* Mobile Delivery Bar - Only visible on lg:hidden */}
         <div className="flex items-center gap-2 px-6 py-3 bg-[#1E1E20] border-b border-white/5 lg:hidden">
@@ -708,9 +710,15 @@ export default function MenuPage() {
                 <span className="text-[16px] font-bold text-white">Total</span>
                 <span className="text-[18px] font-extrabold text-[#F9671A]">£{total.toFixed(2)}</span>
               </div>
-              <button onClick={() => router.push("/checkout")} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer">
-                Proceed to checkout
-              </button>
+              {cartItems.length === 0 ? (
+                  <button disabled className="w-full py-3.5 bg-[#F9671A]/30 text-white rounded-full text-[14px] font-bold cursor-not-allowed">
+                    Your bag is empty
+                  </button>
+                ) : (
+                  <button onClick={() => router.push("/checkout")} className="w-full py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer">
+                    Proceed to checkout
+                  </button>
+                )}
             </div>
           </aside>
         </div>
