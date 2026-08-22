@@ -1,267 +1,257 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
-import { GoogleMap, useJsApiLoader, OverlayView, Polyline } from '@react-google-maps/api';
+import React, { useEffect, useRef } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { getBranchCoordinates, calculateDistanceKm, calculateDeliveryMins } from "@/utils/location";
 
-const mapStyles = [
-  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#263c3f" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#6b9a76" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#38414e" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#212a37" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9ca5b3" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#746855" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#1f2835" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#f3d19c" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "geometry",
-    stylers: [{ color: "#2f3948" }],
-  },
-  {
-    featureType: "transit.station",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#17263c" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#515c6d" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#17263c" }],
-  },
-];
-
-function calcDist(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-export default function CheckoutMap({
-  distance,
-  userLoc,
-  branches,
-  closestBranchId
-}: {
+export type CheckoutMapProps = {
   distance?: number | null;
   userLoc?: { latitude: number; longitude: number } | null;
   branches?: any[];
   closestBranchId?: number | null;
-}) {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
-  });
+  branchLat?: number | string | null;
+  branchLng?: number | string | null;
+  userLat?: number | string | null;
+  userLng?: number | string | null;
+  riderLat?: number | string | null;
+  riderLng?: number | string | null;
+  distanceText?: string | null;
+  userAvatar?: string | null;
+};
 
-  const center = useMemo(() => {
-    if (userLoc) return { lat: userLoc.latitude, lng: userLoc.longitude };
-    return { lat: 40.7128, lng: -74.0060 }; // Default
-  }, [userLoc]);
+export default function CheckoutMap({
+  distance: propDistance,
+  userLoc: propUserLoc,
+  branches: propBranches,
+  closestBranchId,
+  branchLat,
+  branchLng,
+  userLat,
+  userLng,
+}: CheckoutMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // Create formatted branches
-  const markers = useMemo(() => {
-    if (!branches) return [];
-    
-    let minDistance = Infinity;
-    let actualClosestId: any = null;
+  // Resolve user location
+  const userLoc = React.useMemo(() => {
+    if (propUserLoc) return propUserLoc;
+    if (userLat != null && userLng != null) {
+      const lat = Number(userLat);
+      const lng = Number(userLng);
+      if (!isNaN(lat) && !isNaN(lng)) return { latitude: lat, longitude: lng };
+    }
+    return null;
+  }, [propUserLoc, userLat, userLng]);
 
-    const mapped = branches.filter(b => b.latitude && b.longitude).map((b, i) => {
-      const lat = parseFloat(b.latitude);
-      const lng = parseFloat(b.longitude);
-      let dist = null;
-      if (userLoc) {
-        dist = calcDist(userLoc.latitude, userLoc.longitude, lat, lng);
-        if (dist < minDistance) {
-          minDistance = dist;
-          actualClosestId = b.id;
+  // Resolve branches
+  const branches = React.useMemo(() => {
+    if (propBranches && propBranches.length > 0) return propBranches;
+    if (branchLat != null && branchLng != null) {
+      return [{ id: 1, name: "Pacino's Branch", latitude: branchLat, longitude: branchLng }];
+    }
+    return [];
+  }, [propBranches, branchLat, branchLng]);
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
+    mapboxgl.accessToken = token;
+
+    // Determine initial center
+    let initialCenter: [number, number] = [0.0538, 51.4554]; // London UK default
+    if (userLoc) {
+      initialCenter = [userLoc.longitude, userLoc.latitude];
+    } else if (branches.length > 0) {
+      const bCoords = getBranchCoordinates(branches[0]);
+      initialCenter = [bCoords.longitude, bCoords.latitude];
+    }
+
+    const darkStyle = {
+      version: 8,
+      sources: {
+        "carto-dark": {
+          type: "raster",
+          tiles: [
+            "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+          ],
+          tileSize: 256,
+          attribution: "&copy; OpenStreetMap &copy; CARTO"
         }
-      }
-      return {
-        ...b,
-        lat,
-        lng,
-        dist,
-        number: i + 1
-      };
+      },
+      layers: [
+        {
+          id: "carto-dark-layer",
+          type: "raster",
+          source: "carto-dark",
+          minzoom: 0,
+          maxzoom: 20
+        }
+      ]
+    };
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: darkStyle as any,
+      center: initialCenter,
+      zoom: 12,
+      attributionControl: false,
     });
 
-    return mapped.map(b => ({
-      ...b,
-      isClosest: userLoc ? b.id === actualClosestId : b.id === closestBranchId
-    }));
-  }, [branches, closestBranchId, userLoc]);
+    mapRef.current = map;
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
 
-  const onLoad = useCallback(function callback(map: google.maps.Map) {
-    if (userLoc && markers.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds();
-      bounds.extend({ lat: userLoc.latitude, lng: userLoc.longitude });
-      markers.forEach(m => bounds.extend({ lat: m.lat, lng: m.lng }));
-      map.fitBounds(bounds);
+    return () => {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Update markers, route line, and bounds whenever location/branches change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    const bounds = new mapboxgl.LngLatBounds();
+    let hasPoints = false;
+
+    // 1. Add Branch Markers
+    branches.forEach((b, i) => {
+      const bCoords = getBranchCoordinates(b);
+      const isClosest = b.id === closestBranchId || i === 0;
+
+      // Compute distance to user if userLoc exists
+      let distText = "";
+      if (userLoc) {
+        const km = calculateDistanceKm(bCoords.latitude, bCoords.longitude, userLoc.latitude, userLoc.longitude);
+        if (km != null) {
+          const mins = calculateDeliveryMins(km);
+          distText = `${km} km (${mins} mins)`;
+        }
+      }
+
+      // Create custom HTML marker for branch
+      const el = document.createElement("div");
+      el.className = "flex flex-col items-center group cursor-pointer z-10";
+      el.innerHTML = `
+        <div class="bg-[#18181a] border ${isClosest ? "border-[#F9671A]" : "border-white/10"} text-white px-2 py-0.5 rounded-md text-[10px] font-bold mb-1 shadow-lg whitespace-nowrap">
+          ${b.name || `Branch ${i + 1}`}
+          ${distText ? `<span class="text-[#F9671A] ml-1">${distText}</span>` : ""}
+        </div>
+        <div class="w-7 h-7 rounded-full ${isClosest ? "bg-[#F9671A]" : "bg-zinc-700"} flex items-center justify-center text-white font-bold text-xs border-2 border-black shadow-md">
+          ${i + 1}
+        </div>
+      `;
+
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([bCoords.longitude, bCoords.latitude])
+        .addTo(map);
+
+      markersRef.current.push(marker);
+      bounds.extend([bCoords.longitude, bCoords.latitude]);
+      hasPoints = true;
+    });
+
+    // 2. Add User Location Marker
+    if (userLoc) {
+      const el = document.createElement("div");
+      el.className = "flex flex-col items-center z-20";
+      el.innerHTML = `
+        <div class="bg-black/90 border border-[#F9671A] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold mb-1 shadow-2xl whitespace-nowrap">
+          Delivery Location
+          <div class="text-[#F9671A] text-[9px] text-center font-medium">Your Address</div>
+        </div>
+        <div class="relative flex items-center justify-center w-7 h-7">
+          <div class="absolute inset-0 bg-[#F9671A] rounded-full animate-ping opacity-60"></div>
+          <div class="relative w-7 h-7 bg-[#F96A1C] rounded-full flex items-center justify-center border-2 border-black shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+        </div>
+      `;
+
+      const userMarker = new mapboxgl.Marker({ element: el })
+        .setLngLat([userLoc.longitude, userLoc.latitude])
+        .addTo(map);
+
+      markersRef.current.push(userMarker);
+      bounds.extend([userLoc.longitude, userLoc.latitude]);
+      hasPoints = true;
     }
-  }, [userLoc, markers]);
 
-  if (!isLoaded) return <div className="w-full h-full bg-[#1E1E20] animate-pulse rounded-[16px]"></div>;
+    // 3. Draw Route Line between User and Branches
+    if (userLoc && branches.length > 0) {
+      const targetBranch = branches.find((b) => b.id === closestBranchId) || branches[0];
+      const targetCoords = getBranchCoordinates(targetBranch);
+
+      const routeGeoJSON: GeoJSON.Feature<GeoJSON.LineString> = {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [targetCoords.longitude, targetCoords.latitude],
+            [userLoc.longitude, userLoc.latitude],
+          ],
+        },
+      };
+
+      const updateRouteLayer = () => {
+        if (map.getSource("route")) {
+          (map.getSource("route") as mapboxgl.GeoJSONSource).setData(routeGeoJSON);
+        } else {
+          map.addSource("route", {
+            type: "geojson",
+            data: routeGeoJSON,
+          });
+
+          map.addLayer({
+            id: "route-line",
+            type: "line",
+            source: "route",
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+            },
+            paint: {
+              "line-color": "#F9671A",
+              "line-width": 3.5,
+              "line-dasharray": [2, 2],
+            },
+          });
+        }
+      };
+
+      if (map.isStyleLoaded()) {
+        updateRouteLayer();
+      } else {
+        map.once("style.load", updateRouteLayer);
+      }
+    }
+
+    // 4. Fit bounds cleanly if we have points
+    if (hasPoints) {
+      map.fitBounds(bounds, {
+        padding: 45,
+        maxZoom: 15,
+        duration: 800,
+      });
+    }
+  }, [userLoc, branches, closestBranchId]);
 
   return (
-    <div className="relative w-full h-full rounded-[16px] overflow-hidden group">
-      <style>{`
-        .gm-err-container {
-          display: none !important;
-        }
-      `}</style>
-      <GoogleMap
-        mapContainerStyle={{ width: '100%', height: '100%' }}
-        center={center}
-        zoom={12}
-        onLoad={onLoad}
-        options={{
-          styles: mapStyles,
-          disableDefaultUI: true,
-          zoomControl: true,
-          keyboardShortcuts: true,
-          backgroundColor: '#242f3e',
-        }}
-      >
-        {/* Draw line to ALL branches */}
-        {userLoc && markers.map(marker => {
-          const colors = ["#3b82f6", "#10b981", "#8b5cf6", "#ef4444", "#f59e0b"];
-          const color = colors[marker.number % colors.length];
-          return (
-            <Polyline
-              key={`poly-${marker.id}`}
-              path={[
-                { lat: userLoc.latitude, lng: userLoc.longitude },
-                { lat: marker.lat, lng: marker.lng }
-              ]}
-              options={{
-                strokeColor: marker.isClosest ? "#F96A1C" : color,
-                strokeOpacity: marker.isClosest ? 1.0 : 0.8,
-                strokeWeight: marker.isClosest ? 4 : 2,
-                zIndex: marker.isClosest ? 10 : 1
-              }}
-            />
-          );
-        })}
-
-        {/* User Location Marker */}
-        {userLoc && (
-          <OverlayView
-            position={{ lat: userLoc.latitude, lng: userLoc.longitude }}
-            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-            getPixelPositionOffset={(x, y) => ({ x: -x / 2, y: -y / 2 })}
-          >
-            <div className="flex flex-col items-center">
-              <div className="bg-black/90 border border-[#F96A1C] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold mb-1 shadow-2xl whitespace-nowrap z-20">
-                Delivery Location
-                <div className="text-[#F96A1C] text-[9px] text-center mt-0.5 font-medium">Your Address</div>
-              </div>
-              <div className="relative flex items-center justify-center w-7 h-7 z-20">
-                <div className="absolute inset-0 bg-[#F96A1C] rounded-full animate-ping opacity-60"></div>
-                <div className="relative w-7 h-7 bg-[#F96A1C] rounded-full flex items-center justify-center border-2 border-black shadow-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                </div>
-              </div>
-            </div>
-          </OverlayView>
-        )}
-
-        {/* Branch Markers */}
-        {markers.map(marker => {
-          const isClosest = marker.isClosest;
-          const colors = ["#3b82f6", "#10b981", "#8b5cf6", "#ef4444", "#f59e0b"];
-          const baseColor = colors[marker.number % colors.length];
-          const color = isClosest ? "#F96A1C" : baseColor;
-          const isOutOfRange = marker.dist !== null && marker.dist > 100;
-          
-          return (
-            <OverlayView
-              key={marker.id}
-              position={{ lat: marker.lat, lng: marker.lng }}
-              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-              getPixelPositionOffset={(x, y) => ({ x: -x / 2, y: -y / 2 })}
-            >
-              <div className={`relative flex flex-col items-center ${isClosest ? 'z-30' : 'z-10'}`}>
-                {/* Distance Label for ALL branches */}
-                {marker.dist !== null && (
-                  <div className={`absolute top-[-8px] left-[15px] bg-[#1a1a1c] border ${isClosest ? 'border-[#F96A1C]' : 'border-black'} text-white text-[9px] font-bold px-2 py-1 rounded-md whitespace-nowrap flex items-center gap-1 shadow-xl z-20`}>
-                    {isOutOfRange ? (
-                      <span className="text-zinc-400 font-medium">{marker.dist.toFixed(0)} km</span>
-                    ) : (
-                      <>
-                        <span className="text-[#F96A1C]">{(marker.dist * 4).toFixed(0)} min</span> 
-                        <span className="text-zinc-500 font-normal">|</span> 
-                        <span className="text-zinc-200">{marker.dist.toFixed(1)} km</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                
-                <div className={`rounded-full flex items-center justify-center text-white font-bold border-2 border-black shadow-lg text-[11px] ${isClosest ? 'w-8 h-8 ring-2 ring-[#F96A1C] ring-offset-1 ring-offset-black' : 'w-7 h-7 opacity-90'}`} style={{ backgroundColor: color }}>
-                  {marker.number}
-                </div>
-              </div>
-            </OverlayView>
-          );
-        })}
-      </GoogleMap>
+    <div className="relative w-full h-full rounded-[16px] overflow-hidden bg-[#1E1E20]">
+      <div ref={mapContainerRef} className="w-full h-full" />
     </div>
   );
 }
