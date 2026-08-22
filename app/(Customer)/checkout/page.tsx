@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/authApi";
 import Header from "../components/Header";
+
 import { toast } from "react-hot-toast";
 
 export default function CheckoutPage() {
@@ -30,6 +31,8 @@ export default function CheckoutPage() {
   const [activeBranchId, setActiveBranchId] = useState<number | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [showCvc, setShowCvc] = useState(false);
+
+  const { data: cartData } = useGetCartQuery();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
 
@@ -70,6 +73,7 @@ export default function CheckoutPage() {
         toast.error("Could not access location. Please allow location access or enter address manually.");
         return;
       }
+      setUserLocation(pos);
       const addr = await reverseGeocode(pos.latitude, pos.longitude);
       if (addr) {
         setDeliveryAddress(addr);
@@ -78,7 +82,8 @@ export default function CheckoutPage() {
         }
         toast.success("Location detected!");
       } else {
-        toast.error("Could not resolve address. Please enter manually.");
+        setDeliveryAddress(`${pos.latitude.toFixed(4)}, ${pos.longitude.toFixed(4)}`);
+        toast.success("Location detected!");
       }
     } catch (e) {
       console.error("Location detection failed:", e);
@@ -122,11 +127,13 @@ export default function CheckoutPage() {
   const currentBranch = branches.find((b: any) => b.id === (activeBranchId || branches[0]?.id)) || branches[0];
   const modalSelectedBranch = branches.find((b: any) => b.id === selectedBranchId) || currentBranch;
 
-  // Auto-detect delivery address / user GPS and compute distance to selected branch
+  const [routeInfo, setRouteInfo] = useState<{ formattedDistance?: string; formattedDeliveryTime?: string } | null>(null);
+
+  // Auto-detect delivery address / user GPS and compute distance & driving time to selected branch
   useEffect(() => {
     let isMounted = true;
     const calculateDistance = async () => {
-      const { getUserLocation, forwardGeocode, calculateDistanceKm, getBranchCoordinates } = await import("@/utils/location");
+      const { getUserLocation, forwardGeocode, calculateDistanceKm, getBranchCoordinates, getMapboxRouteInfo } = await import("@/utils/location");
       const branch = currentBranch as any;
 
       let coords: { latitude: number; longitude: number } | null = null;
@@ -141,10 +148,21 @@ export default function CheckoutPage() {
         setUserLocation(coords);
         const branchCoords = getBranchCoordinates(branch);
         if (coords && branchCoords) {
+          const mbRoute = await getMapboxRouteInfo(branchCoords, coords);
+          if (mbRoute && isMounted) {
+            setDistanceKm(mbRoute.distance);
+            setRouteInfo({
+              formattedDistance: mbRoute.formattedDistance,
+              formattedDeliveryTime: mbRoute.formattedDeliveryTime,
+            });
+            return;
+          }
           const km = calculateDistanceKm(branchCoords.latitude, branchCoords.longitude, coords.latitude, coords.longitude);
           setDistanceKm(km);
+          setRouteInfo(null);
         } else {
           setDistanceKm(null);
+          setRouteInfo(null);
         }
       }
     };
@@ -156,10 +174,11 @@ export default function CheckoutPage() {
   }, [currentBranch?.id, (currentBranch as any)?.name, (currentBranch as any)?.address, deliveryAddress]);
 
   const { formatDistance, formatDeliveryTime } = require("@/utils/location");
-  const distanceText = distanceKm != null ? formatDistance(distanceKm) : (currentBranch as any)?.dist || "Distance N/A";
-  const deliveryTimeText = distanceKm != null ? formatDeliveryTime(distanceKm) : (currentBranch as any)?.time || "Est. delivery time";
+  const distanceText = routeInfo?.formattedDistance || (distanceKm != null ? formatDistance(distanceKm) : (currentBranch as any)?.dist || "Distance N/A");
+  const deliveryTimeText = routeInfo?.formattedDeliveryTime || (distanceKm != null ? formatDeliveryTime(distanceKm) : (currentBranch as any)?.time || "Est. delivery time");
 
-  const { data: cartData } = useGetCartQuery();
+
+
   const [createOrderMut, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
 
   const { cartObj, items: rawCartItems } = extractCartData(cartData);
@@ -628,14 +647,12 @@ export default function CheckoutPage() {
               <div className="border-b border-white/5 pb-3">
                 <h3 className="text-[17px] font-bold text-white">Map Location</h3>
               </div>
-              <div className="w-full h-[180px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
-                <CheckoutMap
-                  branchLat={(currentBranch as any)?.latitude}
-                  branchLng={(currentBranch as any)?.longitude}
-                  userLat={userLocation?.latitude}
-                  userLng={userLocation?.longitude}
-                  distanceText={distanceText}
-                  userAvatar={(meRes?.user || meRes?.data || meRes)?.avatar_url || (meRes?.user || meRes?.data || meRes)?.avatar || (meRes?.user || meRes?.data || meRes)?.user_image_url}
+              <div className="w-full h-[250px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
+                <CheckoutMap 
+                  distance={distanceKm} 
+                  userLoc={userLocation} 
+                  branches={branches} 
+                  closestBranchId={currentBranch?.id} 
                 />
               </div>
             </div>

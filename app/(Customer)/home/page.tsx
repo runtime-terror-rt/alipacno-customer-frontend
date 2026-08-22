@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StartOrderModal from "../../../components/StartOrderModal";
@@ -12,12 +12,19 @@ import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
 
 const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
   try {
-    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json", {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     const data = await response.json();
     if (data && data.latitude && data.longitude) {
       return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore timeout or other errors silently
+  }
   return null;
 };
 
@@ -32,6 +39,12 @@ export default function CustomerHome() {
   const [createCart] = useCreateCartMutation();
   const { data: branchesResponse } = useGetBranchesQuery();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch by waiting until mounted to render token-dependent UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleMealTypeClick = async (mealId: string) => {
     if (isProcessing) return;
@@ -140,7 +153,7 @@ export default function CustomerHome() {
       ),
     },
     {
-      id: "dine-in",
+      id: "dine_in",
       title: "Dine-In",
       subtitle: "Reserve a table",
       icon: (
@@ -182,7 +195,7 @@ export default function CustomerHome() {
       ),
     },
     {
-      id: "table-order",
+      id: "table_order",
       title: "Table Order",
       subtitle: "Order from seat",
       icon: (
@@ -240,16 +253,23 @@ export default function CustomerHome() {
   ];
 
   const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 4 });
-  const fetchedPopularDishes = menuResponse?.data || [];
+  const fetchedPopularDishes = Array.isArray(menuResponse?.data) ? menuResponse.data : (menuResponse?.data?.data || []);
+
+  const getImageUrl = (url: string) => {
+    if (!url) return "/placeholder.png";
+    if (url.startsWith("http")) return url;
+    if (url.startsWith("/customer")) return url;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
 
   const popularDishes = fetchedPopularDishes.length > 0 ? fetchedPopularDishes.map((item: any) => ({
     id: item.id,
     name: item.name,
-    price: `£${item.price || 0}`,
+    price: `£${item.discount_price || item.price || 0}`,
     oldPrice: (item.original_price && item.original_price !== item.price) ? `£${item.original_price}` : "", 
     unit: "/portion",
     rating: item.rating ? parseFloat(item.rating).toFixed(1) : "4.5", 
-    image: item.image_url || "/customer/popular-1.png",
+    image: getImageUrl(item.image_url || item.image),
   })) : [
     {
       id: 1,
@@ -312,7 +332,7 @@ export default function CustomerHome() {
         />
       )}
 
-      {!token && (
+      {mounted && !token && (
         <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-40 flex items-center gap-2">
           <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
             Login

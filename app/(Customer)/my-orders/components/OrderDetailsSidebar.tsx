@@ -107,6 +107,8 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
         </div>
         <div className="w-full h-[220px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
           <CheckoutMap
+            userLoc={deliveryCoords}
+            distance={distanceKm}
             branchLat={branchCoords?.latitude || order?.branch?.latitude || null}
             branchLng={branchCoords?.longitude || order?.branch?.longitude || null}
             userLat={deliveryCoords?.latitude || null}

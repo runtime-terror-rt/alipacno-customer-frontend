@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import OrderCard from "@/components/Ordercard";
 import { Order, useGetOrdersQuery, useCreateOrderMutation } from "@/redux/features/api/ordersApi";
 import { toast } from "react-hot-toast";
@@ -18,12 +19,100 @@ export type OrderSummaryItem = {
   rawOrder: Order;
 };
 
+function ActiveOrderCard({
+  order,
+  onSelect,
+}: {
+  order: OrderSummaryItem;
+  onSelect: () => void;
+}) {
+  const [deliveryInfo, setDeliveryInfo] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const computeMapboxInfo = async () => {
+      try {
+        const {
+          getBranchCoordinates,
+          forwardGeocode,
+          getUserLocation,
+          getMapboxRouteInfo,
+          calculateDistanceKm,
+          formatDeliveryTime,
+          formatDistance,
+        } = await import("@/utils/location");
+
+        const raw = order.rawOrder;
+        const bCoords = getBranchCoordinates(raw?.branch);
+
+        let dCoords: { latitude: number; longitude: number } | null = null;
+        if (raw?.delivery_address) {
+          dCoords = await forwardGeocode(raw.delivery_address);
+        }
+        if (!dCoords) {
+          dCoords = await getUserLocation();
+        }
+
+        if (bCoords && dCoords) {
+          const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
+          if (mbRoute && isMounted) {
+            setDeliveryInfo(`${mbRoute.formattedDeliveryTime} (${mbRoute.formattedDistance})`);
+            return;
+          }
+
+          const km = calculateDistanceKm(bCoords.latitude, bCoords.longitude, dCoords.latitude, dCoords.longitude);
+          if (km != null && isMounted) {
+            setDeliveryInfo(`${formatDeliveryTime(km)} (${formatDistance(km)})`);
+            return;
+          }
+        }
+      } catch (e) {}
+    };
+
+    computeMapboxInfo();
+    return () => {
+      isMounted = false;
+    };
+  }, [order.rawOrder?.id, order.rawOrder?.delivery_address, order.rawOrder?.branch?.id]);
+
+  const statusText =
+    order.rawOrder?.order_status === "preparing"
+      ? "Preparing"
+      : order.rawOrder?.order_status === "out_for_delivery"
+      ? "Out for Delivery"
+      : order.rawOrder?.order_status === "pending"
+      ? "Pending"
+      : order.rawOrder?.order_status || "Active";
+
+  const displayedText = deliveryInfo
+    ? `${statusText} • Est: ${deliveryInfo}`
+    : order.deliveredText;
+
+  return (
+    <div className="mb-6">
+      <p className="text-[12px] text-zinc-400 mb-4">{order.date}</p>
+      <OrderCard
+        image={order.image}
+        badge={order.badge}
+        title={order.title}
+        deliveredText={displayedText}
+        orderId={order.orderId}
+        qty={order.qty}
+        price={order.price}
+        onClick={onSelect}
+      />
+    </div>
+  );
+}
+
 type Props = {
   onSelectOrder: (orderId: string | number) => void;
 };
 
 export default function OrdersListView({ onSelectOrder }: Props) {
-  const { data: ordersRes, isLoading, isError } = useGetOrdersQuery();
+  const { data: ordersRes, isLoading, isError } = useGetOrdersQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   const [createOrderMut] = useCreateOrderMutation();
 
   const getImageUrl = (url?: string | null) => {
@@ -170,19 +259,11 @@ export default function OrdersListView({ onSelectOrder }: Props) {
         <div className="mb-10">
           <h2 className="text-[16px] font-bold text-white mb-1">Active Orders</h2>
           {activeOrders.map((order) => (
-            <div key={order.id} className="mb-6">
-              <p className="text-[12px] text-zinc-400 mb-4">{order.date}</p>
-              <OrderCard
-                image={order.image}
-                badge={order.badge}
-                title={order.title}
-                deliveredText={order.deliveredText}
-                orderId={order.orderId}
-                qty={order.qty}
-                price={order.price}
-                onClick={() => onSelectOrder(order.rawId)}
-              />
-            </div>
+            <ActiveOrderCard
+              key={order.id}
+              order={order}
+              onSelect={() => onSelectOrder(order.rawId)}
+            />
           ))}
         </div>
       )}
