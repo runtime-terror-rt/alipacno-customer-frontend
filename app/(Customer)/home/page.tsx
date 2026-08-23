@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StartOrderModal from "../../../components/StartOrderModal";
@@ -12,12 +12,19 @@ import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
 
 const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
   try {
-    const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch("https://get.geojs.io/v1/ip/geo.json", {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     const data = await response.json();
     if (data && data.latitude && data.longitude) {
       return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore timeout or other errors silently
+  }
   return null;
 };
 
@@ -32,6 +39,12 @@ export default function CustomerHome() {
   const [createCart] = useCreateCartMutation();
   const { data: branchesResponse } = useGetBranchesQuery();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch by waiting until mounted to render token-dependent UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleMealTypeClick = async (mealId: string) => {
     if (isProcessing) return;
@@ -140,7 +153,7 @@ export default function CustomerHome() {
       ),
     },
     {
-      id: "dine-in",
+      id: "dine_in",
       title: "Dine-In",
       subtitle: "Reserve a table",
       icon: (
@@ -182,7 +195,7 @@ export default function CustomerHome() {
       ),
     },
     {
-      id: "table-order",
+      id: "table_order",
       title: "Table Order",
       subtitle: "Order from seat",
       icon: (
@@ -239,55 +252,37 @@ export default function CustomerHome() {
     },
   ];
 
-  const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 4 });
-  const fetchedPopularDishes = menuResponse?.data || [];
+  const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 10 });
 
-  const popularDishes = fetchedPopularDishes.length > 0 ? fetchedPopularDishes.map((item: any) => ({
+  const rawMenuItems = Array.isArray(menuResponse?.data?.data)
+    ? menuResponse.data.data
+    : Array.isArray(menuResponse?.data)
+    ? menuResponse.data
+    : Array.isArray(menuResponse)
+    ? menuResponse
+    : [];
+
+  const fetchedPopularDishes = rawMenuItems.filter(
+    (item: any) => Number(item.is_popular) === 1 || item.is_popular === true
+  );
+
+  const getImageUrl = (url?: string | null) => {
+    if (!url) return "/customer/popular-1.png";
+    if (url.startsWith("http") || url.startsWith("/customer")) return url;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const popularDishes = fetchedPopularDishes.map((item: any) => ({
     id: item.id,
     name: item.name,
-    price: `£${item.price || 0}`,
-    oldPrice: (item.original_price && item.original_price !== item.price) ? `£${item.original_price}` : "", 
+    price: `£${parseFloat(String(item.price || 0)).toFixed(2)}`,
+    oldPrice: (item.original_price && parseFloat(String(item.original_price)) > parseFloat(String(item.price)))
+      ? `£${parseFloat(String(item.original_price)).toFixed(2)}`
+      : "", 
     unit: "/portion",
-    rating: item.rating ? parseFloat(item.rating).toFixed(1) : "4.5", 
-    image: item.image_url || "/customer/popular-1.png",
-  })) : [
-    {
-      id: 1,
-      name: "Filet Mignon",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-1.png",
-    },
-    {
-      id: 2,
-      name: "Ribeye Steak",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-2.png",
-    },
-    {
-      id: 3,
-      name: "Vegetable Stir Fry",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-3.png",
-    },
-    {
-      id: 4,
-      name: "Pork Belly Bao",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-4.png",
-    },
-  ];
+    rating: item.rating ? parseFloat(String(item.rating)).toFixed(1) : "4.5", 
+    image: getImageUrl(item.image_url || item.image),
+  }));
 
   return (
     <div
@@ -312,7 +307,7 @@ export default function CustomerHome() {
         />
       )}
 
-      {!token && (
+      {mounted && !token && (
         <div className="absolute top-6 right-6 sm:top-8 sm:right-10 z-40 flex items-center gap-2">
           <Link href="/phone-login" className="text-sm font-medium text-[#F9671A] hover:text-white transition-colors">
             Login
