@@ -1,11 +1,70 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Order } from "@/redux/features/api/ordersApi";
 
 type Props = {
   order?: Order | null;
+  mapboxEstTimeText?: string | null;
 };
 
-export default function OrderTimeline({ order }: Props) {
+export default function OrderTimeline({ order, mapboxEstTimeText }: Props) {
+  const [computedEstText, setComputedEstText] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const computeMapboxTime = async () => {
+      if (!order) return;
+      try {
+        const {
+          getBranchCoordinates,
+          forwardGeocode,
+          getUserLocation,
+          getMapboxRouteInfo,
+          calculateDistanceKm,
+          calculateDeliveryMins,
+        } = await import("@/utils/location");
+
+        const bCoords = getBranchCoordinates(order.branch);
+        let dCoords: { latitude: number; longitude: number } | null = null;
+
+        if (order.delivery_address) {
+          dCoords = await forwardGeocode(order.delivery_address);
+        }
+        if (!dCoords) {
+          dCoords = await getUserLocation();
+        }
+
+        if (bCoords && dCoords) {
+          const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
+          if (mbRoute && isMounted) {
+            setComputedEstText(`Est: ${mbRoute.deliveryMins} mins`);
+            return;
+          }
+
+          const km = calculateDistanceKm(
+            bCoords.latitude,
+            bCoords.longitude,
+            dCoords.latitude,
+            dCoords.longitude
+          );
+          if (km != null && isMounted) {
+            const mins = calculateDeliveryMins(km);
+            if (mins) setComputedEstText(`Est: ${mins} mins`);
+          }
+        }
+      } catch (e) {
+        // Silently fallback
+      }
+    };
+
+    computeMapboxTime();
+    return () => {
+      isMounted = false;
+    };
+  }, [order?.id, order?.delivery_address, order?.branch?.id]);
+
   const status = (order?.order_status || "pending").toLowerCase();
 
   const isPendingActive = ["pending", "preparing", "ready_for_delivery", "out_for_delivery", "delivered"].includes(status);
@@ -17,7 +76,13 @@ export default function OrderTimeline({ order }: Props) {
   const branchName = order?.branch?.name || "Cloud Gate (The Bean), Chicago";
   const driverName = order?.assigned_driver?.name ? `Driver (${order.assigned_driver.name}) is on the way to you.` : "Delivery Driver is on the way to you.";
   const deliveryAddr = order?.delivery_address || "7 Elm Street, Woodstock, OX7 1ER";
-  const estTime = order?.estimated_delivery_time ? `Est: ${new Date(order.estimated_delivery_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Estimated: 15 min";
+
+  const estTime =
+    mapboxEstTimeText ||
+    computedEstText ||
+    (order?.estimated_delivery_time
+      ? `Est: ${new Date(order.estimated_delivery_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      : "Est: 25 mins");
 
   const steps = [
     {

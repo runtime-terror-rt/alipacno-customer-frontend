@@ -3,11 +3,10 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppSelector } from "../redux/hooks";
 import { useCreateCartMutation } from "../redux/features/api/cartApi";
-import { useGetBranchesQuery } from "../redux/features/api/branchesApi";
+import { useGetBranchesQuery, BranchItem } from "../redux/features/api/branchesApi";
 
-const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
+const getLocationSilently = async (): Promise<{ latitude: number; longitude: number } | null> => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -29,18 +28,27 @@ const getLocationSilently = async (): Promise<{latitude: number, longitude: numb
   return null;
 };
 
-export default function StartOrderModal({ onClose, initialMode }: { onClose: () => void, initialMode: string }) {
+export default function StartOrderModal({ onClose, initialMode }: { onClose: () => void; initialMode: string }) {
   const [postcode, setPostcode] = useState("");
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [closing, setClosing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  
+
   const router = useRouter();
-  const { token } = useAppSelector((state) => state.auth);
   const [createCart] = useCreateCartMutation();
-  const { data: branchesResponse } = useGetBranchesQuery();
+  const { data: branchesResponse, isLoading: isBranchesLoading } = useGetBranchesQuery();
+
+  const branches = branchesResponse?.data && Array.isArray(branchesResponse.data) ? branchesResponse.data : [];
+
+  useEffect(() => {
+    if (branches.length > 0 && !selectedBranchId) {
+      setSelectedBranchId(branches[0].id);
+    }
+  }, [branches, selectedBranchId]);
 
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
@@ -57,35 +65,32 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
     };
   }, [onClose]);
 
-  // basic focus trap
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== "Tab") return;
-      const dialog = dialogRef.current;
-      if (!dialog) return;
-      const focusable = dialog.querySelectorAll<HTMLElement>(
-        'button, input, [href], select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
+  const handleDetectLocation = async () => {
+    setIsDetecting(true);
+    try {
+      const { getUserLocation, reverseGeocode } = await import("@/utils/location");
+      const pos = await getUserLocation();
+      if (pos) {
+        const addr = await reverseGeocode(pos.latitude, pos.longitude);
+        if (addr) {
+          setPostcode(addr);
+          setError("");
+        }
       }
+    } catch (e) {
+      console.error("Detect location error:", e);
+    } finally {
+      setIsDetecting(false);
     }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  };
 
   async function handleStart() {
     if (isProcessing) return;
     const trimmed = postcode.trim();
-    if (trimmed.length === 0) {
-      setError("Please enter your postcode");
+    const isDelivery = (initialMode || "delivery").toLowerCase() === "delivery";
+
+    if (isDelivery && trimmed.length === 0) {
+      setError("Please enter your delivery postcode or address");
       inputRef.current?.focus();
       return;
     }
@@ -102,37 +107,32 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
       console.error("Silent location fetch failed:", err);
     }
 
-    const branches = branchesResponse?.data || [];
-    const branchId = branches.length > 0 ? branches[0].id : 1;
+    const branchId = selectedBranchId || (branches.length > 0 ? branches[0].id : 1);
 
     try {
       const payload = {
-        order_type: initialMode,
-        delivery_postcode: trimmed,
+        order_type: initialMode || "delivery",
+        delivery_postcode: trimmed || undefined,
         branch_id: branchId,
         latitude: location.latitude,
         longitude: location.longitude,
       };
-      
-      console.log("Sending payload to /api/v1/carts:", payload);
 
       const result = await createCart(payload).unwrap();
-      
-      // Save cart_id and user_delivery_address to localStorage for later use
+
       const cartId = result?.data?.id || result?.id;
       if (cartId) {
         localStorage.setItem("cart_id", String(cartId));
       }
-      localStorage.setItem("user_delivery_address", trimmed);
+      if (trimmed) {
+        localStorage.setItem("user_delivery_address", trimmed);
+      }
+      localStorage.setItem("selected_branch_id", String(branchId));
 
       setClosing(true);
       setTimeout(() => {
         onClose();
-        if (token) {
-          router.push("/menu");
-        } else {
-          router.push("/phone-login");
-        }
+        router.push("/menu");
       }, 180);
     } catch (err) {
       console.error("Failed to create cart:", err);
@@ -142,31 +142,74 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className={`absolute inset-0 bg-black/60 transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} onClick={onClose} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className={`absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} onClick={onClose} />
 
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="pacino-start-title"
-        aria-describedby="pacino-start-desc"
-        className={`relative bg-[#1E1E20] rounded-2xl p-4 md:p-10 w-[92%] max-w-sm text-center border border-white/10 shadow-lg transform transition-all ${closing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
+        className={`relative bg-[#1E1E20] rounded-2xl p-6 sm:p-8 w-full max-w-md text-center border border-white/10 shadow-2xl transform transition-all ${closing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
       >
-        <div className="mb-3 w-21 h-14 mx-auto">
-          <Image src="/logo.png" alt="logo" width={84} height={56} className="w-full h-full" />
+        <div className="mb-3 w-20 h-12 mx-auto relative">
+          <Image src="/logo.png" alt="logo" width={80} height={48} className="w-full h-full object-contain mx-auto" />
         </div>
-        <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl md:text-2xl mb-4">START YOUR <br />ORDER</h3>
 
+        <h3 id="pacino-start-title" className="text-[#F9671A] font-bold text-xl sm:text-2xl mb-1 uppercase tracking-wider">
+          START YOUR ORDER
+        </h3>
+        <p className="text-zinc-400 text-xs mb-5 font-medium">
+          Order Mode: <span className="text-white font-bold capitalize">{initialMode || "Delivery"}</span>
+        </p>
+
+        {/* Branch Selector Dropdown */}
+        <div className="mb-4 text-left">
+          <label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Select Store / Branch</label>
+          <div className="relative">
+            <select
+              value={selectedBranchId || ""}
+              onChange={(e) => setSelectedBranchId(Number(e.target.value))}
+              disabled={isBranchesLoading || branches.length === 0}
+              className="w-full px-4 py-3 rounded-xl bg-[#262626] border border-white/10 text-white outline-none focus:border-[#F9671A]/50 transition-all text-sm appearance-none cursor-pointer pr-10"
+            >
+              {branches.length === 0 ? (
+                <option value="">{isBranchesLoading ? "Loading branches..." : "Pacino's Main Branch"}</option>
+              ) : (
+                branches.map((b: BranchItem) => (
+                  <option key={b.id} value={b.id} className="bg-[#1E1E20] text-white py-2">
+                    {b.name}{b.city ? ` (${b.city})` : b.address ? ` (${b.address})` : ""}
+                  </option>
+                ))
+              )}
+            </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Postcode Input */}
         <div className="mb-6 text-left">
+          <label className="text-xs font-semibold text-zinc-400 mb-1.5 flex items-center justify-between">
+            <span>Delivery Postcode / Address</span>
+            <button
+              type="button"
+              onClick={handleDetectLocation}
+              disabled={isDetecting}
+              className="text-[#F9671A] hover:underline text-[11px] font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            >
+              {isDetecting ? "Detecting..." : "Detect my location"}
+            </button>
+          </label>
           <input
             ref={inputRef}
             value={postcode}
             onChange={(e) => { setPostcode(e.target.value); setError(""); }}
-            placeholder="Enter postcode to start your order"
-            className={`w-full placeholder:text-[#626262] placeholder:text-sm px-4 py-3 rounded-xl bg-[#262626] border outline-none transition-all ${error ? "border-rose-500 focus:border-rose-400" : "border-white/10 focus:border-[#F9671A]/50"
-              } text-white`}
-            aria-label="Postcode"
+            placeholder="Enter postcode (e.g. SE9 6SN)"
+            className={`w-full placeholder:text-zinc-500 text-sm px-4 py-3 rounded-xl bg-[#262626] border outline-none transition-all ${error ? "border-rose-500 focus:border-rose-400" : "border-white/10 focus:border-[#F9671A]/50"} text-white`}
           />
           {error && (
             <div className="flex items-center gap-1.5 mt-2 ml-1">
@@ -178,13 +221,13 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
           )}
         </div>
 
-        <div className="flex gap-3 mb-4">
+        <div className="flex gap-3">
           <button
             onClick={() => handleStart()}
             disabled={isProcessing}
-            className={`flex-1 py-2 text-sm md:text-base rounded-full bg-[#F9671A] text-white ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`w-full py-3.5 text-sm sm:text-base font-bold rounded-full bg-[#F9671A] hover:bg-[#ff7a33] text-white transition-all shadow-lg shadow-orange-600/20 cursor-pointer ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {isProcessing ? 'Processing...' : 'Continue'}
+            {isProcessing ? 'Creating Order...' : 'Continue to Menu'}
           </button>
         </div>
 

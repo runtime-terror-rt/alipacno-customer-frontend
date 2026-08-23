@@ -252,62 +252,37 @@ export default function CustomerHome() {
     },
   ];
 
-  const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 4 });
-  const fetchedPopularDishes = Array.isArray(menuResponse?.data) ? menuResponse.data : (menuResponse?.data?.data || []);
+  const { data: menuResponse, isLoading } = useGetMenuItemsQuery({ is_popular: 1, per_page: 10 });
 
-  const getImageUrl = (url: string) => {
-    if (!url) return "/placeholder.png";
-    if (url.startsWith("http")) return url;
-    if (url.startsWith("/customer")) return url;
+  const rawMenuItems = Array.isArray(menuResponse?.data?.data)
+    ? menuResponse.data.data
+    : Array.isArray(menuResponse?.data)
+    ? menuResponse.data
+    : Array.isArray(menuResponse)
+    ? menuResponse
+    : [];
+
+  const fetchedPopularDishes = rawMenuItems.filter(
+    (item: any) => Number(item.is_popular) === 1 || item.is_popular === true
+  );
+
+  const getImageUrl = (url?: string | null) => {
+    if (!url) return "/customer/popular-1.png";
+    if (url.startsWith("http") || url.startsWith("/customer")) return url;
     return `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
-  const popularDishes = fetchedPopularDishes.length > 0 ? fetchedPopularDishes.map((item: any) => ({
+  const popularDishes = fetchedPopularDishes.map((item: any) => ({
     id: item.id,
     name: item.name,
-    price: `£${item.discount_price || item.price || 0}`,
-    oldPrice: (item.original_price && item.original_price !== item.price) ? `£${item.original_price}` : "", 
+    price: `£${parseFloat(String(item.price || 0)).toFixed(2)}`,
+    oldPrice: (item.original_price && parseFloat(String(item.original_price)) > parseFloat(String(item.price)))
+      ? `£${parseFloat(String(item.original_price)).toFixed(2)}`
+      : "", 
     unit: "/portion",
-    rating: item.rating ? parseFloat(item.rating).toFixed(1) : "4.5", 
+    rating: item.rating ? parseFloat(String(item.rating)).toFixed(1) : "4.5", 
     image: getImageUrl(item.image_url || item.image),
-  })) : [
-    {
-      id: 1,
-      name: "Filet Mignon",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-1.png",
-    },
-    {
-      id: 2,
-      name: "Ribeye Steak",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-2.png",
-    },
-    {
-      id: 3,
-      name: "Vegetable Stir Fry",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-3.png",
-    },
-    {
-      id: 4,
-      name: "Pork Belly Bao",
-      price: "£39.99",
-      oldPrice: "£52.00",
-      unit: "/portion",
-      rating: "4.5",
-      image: "/customer/popular-4.png",
-    },
-  ];
+  }));
 
   return (
     <div

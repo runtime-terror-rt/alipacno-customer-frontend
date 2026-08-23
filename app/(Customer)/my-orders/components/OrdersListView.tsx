@@ -17,6 +17,11 @@ export type OrderSummaryItem = {
   price: string;
   date: string;
   rawOrder: Order;
+  estimatedTimeText?: string;
+};
+
+type Props = {
+  onSelectOrder: (orderId: string | number) => void;
 };
 
 function ActiveOrderCard({
@@ -56,33 +61,51 @@ function ActiveOrderCard({
         if (bCoords && dCoords) {
           const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
           if (mbRoute && isMounted) {
-            setDeliveryInfo(`${mbRoute.formattedDeliveryTime} (${mbRoute.formattedDistance})`);
+            setDeliveryInfo(
+              `${mbRoute.formattedDeliveryTime} (${mbRoute.formattedDistance})`
+            );
             return;
           }
 
-          const km = calculateDistanceKm(bCoords.latitude, bCoords.longitude, dCoords.latitude, dCoords.longitude);
+          // Fallback if Mapbox Directions API route unavailable
+          const km = calculateDistanceKm(
+            bCoords.latitude,
+            bCoords.longitude,
+            dCoords.latitude,
+            dCoords.longitude
+          );
           if (km != null && isMounted) {
             setDeliveryInfo(`${formatDeliveryTime(km)} (${formatDistance(km)})`);
             return;
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        // Silently fallback to standard text
+      }
     };
 
     computeMapboxInfo();
     return () => {
       isMounted = false;
     };
-  }, [order.rawOrder?.id, order.rawOrder?.delivery_address, order.rawOrder?.branch?.id]);
+  }, [order.rawOrder?.id, order.rawOrder?.delivery_address]);
 
-  const statusText =
-    order.rawOrder?.order_status === "preparing"
-      ? "Preparing"
-      : order.rawOrder?.order_status === "out_for_delivery"
-      ? "Out for Delivery"
-      : order.rawOrder?.order_status === "pending"
-      ? "Pending"
-      : order.rawOrder?.order_status || "Active";
+  // Active statuses from DB enum
+  const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready", "out_for_delivery"];
+  const PAST_STATUSES   = ["completed", "cancelled", "refunded"];
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending:          "Pending",
+    accepted:         "Accepted",
+    preparing:        "Preparing",
+    ready:            "Ready for Pickup",
+    out_for_delivery: "Out for Delivery",
+    completed:        "Completed",
+    cancelled:        "Cancelled",
+    refunded:         "Refunded",
+  };
+
+  const statusText = STATUS_LABELS[order.rawOrder?.order_status || ""] || order.rawOrder?.order_status || "Active";
 
   const displayedText = deliveryInfo
     ? `${statusText} • Est: ${deliveryInfo}`
@@ -105,14 +128,11 @@ function ActiveOrderCard({
   );
 }
 
-type Props = {
-  onSelectOrder: (orderId: string | number) => void;
-};
-
 export default function OrdersListView({ onSelectOrder }: Props) {
-  const { data: ordersRes, isLoading, isError } = useGetOrdersQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: ordersRes, isLoading, isError, refetch } = useGetOrdersQuery(
+    undefined,
+    { refetchOnMountOrArgChange: true, pollingInterval: 30000 }
+  );
   const [createOrderMut] = useCreateOrderMutation();
 
   const getImageUrl = (url?: string | null) => {
@@ -127,8 +147,8 @@ export default function OrdersListView({ onSelectOrder }: Props) {
     const image = getImageUrl(firstItem?.menu_item?.image_url || firstItem?.menu_item?.image);
     const badge = firstItem?.size_name || order.order_type || "Steaks";
     const title = firstItem ? `${firstItem.item_name || firstItem.menu_item?.name}` : "Order Items";
-    const statusText = order.order_status === "delivered" ? "Delivered" : order.order_status;
-    const deliveredText = `${statusText} • ${order.delivery_address || "Standard Delivery"}`;
+    const statusLabel = STATUS_LABELS[order.order_status || ""] || order.order_status || "Order";
+    const deliveredText = `${statusLabel} • ${order.delivery_address || "Standard Delivery"}`;
     const orderId = order.order_number || String(order.id);
     const qty = firstItem?.quantity || 1;
     const price = `£${parseFloat(String(order.total || 0)).toFixed(2)}`;
@@ -156,62 +176,31 @@ export default function OrdersListView({ onSelectOrder }: Props) {
     };
   };
 
+  // Active: order still in progress
+  const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready", "out_for_delivery"];
+  const PAST_STATUSES   = ["completed", "cancelled", "refunded"];
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending:          "Pending — awaiting confirmation",
+    accepted:         "Accepted — kitchen confirmed",
+    preparing:        "Preparing",
+    ready:            "Ready for Pickup",
+    out_for_delivery: "Out for Delivery",
+    completed:        "Completed",
+    cancelled:        "Cancelled",
+    refunded:         "Refunded",
+  };
+
   const allOrders = ordersRes?.data || [];
   const activeOrdersList = allOrders
-    .filter((o) => o.order_status !== "delivered" && o.order_status !== "cancelled")
+    .filter((o) => ACTIVE_STATUSES.includes(o.order_status))
     .map(formatOrderToSummary);
   const pastOrdersList = allOrders
-    .filter((o) => o.order_status === "delivered" || o.order_status === "cancelled")
+    .filter((o) => PAST_STATUSES.includes(o.order_status))
     .map(formatOrderToSummary);
 
-  // Fallback defaults if API returns empty array (to keep UI mockup visible if no backend orders yet)
-  const defaultActive: OrderSummaryItem[] = [
-    {
-      id: "active-1",
-      rawId: "active-1",
-      image: "/customer/most-popular-1.png",
-      badge: "Steaks",
-      title: "Grilled chicken pieces",
-      deliveredText: "Delivered on Sunday, May 04, 4:30 PM",
-      orderId: "t7ml-2542-c4kj",
-      qty: 1,
-      price: "£95.00",
-      date: "May 05, 12:45 PM",
-      rawOrder: {} as any,
-    },
-  ];
-
-  const defaultPast: OrderSummaryItem[] = [
-    {
-      id: "past-1",
-      rawId: "past-1",
-      image: "/customer/most-popular-4.png",
-      badge: "Drinks",
-      title: "Caesar Salad - Appetizers",
-      deliveredText: "Delivered on Sunday, May 04, 4:30 PM",
-      orderId: "x5bt-7843-n9uj",
-      qty: 2,
-      price: "£28.00",
-      date: "April 28, 12:45 PM",
-      rawOrder: {} as any,
-    },
-    {
-      id: "past-2",
-      rawId: "past-2",
-      image: "/customer/most-popular-8.png",
-      badge: "Desserts",
-      title: "Chocolate Lava Cake - Desserts",
-      deliveredText: "Delivered on Tuesday, June 11, 7:00 PM",
-      orderId: "u8rt-5921-p2wx",
-      qty: 1,
-      price: "£27.50",
-      date: "April 26, 12:45 PM",
-      rawOrder: {} as any,
-    },
-  ];
-
-  const activeOrders = activeOrdersList.length > 0 ? activeOrdersList : (allOrders.length === 0 ? defaultActive : []);
-  const pastOrders = pastOrdersList.length > 0 ? pastOrdersList : (allOrders.length === 0 ? defaultPast : []);
+  const activeOrders = activeOrdersList.length > 0 ? activeOrdersList : [];
+  const pastOrders = pastOrdersList.length > 0 ? pastOrdersList : [];
 
   const handleReorder = async (orderItem: OrderSummaryItem) => {
     try {

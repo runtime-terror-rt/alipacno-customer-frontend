@@ -16,6 +16,7 @@ import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/au
 import Header from "../components/Header";
 
 import { toast } from "react-hot-toast";
+import OrderSuccessModal from "@/components/OrderSuccessModal";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -263,6 +264,13 @@ export default function CheckoutPage() {
 
   const tipAmt = tip === "£2" ? 2 : tip === "£5" ? 5 : tip === "£10" ? 10 : 0;
 
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successOrderInfo, setSuccessOrderInfo] = useState<{
+    orderNumber?: string;
+    sessionId?: string;
+    totalAmount?: number | string;
+  }>({});
+
   const handlePlaceOrder = async () => {
     if (!customerName.trim()) {
       toast.error("Please enter your name.");
@@ -280,20 +288,47 @@ export default function CheckoutPage() {
     try {
       const cartId = cartObj?.id || cartData?.id || cartData?.data?.id;
       if (!cartId) {
-        toast.error("Your cart is empty or expired.");
+        toast.error("Your cart is empty. Please add items before ordering.");
         return;
       }
 
+      if (rawCartItems.length === 0) {
+        toast.error("Your cart is empty. Please add items before ordering.");
+        return;
+      }
+
+      // Build items payload from cart items (required by backend even with cart_id)
+      const itemsPayload = rawCartItems.map((item: any) => ({
+        menu_item_id: item.menu_item_id || item.menu_item?.id,
+        quantity: item.quantity || 1,
+        size_id: item.size_id || null,
+        cooking_preference_id: item.cooking_preference_id || null,
+        spice_level_id: item.spice_level_id || null,
+        unit_price: parseFloat(String(item.unit_price || item.menu_item?.price || 0)),
+        special_instructions: item.special_instructions || null,
+      })).filter((item: any) => item.menu_item_id);
+
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const successUrl = `${origin}/order/success?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${origin}/checkout`;
+
+      const user = meRes?.user || meRes?.data?.user || meRes?.data || meRes;
+      const userId: number | undefined = user?.id ? Number(user.id) : undefined;
+
       const res = await createOrderMut({
         cart_id: cartId,
+        user_id: userId,
         branch_id: currentBranch?.id || 1,
-        order_type: "delivery", 
+        order_type: cartObj?.order_type || "delivery",
         payment_method: pay.toLowerCase() === "card" ? "stripe" : "cash",
         customer_name: customerName,
         customer_phone: customerPhone,
         delivery_address: deliveryAddress,
         tip: tipAmt,
-        use_loyalty_points: loyalty
+        use_loyalty_points: loyalty,
+        items: itemsPayload.length > 0 ? itemsPayload : undefined,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       }).unwrap();
 
       toast.success(res?.message || "Order placed successfully!");
@@ -301,7 +336,12 @@ export default function CheckoutPage() {
       if (res?.stripe?.url) {
         window.location.href = res.stripe.url;
       } else {
-        router.push("/my-orders");
+        const orderNum = res?.data?.order_number || res?.order?.order_number || res?.order_number;
+        setSuccessOrderInfo({
+          orderNumber: orderNum,
+          totalAmount: total,
+        });
+        setIsSuccessModalOpen(true);
       }
     } catch (e: any) {
       console.error("Order failed", e);
@@ -895,6 +935,18 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
+
+      <OrderSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        orderNumber={successOrderInfo.orderNumber}
+        sessionId={successOrderInfo.sessionId}
+        deliveryAddress={deliveryAddress}
+        branchName={currentBranch?.name}
+        totalAmount={successOrderInfo.totalAmount}
+        branchLat={(currentBranch as any)?.latitude}
+        branchLng={(currentBranch as any)?.longitude}
+      />
     </div>
   );
 }

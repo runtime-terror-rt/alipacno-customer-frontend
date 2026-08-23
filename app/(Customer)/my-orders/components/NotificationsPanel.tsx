@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useGetOrdersQuery } from "@/redux/features/api/ordersApi";
 
 type Notification = {
@@ -11,18 +12,67 @@ type Notification = {
 
 export default function NotificationsPanel() {
   const { data: ordersRes } = useGetOrdersQuery();
+  const [estTimes, setEstTimes] = useState<Record<string, string>>({});
 
   const activeOrders = (ordersRes?.data || []).filter(
     (o) => o.order_status !== "delivered" && o.order_status !== "cancelled"
   );
 
+  useEffect(() => {
+    let isMounted = true;
+    const computeMapboxTimes = async () => {
+      const {
+        getBranchCoordinates,
+        forwardGeocode,
+        getUserLocation,
+        getMapboxRouteInfo,
+      } = await import("@/utils/location");
+
+      const timesMap: Record<string, string> = {};
+
+      for (const o of activeOrders) {
+        try {
+          const bCoords = getBranchCoordinates(o.branch);
+          let dCoords = o.delivery_address
+            ? await forwardGeocode(o.delivery_address)
+            : null;
+          if (!dCoords) {
+            dCoords = await getUserLocation();
+          }
+
+          if (bCoords && dCoords) {
+            const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
+            if (mbRoute) {
+              timesMap[String(o.id)] = `${mbRoute.deliveryMins} mins`;
+            }
+          }
+        } catch (e) {
+          // Fallback
+        }
+      }
+
+      if (isMounted && Object.keys(timesMap).length > 0) {
+        setEstTimes(timesMap);
+      }
+    };
+
+    if (activeOrders.length > 0) {
+      computeMapboxTimes();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [activeOrders.map((o) => `${o.id}-${o.delivery_address}`).join(",")]);
+
   const dynamicNotifications: Notification[] = activeOrders.map((o) => {
     const isPrep = o.order_status === "preparing";
+    const est = estTimes[String(o.id)] || "25 mins";
+
     return {
       id: String(o.id),
-      title: `Order #${o.order_number} is ${isPrep ? "Preparing" : o.order_status}`,
+      title: `Order #${o.order_number || o.id} is ${isPrep ? "Preparing" : o.order_status}`,
       desc: isPrep
-        ? "Our kitchen is cooking your dish - Estimated time 15min."
+        ? `Our kitchen is cooking your dish - Estimated time ${est}.`
         : `Your order status is ${o.order_status}`,
       icon: (
         <svg
@@ -48,7 +98,7 @@ export default function NotificationsPanel() {
     {
       id: "preparing",
       title: "Order #t7ml-2542 is Preparing",
-      desc: "Our kitchen is cooking your dish - Estimated time 15min.",
+      desc: "Our kitchen is cooking your dish - Estimated time 25 mins.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />

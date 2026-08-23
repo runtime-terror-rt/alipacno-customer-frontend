@@ -221,6 +221,8 @@ export interface CreateOrderPayload {
   tip?: number;
   rider_tip?: number;
   use_loyalty_points?: boolean;
+  success_url?: string;
+  cancel_url?: string;
   items?: Array<{
     menu_item_id: number;
     quantity: number;

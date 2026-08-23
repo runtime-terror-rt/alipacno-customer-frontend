@@ -21,21 +21,27 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
 
   const [deliveryCoords, setDeliveryCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [branchCoords, setBranchCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [distanceText, setDistanceText] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     const computeMapDistance = async () => {
-      if (!order) return;
-      const { forwardGeocode, calculateDistanceKm, getUserLocation, getBranchCoordinates } = await import("@/utils/location");
+      const {
+        forwardGeocode,
+        calculateDistanceKm,
+        getUserLocation,
+        getBranchCoordinates,
+        getMapboxRouteInfo,
+        formatDistance,
+      } = await import("@/utils/location");
 
-      const bCoords = getBranchCoordinates(order.branch);
+      const bCoords = getBranchCoordinates(order?.branch);
       if (isMounted) {
         setBranchCoords(bCoords);
       }
 
       let dCoords: { latitude: number; longitude: number } | null = null;
-      if (order.delivery_address) {
+      if (order?.delivery_address) {
         dCoords = await forwardGeocode(order.delivery_address);
       }
 
@@ -48,10 +54,18 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
       }
 
       if (bCoords && dCoords) {
+        const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
+        if (mbRoute && isMounted) {
+          setDistanceText(`${mbRoute.deliveryMins} mins • ${mbRoute.formattedDistance}`);
+          return;
+        }
+
         const km = calculateDistanceKm(bCoords.latitude, bCoords.longitude, dCoords.latitude, dCoords.longitude);
-        if (isMounted) setDistanceKm(km);
+        if (km != null && isMounted) {
+          setDistanceText(formatDistance(km));
+        }
       } else if (isMounted) {
-        setDistanceKm(null);
+        setDistanceText(null);
       }
     };
 
@@ -64,7 +78,6 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
   const riderLat = order?.assigned_driver?.latitude || null;
   const riderLng = order?.assigned_driver?.longitude || null;
 
-  const distanceText = distanceKm != null ? `${distanceKm} km away` : null;
 
   const handleReorder = async () => {
     if (!order) {
@@ -108,7 +121,7 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
         <div className="w-full h-[220px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
           <CheckoutMap
             userLoc={deliveryCoords}
-            distance={distanceKm}
+            distance={null}
             branchLat={branchCoords?.latitude || order?.branch?.latitude || null}
             branchLng={branchCoords?.longitude || order?.branch?.longitude || null}
             userLat={deliveryCoords?.latitude || null}
