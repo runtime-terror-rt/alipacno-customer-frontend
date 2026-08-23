@@ -303,8 +303,24 @@ export default function CheckoutPage() {
       const successUrl = `${origin}/order/success?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${origin}/checkout`;
 
-      const user = meRes?.user || meRes?.data?.user || meRes?.data || meRes;
-      const userId: number | undefined = user?.id ? Number(user.id) : undefined;
+      const currentUser = (() => {
+        if (meRes?.data?.id) return meRes.data;
+        if (meRes?.data?.user?.id) return meRes.data.user;
+        if (meRes?.user?.id) return meRes.user;
+        if (meRes?.id) return meRes;
+        if (typeof window !== "undefined") {
+          try {
+            const saved = localStorage.getItem("user");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed?.id) return parsed;
+            }
+          } catch (e) {}
+        }
+        return null;
+      })();
+
+      const userId: number | undefined = currentUser?.id ? Number(currentUser.id) : undefined;
 
       const payMethod = pay.toLowerCase() === "card" ? "stripe" : "cash";
 
