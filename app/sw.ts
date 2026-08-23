@@ -34,12 +34,7 @@ declare global {
   }
 }
 
-declare const self: typeof globalThis & {
-  __SW_MANIFEST: Array<{
-    url: string;
-    revision?: string | null;
-  }>;
-};
+declare const self: WorkerGlobalScope;
 
 
 const apiCache = new NetworkFirst({
