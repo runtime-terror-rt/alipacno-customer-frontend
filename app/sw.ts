@@ -1,32 +1,6 @@
-// import { defaultCache } from "@serwist/next/worker";
-// import { Serwist } from "serwist";
-
-// declare const self: typeof globalThis & {
-//   __SW_MANIFEST: Array<{
-//     url: string;
-//     revision?: string | null;
-//   }>;
-// };
-// const serwist = new Serwist({
-//   precacheEntries: self.__SW_MANIFEST,
-//   skipWaiting: true,
-//   clientsClaim: true,
-//   runtimeCaching: defaultCache,
-// });
-
-// serwist.addEventListeners();
-
-
-
-
-
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import {
-  ExpirationPlugin,
-  NetworkFirst,
-  Serwist,
-} from "serwist";
+import { ExpirationPlugin, NetworkFirst, Serwist } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -35,7 +9,6 @@ declare global {
 }
 
 declare const self: WorkerGlobalScope;
-
 
 const apiCache = new NetworkFirst({
   cacheName: "alipacno-public-api",
