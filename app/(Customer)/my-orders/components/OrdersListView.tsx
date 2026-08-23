@@ -191,82 +191,91 @@ export default function OrdersListView({ onSelectOrder }: Props) {
     refunded:         "Refunded",
   };
 
-  const STATIC_ACTIVE_ORDERS: OrderSummaryItem[] = [
-    {
-      id: "static-active-1",
-      rawId: "static-1",
-      image: "/customer/popular-1.png",
-      badge: "Steaks",
-      title: "Grilled chicken pieces",
-      deliveredText: "Active • Est: 25 mins delivery",
-      orderId: "t7ml-2542-o4kj",
-      qty: 1,
-      price: "£95.00",
-      date: "May 05, 12:45 PM",
-      rawOrder: {
-        id: 9999,
-        order_number: "t7ml-2542-o4kj",
-        order_status: "preparing",
-        delivery_address: "180 Wall Hall Road",
-        total: "95.00",
-        created_at: "2026-05-05T12:45:00Z",
-      } as any,
-    },
-  ];
+  // const STATIC_ACTIVE_ORDERS: OrderSummaryItem[] = [
+  //   {
+  //     id: "static-active-1",
+  //     rawId: "static-1",
+  //     image: "/customer/popular-1.png",
+  //     badge: "Steaks",
+  //     title: "Grilled chicken pieces",
+  //     deliveredText: "Active • Est: 25 mins delivery",
+  //     orderId: "t7ml-2542-o4kj",
+  //     qty: 1,
+  //     price: "£95.00",
+  //     date: "May 05, 12:45 PM",
+  //     rawOrder: {
+  //       id: 9999,
+  //       order_number: "t7ml-2542-o4kj",
+  //       order_status: "preparing",
+  //       delivery_address: "180 Wall Hall Road",
+  //       total: "95.00",
+  //       created_at: "2026-05-05T12:45:00Z",
+  //     } as any,
+  //   },
+  // ];
 
-  const STATIC_PAST_ORDERS: OrderSummaryItem[] = [
-    {
-      id: "static-past-1",
-      rawId: "static-2",
-      image: "/customer/popular-2.png",
-      badge: "Drinks",
-      title: "Caesar Salad - Appetizers",
-      deliveredText: "Delivered on Sunday, May 04, 4:30 PM",
-      orderId: "x5bt-7643-n6lu",
-      qty: 2,
-      price: "£28.00",
-      date: "April 28, 12:45 PM",
-      rawOrder: {
-        id: 9998,
-        order_number: "x5bt-7643-n6lu",
-        order_status: "completed",
-        delivery_address: "Standard Delivery",
-        total: "28.00",
-        created_at: "2026-04-28T12:45:00Z",
-      } as any,
-    },
-    {
-      id: "static-past-2",
-      rawId: "static-3",
-      image: "/customer/popular-3.png",
-      badge: "Desserts",
-      title: "Chocolate Lava Cake - Desserts",
-      deliveredText: "Delivered on Tuesday, June 11, 7:00 PM",
-      orderId: "u8rt-5921-p2wx",
-      qty: 1,
-      price: "£27.50",
-      date: "April 26, 12:45 PM",
-      rawOrder: {
-        id: 9997,
-        order_number: "u8rt-5921-p2wx",
-        order_status: "completed",
-        delivery_address: "Standard Delivery",
-        total: "27.50",
-        created_at: "2026-04-26T12:45:00Z",
-      } as any,
-    },
-  ];
+  // const STATIC_PAST_ORDERS: OrderSummaryItem[] = [
+  //   {
+  //     id: "static-past-1",
+  //     rawId: "static-2",
+  //     image: "/customer/popular-2.png",
+  //     badge: "Drinks",
+  //     title: "Caesar Salad - Appetizers",
+  //     deliveredText: "Delivered on Sunday, May 04, 4:30 PM",
+  //     orderId: "x5bt-7643-n6lu",
+  //     qty: 2,
+  //     price: "£28.00",
+  //     date: "April 28, 12:45 PM",
+  //     rawOrder: {
+  //       id: 9998,
+  //       order_number: "x5bt-7643-n6lu",
+  //       order_status: "completed",
+  //       delivery_address: "Standard Delivery",
+  //       total: "28.00",
+  //       created_at: "2026-04-28T12:45:00Z",
+  //     } as any,
+  //   },
+  //   {
+  //     id: "static-past-2",
+  //     rawId: "static-3",
+  //     image: "/customer/popular-3.png",
+  //     badge: "Desserts",
+  //     title: "Chocolate Lava Cake - Desserts",
+  //     deliveredText: "Delivered on Tuesday, June 11, 7:00 PM",
+  //     orderId: "u8rt-5921-p2wx",
+  //     qty: 1,
+  //     price: "£27.50",
+  //     date: "April 26, 12:45 PM",
+  //     rawOrder: {
+  //       id: 9997,
+  //       order_number: "u8rt-5921-p2wx",
+  //       order_status: "completed",
+  //       delivery_address: "Standard Delivery",
+  //       total: "27.50",
+  //       created_at: "2026-04-26T12:45:00Z",
+  //     } as any,
+  //   },
+  // ];
 
-  const allOrders = ordersRes?.data || [];
+  const getOrdersArray = (res: any): Order[] => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.data?.data)) return res.data.data;
+    if (Array.isArray(res.orders)) return res.orders;
+    return [];
+  };
+
+  const allOrders = getOrdersArray(ordersRes);
   const activeOrdersList = allOrders
-    .filter((o: Order) => ACTIVE_STATUSES.includes(o.order_status))
+    .filter((o: Order) => ACTIVE_STATUSES.includes(o.order_status?.toLowerCase()))
     .map(formatOrderToSummary);
   const pastOrdersList = allOrders
-    .filter((o: Order) => PAST_STATUSES.includes(o.order_status))
+    .filter((o: Order) => PAST_STATUSES.includes(o.order_status?.toLowerCase()))
     .map(formatOrderToSummary);
 
-  const activeOrders = activeOrdersList.length > 0 ? activeOrdersList : STATIC_ACTIVE_ORDERS;
-  const pastOrders = pastOrdersList.length > 0 ? [...pastOrdersList, ...STATIC_PAST_ORDERS] : STATIC_PAST_ORDERS;
+  const activeOrders = activeOrdersList;
+  const pastOrders = pastOrdersList;
 
   const handleReorder = async (orderItem: OrderSummaryItem) => {
     try {

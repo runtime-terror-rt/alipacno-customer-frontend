@@ -286,16 +286,16 @@ export default function CheckoutPage() {
     }
 
     try {
-      const cartId = cartObj?.id || cartData?.id || cartData?.data?.id || 1;
+      const cartId = Number(cartObj?.id || cartData?.id || cartData?.data?.id || 1);
 
       // Build items payload from cart items
       const itemsPayload = rawCartItems.map((item: any) => ({
-        menu_item_id: item.menu_item_id || item.menu_item?.id || item.id || 1,
-        quantity: item.quantity || 1,
-        size_id: item.size_id || null,
-        cooking_preference_id: item.cooking_preference_id || null,
-        spice_level_id: item.spice_level_id || null,
-        unit_price: parseFloat(String(item.unit_price || item.menu_item?.price || 0)),
+        menu_item_id: Number(item.menu_item_id || item.menu_item?.id || item.id || 1),
+        quantity: Number(item.quantity || 1),
+        size_id: item.size_id ? Number(item.size_id) : (item.size?.id ? Number(item.size.id) : null),
+        cooking_preference_id: item.cooking_preference_id ? Number(item.cooking_preference_id) : (item.cooking_preference?.id ? Number(item.cooking_preference.id) : null),
+        spice_level_id: item.spice_level_id ? Number(item.spice_level_id) : (item.spice_level?.id ? Number(item.spice_level.id) : null),
+        unit_price: parseFloat(String(item.unit_price || item.menu_item?.price || item.price || 0)),
         special_instructions: item.special_instructions || null,
       }));
 
@@ -306,12 +306,14 @@ export default function CheckoutPage() {
       const user = meRes?.user || meRes?.data?.user || meRes?.data || meRes;
       const userId: number | undefined = user?.id ? Number(user.id) : undefined;
 
+      const payMethod = pay.toLowerCase() === "card" ? "stripe" : "cash";
+
       const res = await createOrderMut({
         cart_id: cartId,
         user_id: userId,
-        branch_id: currentBranch?.id || 1,
+        branch_id: Number(currentBranch?.id || 1),
         order_type: cartObj?.order_type || "delivery",
-        payment_method: pay.toLowerCase() === "card" ? "stripe" : "cash",
+        payment_method: payMethod,
         customer_name: customerName,
         customer_phone: customerPhone,
         delivery_address: deliveryAddress,
@@ -324,7 +326,7 @@ export default function CheckoutPage() {
 
       toast.success(res?.message || "Order placed successfully!");
 
-      if (pay.toLowerCase() === "card" && res?.stripe?.url) {
+      if (payMethod === "stripe" && res?.stripe?.url) {
         window.location.href = res.stripe.url;
       } else {
         const orderData = res?.data || res?.order || res;
@@ -336,15 +338,9 @@ export default function CheckoutPage() {
         setIsSuccessModalOpen(true);
       }
     } catch (e: any) {
-      console.error("Order failed", e);
-      // Fallback modal for demo if server API requires mock order
-      const mockOrderNum = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-      setSuccessOrderInfo({
-        orderNumber: mockOrderNum,
-        totalAmount: total,
-      });
-      setIsSuccessModalOpen(true);
-      toast.success("Order placed successfully!");
+      console.error("Order API failed:", e);
+      const errMsg = e?.data?.message || e?.message || "Order placement failed. Please try again.";
+      toast.error(errMsg);
     }
   };
 

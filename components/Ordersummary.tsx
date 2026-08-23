@@ -69,7 +69,9 @@ export default function OrderSummary({ order }: Props) {
               <h4 className="text-[14px] font-bold text-white truncate mb-0.5">{item.name}</h4>
               <p className="text-[11px] text-zinc-400 truncate">{item.desc}</p>
             </div>
-            <span className="text-[#F9671A] text-[15px] font-extrabold flex-shrink-0 pl-2">£{item.price.toFixed(2)}</span>
+            <span className="text-[#F9671A] text-[15px] font-extrabold flex-shrink-0 pl-2">
+              £{(isNaN(Number(item.price)) ? 0 : Number(item.price)).toFixed(2)}
+            </span>
           </div>
         ))}
       </div>
