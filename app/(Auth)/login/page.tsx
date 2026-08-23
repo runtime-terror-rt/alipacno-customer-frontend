@@ -36,7 +36,7 @@ export default function Login() {
         dispatch(setCredentials({ user, token }));
       }
       toast.success(res?.message || "Logged in successfully!");
-      router.push("/home");
+      router.push("/menu");
     } catch (err: any) {
       toast.error(err?.data?.message || "Login failed. Please try again.");
     }
