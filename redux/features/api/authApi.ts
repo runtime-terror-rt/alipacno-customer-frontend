@@ -55,21 +55,11 @@ export const authApi = baseApi.injectEndpoints({
       providesTags: ['Profile'],
     }),
     updateUser: builder.mutation({
-      query: ({ id, data }) => {
-        if (data instanceof FormData) {
-          data.append("_method", "PUT");
-          return {
-            url: `/api/v1/users/${id}`,
-            method: "POST",
-            body: data,
-          };
-        }
-        return {
-          url: `/api/v1/users/${id}`,
-          method: "PUT",
-          body: data,
-        };
-      },
+      query: ({ data }) => ({
+        url: "/api/v1/profile_update",
+        method: "POST",
+        body: data,
+      }),
       invalidatesTags: ['Profile'],
     }),
     deleteAccount: builder.mutation({

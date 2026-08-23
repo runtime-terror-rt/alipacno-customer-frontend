@@ -61,7 +61,7 @@ export default function EditProfileForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="text-[13.5px] font-medium text-white">Gender</label>
-            <input defaultValue="Male" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+            <input name="gender" value={formData.gender || ""} onChange={handleInputChange} placeholder="e.g. female / male" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-[13.5px] font-medium text-white">Phone Number</label>
@@ -82,7 +82,7 @@ export default function EditProfileForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="text-[13.5px] font-medium text-white">Post code</label>
-            <input name="post_code" value={formData.post_code} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+            <input name="postcode" value={formData.postcode || formData.post_code || ""} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-[13.5px] font-medium text-white">City</label>
@@ -100,7 +100,7 @@ export default function EditProfileForm({
           <input name="address_line_2" value={formData.address_line_2} onChange={handleInputChange} className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
         </div>
 
-        <h3 className="text-[17px] font-bold text-white mb-1 mt-6">Payment Information</h3>
+        {/* <h3 className="text-[17px] font-bold text-white mb-1 mt-6">Payment Information</h3>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[13.5px] font-medium text-white">Cardholder name</label>
@@ -116,7 +116,7 @@ export default function EditProfileForm({
             <label className="text-[13.5px] font-medium text-white">CVC</label>
             <input defaultValue="555" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
           </div>
-        </div>
+        </div> */}
 
         <div className="flex gap-4 mb-20 max-w-[400px]">
           <button onClick={() => setIsEditing(false)} className="border border-[#F9671A]/50 text-[#F9671A] hover:bg-[#F9671A]/10 text-[14px] font-bold px-8 py-3.5 rounded-full transition-colors flex-1 cursor-pointer">

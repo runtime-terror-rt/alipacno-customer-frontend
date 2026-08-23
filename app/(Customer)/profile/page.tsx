@@ -83,11 +83,14 @@ export default function ProfilePage() {
   const [deleteAccountApi, { isLoading: isDeletingAccount }] = useDeleteAccountMutation();
 
   // Form states
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Record<string, string>>({
     name: "",
     phone: "",
     email: "",
+    gender: "female",
+    label: "Home",
     country: "UK",
+    postcode: "NW1 6XE",
     post_code: "NW1 6XE",
     city: "London",
     address_line_1: "221B Baker Street",
@@ -107,13 +110,16 @@ export default function ProfilePage() {
       if (user.user_image) setCoverPhoto(getImageUrl(user.user_image));
 
       const defaultAddress = user.addresses?.[0] || {};
+      const pc = defaultAddress.postal_code || defaultAddress.postcode || defaultAddress.post_code || "NW1 6XE";
       setFormData((prev) => ({
         ...prev,
         name: user.name || "",
         phone: user.phone || "",
         email: user.email || "",
+        gender: user.gender || "female",
         country: defaultAddress.country || "UK",
-        post_code: defaultAddress.postal_code || defaultAddress.post_code || "NW1 6XE",
+        postcode: pc,
+        post_code: pc,
         city: defaultAddress.city || "London",
         address_line_1: defaultAddress.address_line_1 || "221B Baker Street",
         address_line_2: defaultAddress.address_line_2 || "Marylebone",
@@ -127,31 +133,32 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-    if (!user?.id) return;
     try {
-      const hasFiles = coverPhotoFile || profilePhotoFile;
-      let payload: any = {};
-      
-      if (hasFiles) {
-        payload = new FormData();
-        if (formData.name) payload.append("name", formData.name);
-        if (formData.email) payload.append("email", formData.email);
-        if (formData.phone) payload.append("phone", formData.phone);
-        if (profilePhotoFile) payload.append("avatar", profilePhotoFile);
-        if (coverPhotoFile) payload.append("user_image", coverPhotoFile);
-      } else {
-        if (formData.name) payload.name = formData.name;
-        if (formData.email) payload.email = formData.email;
-        if (formData.phone) payload.phone = formData.phone;
-      }
+      const payload = new FormData();
+      if (formData.name) payload.append("name", formData.name);
+      if (formData.email) payload.append("email", formData.email);
+      if (formData.phone) payload.append("phone", formData.phone);
+      if (formData.gender) payload.append("gender", formData.gender);
+      payload.append("label", formData.label || "Home");
+      if (formData.country) payload.append("country", formData.country);
+      if (formData.city) payload.append("city", formData.city);
+      const pc = formData.postcode || formData.post_code;
+      if (pc) payload.append("postcode", pc);
+      if (formData.address_line_1) payload.append("address_line_1", formData.address_line_1);
+      if (formData.address_line_2) payload.append("address_line_2", formData.address_line_2);
+      payload.append("is_default", "true");
 
-      await updateUserApi({ id: user.id, data: payload }).unwrap();
+      if (profilePhotoFile) payload.append("avatar", profilePhotoFile);
+      if (coverPhotoFile) payload.append("user_image", coverPhotoFile);
+
+      await updateUserApi({ data: payload }).unwrap();
+      toast.success("Profile updated successfully!");
       setIsEditing(false);
       setCoverPhotoFile(null);
       setProfilePhotoFile(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update profile", error);
-      alert("Failed to update profile. Please try again.");
+      toast.error(error?.data?.message || "Failed to update profile. Please try again.");
     }
   };
 
@@ -167,11 +174,12 @@ export default function ProfilePage() {
       };
       reader.readAsDataURL(file);
       
-      if (!isEditing && user?.id) {
+      if (!isEditing) {
         try {
           const payload = new FormData();
           payload.append("user_image", file);
-          await updateUserApi({ id: user.id, data: payload }).unwrap();
+          await updateUserApi({ data: payload }).unwrap();
+          toast.success("Cover photo updated!");
           setCoverPhotoFile(null);
         } catch (error) {
           console.error("Failed to update cover photo", error);
@@ -192,11 +200,12 @@ export default function ProfilePage() {
       };
       reader.readAsDataURL(file);
       
-      if (!isEditing && user?.id) {
+      if (!isEditing) {
         try {
           const payload = new FormData();
           payload.append("avatar", file);
-          await updateUserApi({ id: user.id, data: payload }).unwrap();
+          await updateUserApi({ data: payload }).unwrap();
+          toast.success("Profile photo updated!");
           setProfilePhotoFile(null);
         } catch (error) {
           console.error("Failed to update profile photo", error);

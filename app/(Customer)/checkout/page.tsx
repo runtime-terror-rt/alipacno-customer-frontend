@@ -709,7 +709,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Card Details (No border on inputs) */}
-              {pay === "Card" && (
+              {/* {pay === "Card" && (
                 <div className="flex flex-col gap-3">
                   <h4 className="text-[14px] font-bold text-white mb-1">Card details</h4>
                   <div>
@@ -741,7 +741,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
             <div className="pb-10"></div>
           </main>
