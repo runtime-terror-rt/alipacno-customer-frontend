@@ -255,6 +255,21 @@ export const ordersApi = baseApi.injectEndpoints({
         const search = params?.search || "";
         return `/api/v1/orders?per_page=${per_page}&page=${page}&search=${encodeURIComponent(search)}`;
       },
+      transformResponse: (res: any) => {
+        let items: Order[] = [];
+        if (Array.isArray(res?.data)) {
+          items = res.data;
+        } else if (Array.isArray(res?.data?.data)) {
+          items = res.data.data;
+        } else if (Array.isArray(res)) {
+          items = res;
+        }
+        return {
+          data: items,
+          total: res?.total || res?.data?.total || items.length,
+          current_page: res?.current_page || res?.data?.current_page || 1,
+        } as any;
+      },
       providesTags: ["Orders"],
     }),
     getOrderById: builder.query<Order, number | string>({
