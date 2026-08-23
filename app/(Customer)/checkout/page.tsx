@@ -169,15 +169,6 @@ export default function CheckoutPage() {
   const [routeInfo, setRouteInfo] = useState<{ formattedDistance?: string; formattedDeliveryTime?: string } | null>(null);
 
   // Auto-detect delivery address / user GPS and compute distance & driving time to selected branch.
-  //
-  // Fixes applied here:
-  // 1. Uses `debouncedAddress` (not the raw per-keystroke `deliveryAddress`), so
-  //    we don't fire a geocode request on every character typed.
-  // 2. Tracks a request id and only applies the result of the LATEST request —
-  //    a slow/older response can no longer overwrite a newer, correct one.
-  // 3. If the address currently on screen came from GPS detection and hasn't
-  //    been hand-edited since, reuse the exact GPS coordinates instead of
-  //    forward-geocoding the reverse-geocoded address string back to coordinates.
   useEffect(() => {
     let isMounted = true;
     const myRequestId = ++requestIdRef.current;
@@ -325,15 +316,18 @@ export default function CheckoutPage() {
       const payMethod = pay.toLowerCase() === "card" ? "stripe" : "cash";
 
       const res = await createOrderMut({
-        cart_id: cartId,
-        user_id: userId,
         branch_id: Number(currentBranch?.id || 1),
+        user_id: userId,
+        cart_id: cartId,
         order_type: cartObj?.order_type || "delivery",
         payment_method: payMethod,
         customer_name: customerName,
         customer_phone: customerPhone,
         delivery_address: deliveryAddress,
+        table_id: null,
+        notes: undefined,
         tip: tipAmt,
+        rider_tip: 0,
         use_loyalty_points: loyalty,
         items: itemsPayload.length > 0 ? itemsPayload : undefined,
         success_url: successUrl,
@@ -342,8 +336,10 @@ export default function CheckoutPage() {
 
       toast.success(res?.message || "Order placed successfully!");
 
-      if (payMethod === "stripe" && res?.stripe?.url) {
-        window.location.href = res.stripe.url;
+      const stripeUrl = res?.stripe?.url || res?.data?.stripe?.url;
+
+      if (payMethod === "stripe" && stripeUrl) {
+        window.location.href = stripeUrl;
       } else {
         const orderData = res?.data || res?.order || res;
         const orderNum = orderData?.order_number || res?.order_number || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
