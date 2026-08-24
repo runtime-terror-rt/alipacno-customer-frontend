@@ -14,32 +14,26 @@ export default function OrderTimeline({ order, mapboxEstTimeText }: Props) {
 
   useEffect(() => {
     let isMounted = true;
-    const computeMapboxTime = async () => {
+    const computeEstTime = async () => {
       if (!order) return;
       try {
         const {
           getBranchCoordinates,
           forwardGeocode,
-          getUserLocation,
-          getMapboxRouteInfo,
+          getGoogleRouteInfo,
           calculateDistanceKm,
           calculateDeliveryMins,
         } = await import("@/utils/location");
 
         const bCoords = getBranchCoordinates(order.branch);
-        let dCoords: { latitude: number; longitude: number } | null = null;
+        if (!bCoords || !order.delivery_address) return;
 
-        if (order.delivery_address) {
-          dCoords = await forwardGeocode(order.delivery_address);
-        }
-        if (!dCoords) {
-          dCoords = await getUserLocation();
-        }
+        const dCoords = await forwardGeocode(order.delivery_address);
 
         if (bCoords && dCoords) {
-          const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
-          if (mbRoute && isMounted) {
-            setComputedEstText(`Est: ${mbRoute.deliveryMins} mins`);
+          const route = await getGoogleRouteInfo(bCoords, dCoords);
+          if (route && isMounted) {
+            setComputedEstText(`Est: ${route.deliveryMins} mins`);
             return;
           }
 
@@ -59,7 +53,7 @@ export default function OrderTimeline({ order, mapboxEstTimeText }: Props) {
       }
     };
 
-    computeMapboxTime();
+    computeEstTime();
     return () => {
       isMounted = false;
     };
@@ -73,9 +67,9 @@ export default function OrderTimeline({ order, mapboxEstTimeText }: Props) {
   const isOutActive = ["out_for_delivery", "delivered"].includes(status);
   const isDeliveredActive = status === "delivered";
 
-  const branchName = order?.branch?.name || "Cloud Gate (The Bean), Chicago";
+  const branchName = order?.branch?.name || "Branch";
   const driverName = order?.assigned_driver?.name ? `Driver (${order.assigned_driver.name}) is on the way to you.` : "Delivery Driver is on the way to you.";
-  const deliveryAddr = order?.delivery_address || "7 Elm Street, Woodstock, OX7 1ER";
+  const deliveryAddr = order?.delivery_address || "";
 
   const estTime =
     mapboxEstTimeText ||

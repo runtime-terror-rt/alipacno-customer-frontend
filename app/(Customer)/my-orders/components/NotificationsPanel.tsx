@@ -20,12 +20,11 @@ export default function NotificationsPanel() {
 
   useEffect(() => {
     let isMounted = true;
-    const computeMapboxTimes = async () => {
+    const computeEstTimes = async () => {
       const {
         getBranchCoordinates,
         forwardGeocode,
-        getUserLocation,
-        getMapboxRouteInfo,
+        getGoogleRouteInfo,
       } = await import("@/utils/location");
 
       const timesMap: Record<string, string> = {};
@@ -33,17 +32,13 @@ export default function NotificationsPanel() {
       for (const o of activeOrders) {
         try {
           const bCoords = getBranchCoordinates(o.branch);
-          let dCoords = o.delivery_address
-            ? await forwardGeocode(o.delivery_address)
-            : null;
-          if (!dCoords) {
-            dCoords = await getUserLocation();
-          }
+          if (!bCoords || !o.delivery_address) continue;
+          const dCoords = await forwardGeocode(o.delivery_address);
 
           if (bCoords && dCoords) {
-            const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
-            if (mbRoute) {
-              timesMap[String(o.id)] = `${mbRoute.deliveryMins} mins`;
+            const route = await getGoogleRouteInfo(bCoords, dCoords);
+            if (route) {
+              timesMap[String(o.id)] = `${route.deliveryMins} mins`;
             }
           }
         } catch (e) {
@@ -57,7 +52,7 @@ export default function NotificationsPanel() {
     };
 
     if (activeOrders.length > 0) {
-      computeMapboxTimes();
+      computeEstTimes();
     }
     return () => {
       isMounted = false;
