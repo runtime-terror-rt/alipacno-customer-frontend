@@ -20,12 +20,11 @@ export default function NotificationsPanel() {
 
   useEffect(() => {
     let isMounted = true;
-    const computeMapboxTimes = async () => {
+    const computeEstTimes = async () => {
       const {
         getBranchCoordinates,
         forwardGeocode,
-        getUserLocation,
-        getMapboxRouteInfo,
+        getGoogleRouteInfo,
       } = await import("@/utils/location");
 
       const timesMap: Record<string, string> = {};
@@ -33,17 +32,13 @@ export default function NotificationsPanel() {
       for (const o of activeOrders) {
         try {
           const bCoords = getBranchCoordinates(o.branch);
-          let dCoords = o.delivery_address
-            ? await forwardGeocode(o.delivery_address)
-            : null;
-          if (!dCoords) {
-            dCoords = await getUserLocation();
-          }
+          if (!bCoords || !o.delivery_address) continue;
+          const dCoords = await forwardGeocode(o.delivery_address);
 
           if (bCoords && dCoords) {
-            const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
-            if (mbRoute) {
-              timesMap[String(o.id)] = `${mbRoute.deliveryMins} mins`;
+            const route = await getGoogleRouteInfo(bCoords, dCoords);
+            if (route) {
+              timesMap[String(o.id)] = `${route.deliveryMins} mins`;
             }
           }
         } catch (e) {
@@ -57,7 +52,7 @@ export default function NotificationsPanel() {
     };
 
     if (activeOrders.length > 0) {
-      computeMapboxTimes();
+      computeEstTimes();
     }
     return () => {
       isMounted = false;
@@ -94,34 +89,34 @@ export default function NotificationsPanel() {
     };
   });
 
-  const defaultNotifications: Notification[] = [
-    {
-      id: "preparing",
-      title: "Order #t7ml-2542 is Preparing",
-      desc: "Our kitchen is cooking your dish - Estimated time 25 mins.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-          <path d="M3 6h18" />
-          <path d="M16 10a4 4 0 0 1-8 0" />
-        </svg>
-      ),
-    },
-    {
-      id: "received",
-      title: "Order #t7ml-2542 Received",
-      desc: "Your order has been received by our kitchen",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
-          <path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9" />
-          <path d="M12 3v6" />
-        </svg>
-      ),
-    },
-  ];
+  // const defaultNotifications: Notification[] = [
+  //   {
+  //     id: "preparing",
+  //     title: "Order #t7ml-2542 is Preparing",
+  //     desc: "Our kitchen is cooking your dish - Estimated time 25 mins.",
+  //     icon: (
+  //       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  //         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+  //         <path d="M3 6h18" />
+  //         <path d="M16 10a4 4 0 0 1-8 0" />
+  //       </svg>
+  //     ),
+  //   },
+  //   {
+  //     id: "received",
+  //     title: "Order #t7ml-2542 Received",
+  //     desc: "Your order has been received by our kitchen",
+  //     icon: (
+  //       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  //         <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
+  //         <path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9" />
+  //         <path d="M12 3v6" />
+  //       </svg>
+  //     ),
+  //   },
+  // ];
 
-  const notifications = dynamicNotifications.length > 0 ? dynamicNotifications : defaultNotifications;
+  const notifications = dynamicNotifications.length > 0 ? dynamicNotifications : [];
 
   return (
     <div className="p-6 flex flex-col gap-4 overflow-y-auto">

@@ -29,9 +29,8 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
       const {
         forwardGeocode,
         calculateDistanceKm,
-        getUserLocation,
         getBranchCoordinates,
-        getMapboxRouteInfo,
+        getGoogleRouteInfo,
         formatDistance,
       } = await import("@/utils/location");
 
@@ -45,18 +44,14 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
         dCoords = await forwardGeocode(order.delivery_address);
       }
 
-      if (!dCoords) {
-        dCoords = await getUserLocation();
-      }
-
       if (dCoords && isMounted) {
         setDeliveryCoords(dCoords);
       }
 
       if (bCoords && dCoords) {
-        const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
-        if (mbRoute && isMounted) {
-          setDistanceText(`${mbRoute.deliveryMins} mins • ${mbRoute.formattedDistance}`);
+        const route = await getGoogleRouteInfo(bCoords, dCoords);
+        if (route && isMounted) {
+          setDistanceText(`${route.deliveryMins} mins • ${route.formattedDistance}`);
           return;
         }
 
