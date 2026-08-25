@@ -18,6 +18,7 @@ function OrderSuccessContent() {
   const [deliveryAddress, setDeliveryAddress] = useState<string>("Standard Delivery");
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [deliveryInfo, setDeliveryInfo] = useState<string | null>(null);
+  const [branchInfo, setBranchInfo] = useState<{ name: string; lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -25,40 +26,47 @@ function OrderSuccessContent() {
       if (saved && saved.trim()) {
         setDeliveryAddress(saved);
       }
+      // Load the branch that was selected at checkout time
+      const savedBranch = localStorage.getItem("checkout_selected_branch");
+      if (savedBranch) {
+        try {
+          const parsed = JSON.parse(savedBranch);
+          if (parsed?.lat && parsed?.lng) {
+            setBranchInfo(parsed);
+          }
+        } catch { }
+      }
     }
   }, []);
 
   useEffect(() => {
     let isMounted = true;
-    const computeMapboxInfo = async () => {
+    const computeRouteInfo = async () => {
       try {
         const {
-          getUserLocation,
           forwardGeocode,
-          getMapboxRouteInfo,
+          getGoogleRouteInfo,
           calculateDistanceKm,
           formatDeliveryTime,
           formatDistance,
         } = await import("@/utils/location");
 
-        let coords: { latitude: number; longitude: number } | null = null;
-        if (deliveryAddress && deliveryAddress !== "Standard Delivery") {
-          coords = await forwardGeocode(deliveryAddress);
-        }
-        if (!coords) {
-          coords = await getUserLocation();
-        }
+        // Only geocode if the user has a real delivery address
+        if (!deliveryAddress || deliveryAddress === "Standard Delivery") return;
+        const coords = await forwardGeocode(deliveryAddress);
 
         if (coords && isMounted) {
           setUserCoords(coords);
         }
 
-        const bCoords = { latitude: 51.4554, longitude: 0.0538 };
+        // Use the saved branch coords or fall back to the Eltham default
+        const bCoords = branchInfo ? { latitude: branchInfo.lat, longitude: branchInfo.lng } : null;
+
 
         if (bCoords && coords) {
-          const mbRoute = await getMapboxRouteInfo(bCoords, coords);
-          if (mbRoute && isMounted) {
-            setDeliveryInfo(`${mbRoute.formattedDeliveryTime} (${mbRoute.formattedDistance})`);
+          const route = await getGoogleRouteInfo(bCoords, coords);
+          if (route && isMounted) {
+            setDeliveryInfo(`${route.formattedDeliveryTime} (${route.formattedDistance})`);
             return;
           }
 
@@ -72,11 +80,11 @@ function OrderSuccessContent() {
       }
     };
 
-    computeMapboxInfo();
+    computeRouteInfo();
     return () => {
       isMounted = false;
     };
-  }, [deliveryAddress]);
+  }, [deliveryAddress, branchInfo]);
 
   const displayOrderNum =
     orderNumParam || orderId ? `#${orderNumParam || orderId}` : sessionId ? `#${sessionId.substring(0, 14)}...` : "#t7ml-2542-c4kj";
@@ -135,8 +143,9 @@ function OrderSuccessContent() {
 
           <div className="w-full h-[220px] rounded-[18px] overflow-hidden shadow-inner">
             <CheckoutMap
-              branchLat={51.4554}
-              branchLng={0.0538}
+              branchLat={branchInfo?.lat ?? null}
+              branchLng={branchInfo?.lng ?? null}
+              branchName={branchInfo?.name ?? undefined}
               userLat={userCoords?.latitude}
               userLng={userCoords?.longitude}
               distanceText={deliveryInfo}
@@ -153,7 +162,7 @@ function OrderSuccessContent() {
           </div>
           <div className="flex justify-between items-center text-zinc-400 border-b border-white/5 pb-2.5">
             <span>Restaurant Branch</span>
-            <span className="text-white font-semibold">Pacino&apos;s Eltham</span>
+            <span className="text-white font-semibold">{branchInfo?.name || "Selected Branch"}</span>
           </div>
           <div className="flex justify-between items-center text-zinc-400 border-b border-white/5 pb-2.5">
             <span>Delivery Location</span>

@@ -35,13 +35,12 @@ function ActiveOrderCard({
 
   useEffect(() => {
     let isMounted = true;
-    const computeMapboxInfo = async () => {
+    const computeRouteInfo = async () => {
       try {
         const {
           getBranchCoordinates,
           forwardGeocode,
-          getUserLocation,
-          getMapboxRouteInfo,
+          getGoogleRouteInfo,
           calculateDistanceKm,
           formatDeliveryTime,
           formatDistance,
@@ -49,25 +48,20 @@ function ActiveOrderCard({
 
         const raw = order.rawOrder;
         const bCoords = getBranchCoordinates(raw?.branch);
+        if (!bCoords || !raw?.delivery_address) return;
 
-        let dCoords: { latitude: number; longitude: number } | null = null;
-        if (raw?.delivery_address) {
-          dCoords = await forwardGeocode(raw.delivery_address);
-        }
-        if (!dCoords) {
-          dCoords = await getUserLocation();
-        }
+        const dCoords = await forwardGeocode(raw.delivery_address);
 
         if (bCoords && dCoords) {
-          const mbRoute = await getMapboxRouteInfo(bCoords, dCoords);
-          if (mbRoute && isMounted) {
+          const route = await getGoogleRouteInfo(bCoords, dCoords);
+          if (route && isMounted) {
             setDeliveryInfo(
-              `${mbRoute.formattedDeliveryTime} (${mbRoute.formattedDistance})`
+              `${route.formattedDeliveryTime} (${route.formattedDistance})`
             );
             return;
           }
 
-          // Fallback if Mapbox Directions API route unavailable
+          // Fallback if Google Directions API route unavailable
           const km = calculateDistanceKm(
             bCoords.latitude,
             bCoords.longitude,
@@ -84,7 +78,7 @@ function ActiveOrderCard({
       }
     };
 
-    computeMapboxInfo();
+    computeRouteInfo();
     return () => {
       isMounted = false;
     };
