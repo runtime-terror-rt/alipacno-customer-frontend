@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCreateCartMutation } from "../redux/features/api/cartApi";
 import { useGetBranchesQuery, BranchItem } from "../redux/features/api/branchesApi";
+import { useBranchSelection } from "@/hooks/useBranchSelection";
 
 const getLocationSilently = async (): Promise<{ latitude: number; longitude: number } | null> => {
   try {
@@ -30,7 +31,6 @@ const getLocationSilently = async (): Promise<{ latitude: number; longitude: num
 
 export default function StartOrderModal({ onClose, initialMode }: { onClose: () => void; initialMode: string }) {
   const [postcode, setPostcode] = useState("");
-  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [closing, setClosing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -40,15 +40,9 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
 
   const router = useRouter();
   const [createCart] = useCreateCartMutation();
-  const { data: branchesResponse, isLoading: isBranchesLoading } = useGetBranchesQuery();
+  const { branches, selectedBranch, selectBranch, isLoading: isBranchesLoading } = useBranchSelection();
 
-  const branches = branchesResponse?.data && Array.isArray(branchesResponse.data) ? branchesResponse.data : [];
-
-  useEffect(() => {
-    if (branches.length > 0 && !selectedBranchId) {
-      setSelectedBranchId(branches[0].id);
-    }
-  }, [branches, selectedBranchId]);
+  const selectedBranchId = selectedBranch?.id || null;
 
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
@@ -169,16 +163,16 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
           <div className="relative">
             <select
               value={selectedBranchId || ""}
-              onChange={(e) => setSelectedBranchId(Number(e.target.value))}
+              onChange={(e) => selectBranch(Number(e.target.value))}
               disabled={isBranchesLoading || branches.length === 0}
               className="w-full px-4 py-3 rounded-xl bg-[#262626] border border-white/10 text-white outline-none focus:border-[#F9671A]/50 transition-all text-sm appearance-none cursor-pointer pr-10"
             >
               {branches.length === 0 ? (
                 <option value="">{isBranchesLoading ? "Loading branches..." : "Pacino's Main Branch"}</option>
               ) : (
-                branches.map((b: BranchItem) => (
+                branches.map((b) => (
                   <option key={b.id} value={b.id} className="bg-[#1E1E20] text-white py-2">
-                    {b.name}{b.city ? ` (${b.city})` : b.address ? ` (${b.address})` : ""}
+                    {b.name}{b.isNearest ? " 📍 (Nearest)" : ""}{b.formattedDistance ? ` • ${b.formattedDistance}` : ""}
                   </option>
                 ))
               )}

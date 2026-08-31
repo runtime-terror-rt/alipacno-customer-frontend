@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import CheckoutMap from "@/components/CheckoutMap";
 import { Order, useCreateOrderMutation, useGetOrderByIdQuery } from "@/redux/features/api/ordersApi";
+import { useRiderTracking } from "@/hooks/useRiderTracking";
 import { toast } from "react-hot-toast";
 
 type Props = {
@@ -70,9 +71,17 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
     };
   }, [order?.id, order?.delivery_address, order?.branch?.id, order?.branch?.name, order?.branch?.address]);
 
-  const riderLat = order?.assigned_driver?.latitude || null;
-  const riderLng = order?.assigned_driver?.longitude || null;
+  const initialDriverLat = order?.assigned_driver?.latitude ? Number(order.assigned_driver.latitude) : null;
+  const initialDriverLng = order?.assigned_driver?.longitude ? Number(order.assigned_driver.longitude) : null;
+  const initialRiderLoc = initialDriverLat && initialDriverLng ? { latitude: initialDriverLat, longitude: initialDriverLng } : null;
 
+  const { riderLoc, heading, speedKmH, isLiveWebSocket } = useRiderTracking({
+    orderId: order?.id,
+    orderStatus: order?.order_status || "out_for_delivery",
+    branchLoc: branchCoords,
+    customerLoc: deliveryCoords,
+    initialRiderLoc,
+  });
 
   const handleReorder = async () => {
     if (!order) {
@@ -110,8 +119,13 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 pb-4 mx-6 px-0 mb-4 flex flex-col gap-4 flex-shrink-0">
-        <div className="border-b border-white/5 pb-3">
-          <h3 className="text-[17px] font-bold text-white">Map Location</h3>
+        <div className="border-b border-white/5 pb-3 flex items-center justify-between">
+          <h3 className="text-[17px] font-bold text-white">Live Tracking Map</h3>
+          {isLiveWebSocket && (
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold animate-pulse">
+              WebSocket Connected
+            </span>
+          )}
         </div>
         <div className="w-full h-[220px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
           <CheckoutMap
@@ -121,8 +135,11 @@ export default function OrderDetailsSidebar({ orderId, order: propOrder }: Props
             branchLng={branchCoords?.longitude || order?.branch?.longitude || null}
             userLat={deliveryCoords?.latitude || null}
             userLng={deliveryCoords?.longitude || null}
-            riderLat={riderLat}
-            riderLng={riderLng}
+            riderLat={riderLoc?.latitude || null}
+            riderLng={riderLoc?.longitude || null}
+            riderHeading={heading}
+            riderSpeed={speedKmH}
+            isLiveWebSocket={isLiveWebSocket}
             distanceText={distanceText}
             userAvatar={order?.user?.avatar_url || null}
           />

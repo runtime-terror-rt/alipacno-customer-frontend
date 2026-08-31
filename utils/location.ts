@@ -258,6 +258,34 @@ export async function getGoogleRouteInfo(origin: Coordinates, destination: Coord
   }
 }
 
+/**
+ * Fetch actual street-by-street driving route polyline coordinates [lng, lat][]
+ * between two points using the OSRM driving engine API.
+ */
+export async function getDrivingRouteGeometry(
+  origin: Coordinates,
+  destination: Coordinates
+): Promise<{ coordinates: [number, number][]; distanceKm: number; durationMins: number } | null> {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.code === "Ok" && Array.isArray(data.routes) && data.routes.length > 0) {
+      const route = data.routes[0];
+      const coordinates: [number, number][] = route.geometry.coordinates; // Array of [lng, lat]
+      const distanceKm = Math.round((route.distance / 1000) * 10) / 10;
+      const durationMins = Math.round(route.duration / 60);
+
+      return { coordinates, distanceKm, durationMins };
+    }
+  } catch (err) {
+    console.warn("[Routing] OSRM driving route error:", err);
+  }
+  return null;
+}
+
 // ============================================================================
 // User geolocation
 // ============================================================================
