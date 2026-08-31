@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.pacinos.uk",
       },
+      {
+        protocol: "http",
+        hostname: "api.pacinos.uk",
+      },
     ],
   },
 };
