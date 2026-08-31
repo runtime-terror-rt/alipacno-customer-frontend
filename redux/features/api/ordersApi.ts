@@ -158,8 +158,8 @@ export interface Order {
   address_id?: number | null;
   table_id?: number | null;
   reservation_id?: number | null;
-  order_type: string;
-  order_status: string; // "pending", "preparing", "ready_for_delivery", "out_for_delivery", "delivered", "cancelled"
+  order_type: string; // "delivery", "collection", "dine_in", "table", "table_order"
+  order_status: string; // "pending", "preparing", "ready", "out_for_delivery", "delivered", "cancelled"
   payment_status: string;
   payment_method: string;
   order_source?: string;

@@ -10,6 +10,7 @@ import { useGetCartQuery, useUpdateCartItemMutation, useRemoveCartItemMutation, 
 import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
 import { useCreateOrderMutation } from "../../../redux/features/api/ordersApi";
 import { useGetBranchesQuery } from "@/redux/features/api/branchesApi";
+import { useBranchSelection } from "@/hooks/useBranchSelection";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/authApi";
@@ -140,13 +141,20 @@ export default function CheckoutPage() {
     }
   };
 
-  const { data: branchesRes } = useGetBranchesQuery();
+  const { branches: branchesWithDistance, selectedBranch, nearestBranch, selectBranch } = useBranchSelection(userLocation);
 
-  const branches = branchesRes?.data || [];
-  console.log("branches", branches);
+  const branches = branchesWithDistance;
 
-  const currentBranch = branches.find((b: any) => b.id === (activeBranchId || branches[0]?.id)) || branches[0];
-  const modalSelectedBranch = branches.find((b: any) => b.id === selectedBranchId) || currentBranch;
+  const currentBranch = branches.find((b: any) => b.id === (activeBranchId || selectedBranch?.id || nearestBranch?.id)) || selectedBranch || nearestBranch || branches[0];
+  const modalSelectedBranch = branches.find((b: any) => b.id === (selectedBranchId || currentBranch?.id)) || currentBranch;
+
+  // Sync active branch to selected/nearest branch automatically
+  useEffect(() => {
+    if (selectedBranch?.id) {
+      setActiveBranchId(selectedBranch.id);
+      setSelectedBranchId(selectedBranch.id);
+    }
+  }, [selectedBranch?.id]);
 
   // Persist the currently selected branch to localStorage so the order success
   // page can show the correct branch on the map without hardcoded coordinates.
@@ -870,7 +878,16 @@ export default function CheckoutPage() {
               })}
             </div>
             
-            <button onClick={() => { setActiveBranchId(selectedBranchId); setIsBranchModalOpen(false); }} className="w-full mt-auto py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer flex items-center justify-center">
+            <button
+              onClick={() => {
+                if (selectedBranchId) {
+                  setActiveBranchId(selectedBranchId);
+                  selectBranch(selectedBranchId);
+                }
+                setIsBranchModalOpen(false);
+              }}
+              className="w-full mt-auto py-3.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[14px] font-bold transition-colors shadow-lg shadow-orange-600/20 cursor-pointer flex items-center justify-center"
+            >
               Confirm Branch
             </button>
           </div>

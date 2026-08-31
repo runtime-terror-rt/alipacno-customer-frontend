@@ -4,11 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useGetWishlistQuery, useToggleWishlistMutation } from "../../../redux/features/api/wishlistApi";
-import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
+import { useGetWishlistQuery } from "../../../redux/features/api/wishlistApi";
 import { useGetOrdersQuery } from "../../../redux/features/api/ordersApi";
 import { useGetMeQuery } from "../../../redux/features/api/authApi";
-import { toast } from "react-hot-toast";
+import { useBranchSelection } from "@/hooks/useBranchSelection";
 
 interface HeaderProps {
   onProductClick?: (product: any) => void;
@@ -20,14 +19,12 @@ export default function Header({ onProductClick, onMenuClick }: HeaderProps) {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
   const { data: wishlistData } = useGetWishlistQuery();
-  const [toggleWishlistMut] = useToggleWishlistMutation();
-  const { data: branchesRes } = useGetBranchesQuery();
   const { data: ordersRes } = useGetOrdersQuery();
   const { data: meRes } = useGetMeQuery();
 
+  const { nearestBranch } = useBranchSelection();
+
   const wishlistItems = Array.isArray(wishlistData?.data) ? wishlistData.data : (wishlistData?.data?.data || []);
-  const branchesList = branchesRes?.data || [];
-  const nearestBranch = branchesList[0]?.name || "Pacino's Eltham";
 
   const ordersList = ordersRes?.data || [];
   const activeOrdersCount = ordersList.filter(
@@ -62,13 +59,24 @@ export default function Header({ onProductClick, onMenuClick }: HeaderProps) {
             <Image src="/logo.png" alt="Logo" width={75} height={42} priority className="object-contain" />
           </Link>
         </div>
-        <div className="hidden lg:flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-          </svg>
+
+        {/* Sophisticated Sleek Nearest Branch Suggestion */}
+        <div className="hidden lg:flex items-center gap-2 text-xs font-medium">
+          <div className="w-6 h-6 rounded-full bg-[#F9671A]/10 border border-[#F9671A]/30 flex items-center justify-center text-[#F9671A]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
           <span className="text-zinc-400 text-sm font-medium">Nearest Branch:</span>
-          <span className="text-[#F9671A] text-sm font-semibold ml-1">{nearestBranch}</span>
+          <span className="text-[#F9671A] text-sm font-bold ml-0.5">
+            {nearestBranch?.name || "Pacino's Main Store"}
+          </span>
+          {nearestBranch?.formattedDistance && (
+            <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold ml-1">
+              {nearestBranch.formattedDistance}
+            </span>
+          )}
         </div>
       </div>
 
@@ -99,73 +107,55 @@ export default function Header({ onProductClick, onMenuClick }: HeaderProps) {
                 {wishlistItems.length === 0 ? (
                   <div className="p-6 text-center text-zinc-400 text-sm">Your wishlist is empty.</div>
                 ) : (
-                  wishlistItems.map((wishlistItem: any) => {
-                    const wItem = wishlistItem.menu_item;
-                    if (!wItem) return null;
-                    return (
-                      <div key={wishlistItem.id} className="flex gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => handleProductClick(wItem)}>
-                        <img src={getImageUrl(wItem.image_url || wItem.image)} alt={wItem.name} className="w-12 h-12 rounded-lg object-cover bg-black/20 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-[13px] font-bold text-white truncate">{wItem.name}</h4>
-                          <div className="text-[#F9671A] text-[12px] font-extrabold mt-0.5">£{wItem.discount_price || wItem.price}</div>
+                  <div className="divide-y divide-white/5">
+                    {wishlistItems.map((item: any) => {
+                      const p = item.menu_item || item.product || item;
+                      const pName = p.name || p.title || "Menu Item";
+                      const pPrice = p.price ? `$${parseFloat(p.price).toFixed(2)}` : "$0.00";
+                      const pImg = getImageUrl(p.image_url || p.image);
+
+                      return (
+                        <div key={item.id || p.id} className="p-3.5 flex items-center justify-between hover:bg-white/5 transition-colors">
+                          <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => handleProductClick(p)}>
+                            <div className="w-10 h-10 rounded-lg overflow-hidden relative flex-shrink-0 bg-zinc-800 border border-white/10">
+                              <Image src={pImg} alt={pName} fill className="object-cover" />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-bold text-white truncate max-w-[140px]">{pName}</h4>
+                              <p className="text-[11px] font-semibold text-[#F9671A] mt-0.5">{pPrice}</p>
+                            </div>
+                          </div>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); toggleWishlistMut({ menu_item_id: wItem.id }); toast.success(`${wItem.name} removed from wishlist!`); }} className="text-zinc-500 hover:text-red-500 transition-colors p-1 opacity-100 sm:opacity-0 group-hover:opacity-100 flex-shrink-0 h-fit self-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                        </button>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              {wishlistItems.length > 0 && (
-                <div className="p-3 bg-[#212124] border-t border-white/10 rounded-b-2xl">
-                  <button onClick={() => { setIsWishlistOpen(false); router.push('/wishlist'); }} className="w-full py-2.5 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-xl text-[13px] font-bold transition-colors cursor-pointer shadow-lg shadow-[#F9671A]/20">
-                    View Full Wishlist
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
-        <button onClick={() => router.push("/my-orders")} className="relative text-zinc-400 hover:text-white transition-colors cursor-pointer">
+
+        <Link href="/my-orders" className="text-zinc-400 hover:text-white transition-colors cursor-pointer relative flex items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
             <path d="M3 6h18"></path>
             <path d="M16 10a4 4 0 0 1-8 0"></path>
           </svg>
           {activeOrdersCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{activeOrdersCount}</span>
+            <span className="absolute -top-1.5 -right-2 bg-[#F9671A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+              {activeOrdersCount}
+            </span>
           )}
-        </button>
+        </Link>
 
-        <div onClick={() => router.push("/profile")} className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-white/10 cursor-pointer group">
-          <span className="text-sm font-medium text-white group-hover:text-[#F9671A] transition-colors hidden sm:inline">{userName}</span>
-          <div className="w-8 h-8 rounded-full bg-[#F9671A] text-white font-bold text-xs flex items-center justify-center overflow-hidden relative border border-white/10 group-hover:border-[#F9671A]/30 transition-colors flex-shrink-0">
-            {user.avatar_url || user.avatar || user.user_image_url ? (
-              <Image src={userAvatar} alt="Avatar" fill className="object-cover" />
-            ) : (
-              <span>
-                {(() => {
-                  const parts = userName.trim().split(/\s+/);
-                  return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0]?.substring(0, 2).toUpperCase() || "U";
-                })()}
-              </span>
-            )}
+        <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+          <div className="w-8 h-8 rounded-full overflow-hidden relative border border-white/20 bg-zinc-800 flex-shrink-0">
+            <Image src={userAvatar} alt="User Avatar" fill className="object-cover" />
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:text-white transition-colors hidden sm:inline">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
+          <span className="hidden sm:block text-xs font-bold text-white max-w-[100px] truncate">
+            {userName}
+          </span>
         </div>
-
-        {/* Burger Menu Trigger */}
-        {onMenuClick && (
-          <button
-            onClick={onMenuClick}
-            className="text-zinc-400 hover:text-white transition-colors cursor-pointer lg:hidden ml-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-          </button>
-        )}
       </div>
     </header>
   );
