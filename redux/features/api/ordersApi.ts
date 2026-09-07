@@ -216,6 +216,8 @@ export interface CreateOrderPayload {
   customer_name?: string;
   customer_phone?: string;
   delivery_address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   table_id?: number | null;
   notes?: string;
   tip?: number;

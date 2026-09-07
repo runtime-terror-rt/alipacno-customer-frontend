@@ -25,7 +25,14 @@ export default function MenuPage() {
   
   const [activeCategory, setActiveCategory] = useState<string | null>(categoryParam || null);
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>('all');
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
+
+  useEffect(() => {
+    const s = searchParams.get('search');
+    if (s !== null) {
+      setSearchQuery(s);
+    }
+  }, [searchParams]);
   const [activeTagId, setActiveTagId] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [modalQty, setModalQty] = useState(1);
@@ -294,12 +301,12 @@ export default function MenuPage() {
 
   const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery(
     { 
-      category_id: activeCategoryId, 
+      category_id: searchQuery ? undefined : activeCategoryId, 
       subcategory_id: activeSubcategory !== 'all' ? subcategoriesList.find((s: any) => s.name === activeSubcategory)?.id : undefined,
       search: searchQuery || undefined,
       per_page: 50 
     },
-    { skip: !activeCategoryId }
+    { skip: !searchQuery && !activeCategoryId }
   );
 
   const { data: popularMenuItemsData } = useGetMenuItemsQuery(
@@ -524,95 +531,147 @@ export default function MenuPage() {
               ))}
             </div>
 
-            {/* Happy Hour Section */}
-            <div className="flex flex-row items-center justify-between sm:justify-start gap-2 sm:gap-4 mb-6">
-              <h2 className="text-[12px] min-[375px]:text-[13px] min-[400px]:text-[15px] sm:text-[17px] font-bold text-white flex items-center whitespace-nowrap">
-                Happy hour pricing: <span className="text-[#F9671A] ml-1 sm:ml-2">03h : 22m : 31s</span>
-              </h2>
-              <div className="bg-[#3a2016] text-[#F9671A] border border-[#F9671A]/20 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full whitespace-nowrap">
-                35% OFF
-              </div>
-            </div>
-
-            {/* Happy Hour Grid */}
-            {happyHourItems.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-                {happyHourItems.map((item: any) => (
-                  <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
-                    <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
-                      <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
-                        <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+            {searchQuery ? (
+              <div className="mb-10">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[19px] font-bold text-white">
+                    Search Results for <span className="text-[#F9671A]">"{searchQuery}"</span>
+                  </h2>
+                  <span className="text-xs text-zinc-400 font-semibold">{apiMenuItems.length} Items</span>
+                </div>
+                {apiMenuItems.length > 0 ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {apiMenuItems.map((item: any) => (
+                      <div key={`search-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
+                        <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
+                          <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
+                            <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+                          </div>
+                          <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors shadow-lg cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isWishlisted(item.id) ? "#F9671A" : "currentColor"} stroke={isWishlisted(item.id) ? "#F9671A" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isWishlisted(item.id) ? "text-[#F9671A]" : "text-white"}>
+                              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                            </svg>
+                          </button>
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                        </div>
+                        <div className="p-4 flex flex-col flex-1">
+                          <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
+                          <div className="flex items-center gap-1.5 text-xs mb-4">
+                            <span className="font-extrabold text-[#F9671A]">{item.price}</span>
+                            {item.oldPrice && <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>}
+                          </div>
+                          <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                            Add to cart
+                          </button>
+                        </div>
                       </div>
-
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
-                    </div>
-                    <div className="p-4 flex flex-col flex-1">
-                      <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
-                      <div className="flex items-center gap-1.5 text-xs mb-4">
-                        <span className="font-extrabold text-[#F9671A]">{item.price}</span>
-                        <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
-                        <span className="text-zinc-400 text-[11px]">/portion</span>
-                      </div>
-                      <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-                        Add to cart
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.3-4.3"></path>
+                    </svg>
+                    <p className="text-zinc-300 font-bold text-base mb-1">No items found</p>
+                    <p className="text-zinc-500 text-xs">We couldn't find any menu items matching "{searchQuery}"</p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 mb-10 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                <p className="text-zinc-400 font-medium text-sm">No happy hour items available.</p>
-              </div>
-            )}
-
-            {/* Most popular Steaks Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-[19px] font-bold text-white">Most popular {activeCategory}</h2>
-              <button className="bg-white/5 border border-white/10 text-white text-[12px] font-medium px-4 py-1.5 rounded-full flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer">
-                Sort
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></svg>
-              </button>
-            </div>
-
-            {/* Most Popular Grid */}
-            {popularItems.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {popularItems.map((item: any) => (
-                  <div key={`pop-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
-                    <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
-                      <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
-                        <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
-                      </div>
-                      <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors shadow-lg cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isWishlisted(item.id) ? "#F9671A" : "currentColor"} stroke={isWishlisted(item.id) ? "#F9671A" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isWishlisted(item.id) ? "text-[#F9671A]" : "text-white"}>
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-                        </svg>
-                      </button>
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
-                    </div>
-                    <div className="p-4 flex flex-col flex-1">
-                      <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
-                      <div className="flex items-center gap-1.5 text-xs mb-4">
-                        <span className="font-extrabold text-[#F9671A]">{item.price}</span>
-                        <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
-                        <span className="text-zinc-400 text-[11px]">/portion</span>
-                      </div>
-                      <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-                        Add to cart
-                      </button>
-                    </div>
+              <>
+                {/* Happy Hour Section */}
+                <div className="flex flex-row items-center justify-between sm:justify-start gap-2 sm:gap-4 mb-6">
+                  <h2 className="text-[12px] min-[375px]:text-[13px] min-[400px]:text-[15px] sm:text-[17px] font-bold text-white flex items-center whitespace-nowrap">
+                    Happy hour pricing: <span className="text-[#F9671A] ml-1 sm:ml-2">03h : 22m : 31s</span>
+                  </h2>
+                  <div className="bg-[#3a2016] text-[#F9671A] border border-[#F9671A]/20 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full whitespace-nowrap">
+                    35% OFF
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                <p className="text-zinc-400 font-medium text-sm">No popular items found for this category.</p>
-              </div>
+                </div>
+
+                {/* Happy Hour Grid */}
+                {happyHourItems.length > 0 ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                    {happyHourItems.map((item: any) => (
+                      <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
+                        <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
+                          <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
+                            <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+                          </div>
+
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                        </div>
+                        <div className="p-4 flex flex-col flex-1">
+                          <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
+                          <div className="flex items-center gap-1.5 text-xs mb-4">
+                            <span className="font-extrabold text-[#F9671A]">{item.price}</span>
+                            <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
+                            <span className="text-zinc-400 text-[11px]">/portion</span>
+                          </div>
+                          <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                            Add to cart
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 mb-10 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <p className="text-zinc-400 font-medium text-sm">No happy hour items available.</p>
+                  </div>
+                )}
+
+                {/* Most popular Steaks Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[19px] font-bold text-white">Most popular {activeCategory}</h2>
+                  <button className="bg-white/5 border border-white/10 text-white text-[12px] font-medium px-4 py-1.5 rounded-full flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer">
+                    Sort
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></svg>
+                  </button>
+                </div>
+
+                {/* Most Popular Grid */}
+                {popularItems.length > 0 ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {popularItems.map((item: any) => (
+                      <div key={`pop-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
+                        <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
+                          <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
+                            <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+                          </div>
+                          <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md z-20 border border-white/10 transition-colors shadow-lg cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isWishlisted(item.id) ? "#F9671A" : "currentColor"} stroke={isWishlisted(item.id) ? "#F9671A" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isWishlisted(item.id) ? "text-[#F9671A]" : "text-white"}>
+                              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                            </svg>
+                          </button>
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                        </div>
+                        <div className="p-4 flex flex-col flex-1">
+                          <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
+                          <div className="flex items-center gap-1.5 text-xs mb-4">
+                            <span className="font-extrabold text-[#F9671A]">{item.price}</span>
+                            <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
+                            <span className="text-zinc-400 text-[11px]">/portion</span>
+                          </div>
+                          <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                            Add to cart
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                    <p className="text-zinc-400 font-medium text-sm">No popular items found for this category.</p>
+                  </div>
+                )}
+              </>
             )}
 
           </main>

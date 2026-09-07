@@ -32,8 +32,18 @@ export default function EditProfileForm({
 
       {/* Avatar Section */}
       <div className="mb-10 relative w-[100px] h-[100px] mx-auto lg:mx-0 mt-4 lg:mt-0">
-        <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-[#1E1E20] relative shadow-lg">
-          <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+        <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-[#1E1E20] relative shadow-lg bg-zinc-800 flex items-center justify-center">
+          {profilePhoto && profilePhoto !== "/customer/profile.png" && !profilePhoto.includes("placeholder") ? (
+            <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+          ) : (
+            <div className="w-full h-full bg-[#F9671A] flex items-center justify-center text-white text-3xl font-extrabold uppercase">
+              {formData?.name ? (
+                formData.name.trim().split(/\s+/).length >= 2
+                  ? (formData.name.trim().split(/\s+/)[0][0] + formData.name.trim().split(/\s+/)[formData.name.trim().split(/\s+/).length - 1][0]).toUpperCase()
+                  : formData.name.trim().slice(0, 2).toUpperCase()
+              ) : "U"}
+            </div>
+          )}
         </div>
         <button
           onClick={() => document.getElementById('profile-upload-input')?.click()}

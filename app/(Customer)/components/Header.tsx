@@ -149,6 +149,8 @@ export default function Header({ onProductClick }: HeaderProps) {
   const router = useRouter();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const chatDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: wishlistData } = useGetWishlistQuery();
@@ -171,9 +173,18 @@ export default function Header({ onProductClick }: HeaderProps) {
   ).length;
 
   const user = meRes?.user || meRes?.data || meRes || {};
-  const userName = user.name || "Charles Deo";
-  const userAvatar =
-    user.avatar_url || user.avatar || user.user_image_url || "/customer/profile.png";
+  const userName = user.name || "Customer";
+  const rawAvatar = user.avatar_url || user.avatar || user.user_image_url;
+  const hasAvatar = Boolean(rawAvatar && rawAvatar !== "/customer/profile.png");
+
+  const getUserInitials = (name?: string) => {
+    if (!name || !name.trim()) return "U";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  };
 
   const getImageUrl = (url: string) => {
     if (!url) return "/placeholder.png";
@@ -242,12 +253,54 @@ export default function Header({ onProductClick }: HeaderProps) {
       {/* Right: Icons */}
       <div className="flex items-center gap-3 sm:gap-5">
         {/* Search */}
-        <button onClick={() => router.push("/menu")} className="text-zinc-400 hover:text-white transition-colors cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-        </button>
+        <div className="relative flex items-center">
+          {isSearchExpanded ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (headerSearchQuery.trim()) {
+                  router.push(`/menu?search=${encodeURIComponent(headerSearchQuery.trim())}`);
+                } else {
+                  router.push("/menu");
+                }
+              }}
+              className="flex items-center gap-1.5 bg-[#212124] border border-white/15 rounded-full px-3 py-1 text-xs transition-all w-[180px] sm:w-[220px]"
+            >
+              <button type="submit" className="text-[#F9671A] shrink-0 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </button>
+              <input
+                type="text"
+                value={headerSearchQuery}
+                onChange={(e) => setHeaderSearchQuery(e.target.value)}
+                placeholder="Search menu..."
+                autoFocus
+                className="w-full bg-transparent text-white placeholder:text-zinc-500 outline-none text-xs"
+              />
+              <button
+                type="button"
+                onClick={() => { setIsSearchExpanded(false); setHeaderSearchQuery(""); }}
+                className="text-zinc-400 hover:text-white shrink-0 cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setIsSearchExpanded(true)}
+              className="text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center"
+              title="Search Menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         {/* Wishlist */}
         <div className="relative">
@@ -343,14 +396,20 @@ export default function Header({ onProductClick }: HeaderProps) {
         </Link>
 
         {/* User */}
-        <div className="flex items-center gap-2 pl-2 border-l border-white/10">
-          <div className="w-8 h-8 rounded-full overflow-hidden relative border border-white/20 bg-zinc-800 flex-shrink-0">
-            <Image src={userAvatar} alt="User Avatar" fill className="object-cover" />
-          </div>
-          <span className="hidden sm:block text-xs font-bold text-white max-w-[100px] truncate">
+        <Link href="/profile" className="flex items-center gap-2 pl-2 border-l border-white/10 group cursor-pointer">
+          {hasAvatar ? (
+            <div className="w-8 h-8 rounded-full overflow-hidden relative border border-white/20 bg-zinc-800 flex-shrink-0">
+              <Image src={getImageUrl(rawAvatar)} alt="User Avatar" fill className="object-cover" />
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[#F9671A] flex items-center justify-center text-white text-[12px] font-bold shrink-0 border border-white/20 shadow-sm">
+              {getUserInitials(userName)}
+            </div>
+          )}
+          <span className="hidden sm:block text-xs font-bold text-white max-w-[100px] truncate group-hover:text-[#F9671A] transition-colors">
             {userName}
           </span>
-        </div>
+        </Link>
       </div>
     </header>
   );

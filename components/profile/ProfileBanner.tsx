@@ -71,8 +71,18 @@ export default function ProfileBanner({
         </div>
 
         {/* Profile Photo */}
-        <div className="absolute -bottom-[50px] lg:-bottom-[65px] left-4 lg:left-16 w-[100px] h-[100px] lg:w-[160px] lg:h-[160px] rounded-full border-[4px] lg:border-[6px] border-[#1E1E20] overflow-hidden bg-zinc-800 z-30 shadow-xl">
-          <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+        <div className="absolute -bottom-[50px] lg:-bottom-[65px] left-4 lg:left-16 w-[100px] h-[100px] lg:w-[160px] lg:h-[160px] rounded-full border-[4px] lg:border-[6px] border-[#1E1E20] overflow-hidden bg-zinc-800 z-30 shadow-xl flex items-center justify-center">
+          {profilePhoto && profilePhoto !== "/customer/profile.png" && !profilePhoto.includes("placeholder") ? (
+            <Image src={profilePhoto} alt="Profile" fill className="object-cover" />
+          ) : (
+            <div className="w-full h-full bg-[#F9671A] flex items-center justify-center text-white text-3xl lg:text-5xl font-extrabold uppercase">
+              {user?.name ? (
+                user.name.trim().split(/\s+/).length >= 2
+                  ? (user.name.trim().split(/\s+/)[0][0] + user.name.trim().split(/\s+/)[user.name.trim().split(/\s+/).length - 1][0]).toUpperCase()
+                  : user.name.trim().slice(0, 2).toUpperCase()
+              ) : "U"}
+            </div>
+          )}
         </div>
       </div>
 

@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [coverPhoto, setCoverPhoto] = useState("/customer/cover-image.png");
-  const [profilePhoto, setProfilePhoto] = useState("/customer/profile.png");
+  const [profilePhoto, setProfilePhoto] = useState("");
   const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
