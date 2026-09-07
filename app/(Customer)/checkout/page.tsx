@@ -321,6 +321,8 @@ export default function CheckoutPage() {
         customer_name: customerName,
         customer_phone: customerPhone,
         delivery_address: deliveryAddress,
+        latitude: userLocation?.latitude ?? (gpsCoordsRef.current?.latitude || null),
+        longitude: userLocation?.longitude ?? (gpsCoordsRef.current?.longitude || null),
         table_id: null,
         notes: undefined,
         tip: tipAmt,
@@ -744,13 +746,13 @@ export default function CheckoutPage() {
           </main>
 
           {/* Right Sidebar (Map & Order Summary - Same width and structure as Menu Page Cart) */}
-          <aside className="w-full lg:w-[355px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full relative z-30">
+          <aside className="w-full lg:w-[355px] flex-shrink-0 border-t lg:border-t-0 lg:border-l border-white/5 bg-[#1E1E20] flex flex-col h-auto lg:h-full min-h-0 relative z-30">
             {/* Map Section (No border on map container) */}
             <div className="p-6 pb-4 border-b border-white/5 mx-6 px-0 mb-4 flex flex-col gap-4 flex-shrink-0">
               <div className="border-b border-white/5 pb-3">
                 <h3 className="text-[17px] font-bold text-white">Map Location</h3>
               </div>
-              <div className="w-full h-[250px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
+              <div className="w-full h-[220px] rounded-[16px] overflow-hidden shadow-lg bg-[#252527]">
                 <CheckoutMap 
                   distance={distanceKm} 
                   userLoc={userLocation} 
@@ -761,8 +763,8 @@ export default function CheckoutPage() {
             </div>
 
             {/* Order Summary Section (No border on items) */}
-            <div className="flex-1 overflow-y-auto px-6 flex flex-col scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-              <div className="flex items-center justify-between mb-5">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 flex flex-col scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <h3 className="text-[17px] font-bold text-white">Order Summary</h3>
                 <div className="bg-[#3a2016] text-[#F9671A] text-[10px] font-extrabold px-2 py-0.5 rounded border border-[#F9671A]/20">
                   {cartItems.length} ITEMS
@@ -770,22 +772,26 @@ export default function CheckoutPage() {
               </div>
 
               {/* Items List */}
-              <div className="flex flex-col gap-4 mb-6">
-                {cartItems.map((item: any) => {
-                  const catName = item.menuItem?.category?.name || categoriesList.find((c: any) => c.id === item.menuItem?.category_id)?.name || item.category || 'Burgers';
-                  return (
-                  <div key={item.id} className="flex items-center gap-3 bg-[#212124] p-3 rounded-[16px] shadow-sm">
-                    <div className="w-[52px] h-[52px] rounded-[12px] overflow-hidden flex-shrink-0 relative bg-[#28282b]">
-                      <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-[14px] font-bold text-white truncate mb-0.5">{item.name}</h4>
-                      <p className="text-[11px] text-zinc-400 truncate">{item.desc}</p>
-                    </div>
-                    <span className="text-[#F9671A] text-[15px] font-extrabold flex-shrink-0 pl-2">£{item.price}</span>
-                  </div>
-                  );
-                })}
+              <div className="flex flex-col gap-3 mb-6">
+                {cartItems.length === 0 ? (
+                  <div className="text-zinc-500 text-xs py-4 text-center">No items in order</div>
+                ) : (
+                  cartItems.map((item: any) => {
+                    const catName = item.menuItem?.category?.name || categoriesList.find((c: any) => c.id === item.menuItem?.category_id)?.name || item.category || 'Burgers';
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 bg-[#212124] p-3 rounded-[16px] shadow-sm">
+                        <div className="w-[52px] h-[52px] rounded-[12px] overflow-hidden flex-shrink-0 relative bg-[#28282b]">
+                          <img src={item.img || "/placeholder.png"} alt={item.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-[14px] font-bold text-white truncate mb-0.5">{item.name}</h4>
+                          <p className="text-[11px] text-zinc-400 line-clamp-2 leading-tight">{item.desc}</p>
+                        </div>
+                        <span className="text-[#F9671A] text-[15px] font-extrabold flex-shrink-0 pl-2">£{item.price}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 

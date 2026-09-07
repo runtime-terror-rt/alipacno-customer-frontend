@@ -202,7 +202,7 @@ export default function CheckoutMap({
       }
 
       if (hasPoints) {
-        map.fitBounds(bounds, { top: 60, bottom: 60, left: 60, right: 60 });
+        map.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
       }
     },
     [bCoords, userLoc, riderLoc]
@@ -216,7 +216,7 @@ export default function CheckoutMap({
     if (bCoords) bounds.extend({ lat: bCoords.latitude, lng: bCoords.longitude });
     if (userLoc) bounds.extend({ lat: userLoc.latitude, lng: userLoc.longitude });
     if (riderLoc) bounds.extend({ lat: riderLoc.latitude, lng: riderLoc.longitude });
-    mapRef.current.fitBounds(bounds, { top: 60, bottom: 60, left: 60, right: 60 });
+    mapRef.current.fitBounds(bounds, { top: 25, bottom: 25, left: 25, right: 25 });
   };
 
   const displayDistance =

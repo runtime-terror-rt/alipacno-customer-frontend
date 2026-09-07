@@ -171,30 +171,62 @@ export async function forwardGeocode(
   }
 }
 
-/** Reverse geocode lat/lng to a human-readable address string (Google Maps). */
+/** Reverse geocode lat/lng to a human-readable address string. */
 export async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
-  if (!GOOGLE_MAPS_API_KEY) {
-    console.error("[Geocoding] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing");
-    return null;
+  // 1. Try Google Maps API if key exists
+  if (GOOGLE_MAPS_API_KEY) {
+    try {
+      const params = new URLSearchParams({
+        latlng: `${lat},${lon}`,
+        key: GOOGLE_MAPS_API_KEY,
+      });
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === "OK" && Array.isArray(data.results) && data.results.length > 0) {
+          return data.results[0].formatted_address || null;
+        }
+      }
+    } catch (e) {
+      console.warn("[Geocoding] Google reverse geocode failed:", e);
+    }
   }
 
+  // 2. Fallback to OpenStreetMap Nominatim (Free)
   try {
-    const params = new URLSearchParams({
-      latlng: `${lat},${lon}`,
-      key: GOOGLE_MAPS_API_KEY,
-    });
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    if (data.status !== "OK" || !Array.isArray(data.results) || data.results.length === 0) return null;
-
-    return data.results[0].formatted_address || null;
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
+    const res = await fetch(url, { headers: { "User-Agent": "PacinosCustomerApp/1.0" } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.display_name) {
+        return data.display_name;
+      }
+    }
   } catch (e) {
-    console.warn("[Geocoding] Reverse geocode failed:", e);
-    return null;
+    console.warn("[Geocoding] Nominatim reverse geocode failed:", e);
   }
+
+  // 3. Fallback to BigDataCloud (Free, client-side allowed)
+  try {
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const parts = [
+        data.locality || data.city || data.localityInfo?.informative?.[0]?.name,
+        data.principalSubdivision,
+        data.countryName,
+      ].filter(Boolean);
+      if (parts.length > 0) {
+        return parts.join(", ");
+      }
+    }
+  } catch (e) {
+    console.warn("[Geocoding] BigDataCloud reverse geocode failed:", e);
+  }
+
+  return null;
 }
 
 // ============================================================================

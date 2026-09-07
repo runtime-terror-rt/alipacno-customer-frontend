@@ -166,7 +166,7 @@ export default function OrderSuccessModal({
         </div>
 
         {/* Map */}
-        <div className="rounded-[20px] overflow-hidden border border-white/5 bg-[#181819]">
+        {/* <div className="rounded-[20px] overflow-hidden border border-white/5 bg-[#181819]">
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
             <div className="flex items-center gap-2 text-[12px] font-bold text-zinc-300">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F9671A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -176,7 +176,7 @@ export default function OrderSuccessModal({
             </div>
             <span className="text-[12px] font-extrabold text-[#F9671A]">{deliveryInfo || "Calculating…"}</span>
           </div>
-          <div style={{ height: "130px" }}>
+          <div style={{ height: "250px" }}>
             <CheckoutMap
               branchLat={branchLat ?? null}
               branchLng={branchLng ?? null}
@@ -185,13 +185,24 @@ export default function OrderSuccessModal({
               userLng={userCoords?.longitude}
               distanceText={deliveryInfo}
             />
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
 
         {/* Summary chips */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { emoji: "📍", label: "Delivery", value: deliveryAddress?.split(",")[0] || "Your address" },
+            { 
+              emoji: "📍", 
+              label: "Delivery", 
+              value: (() => {
+                if (!deliveryAddress) return "Your address";
+                // If address looks like raw coordinates e.g. "23.7753, 90.3845"
+                if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(deliveryAddress.trim())) {
+                  return "Detected Location";
+                }
+                return deliveryAddress.split(",")[0] || "Your address";
+              })()
+            },
             { emoji: "✅", label: "Payment", value: "Confirmed" },
             {
               emoji: "💰",
@@ -204,7 +215,7 @@ export default function OrderSuccessModal({
             <div key={c.label} className="bg-[#181819] border border-white/5 rounded-[14px] p-3 text-center flex flex-col items-center gap-0.5">
               <span className="text-[18px]">{c.emoji}</span>
               <span className="text-[10px] text-zinc-500 font-medium">{c.label}</span>
-              <span className="text-[12px] text-white font-bold truncate w-full text-center">{c.value}</span>
+              <span className="text-[12px] text-white font-bold truncate w-full text-center" title={c.value}>{c.value}</span>
             </div>
           ))}
         </div>

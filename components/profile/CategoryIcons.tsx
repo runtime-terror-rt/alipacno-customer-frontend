@@ -68,13 +68,12 @@ export const getCategoryIcon = (name: string) => {
 };
 
 export const renderCategoryIcon = (cat: any, isActive: boolean) => {
-  const knownCategories = ["Steaks", "Starters", "Sides", "Drinks", "Desserts", "Lunch Special"];
-  if (knownCategories.includes(cat.name)) {
-    return getCategoryIcon(cat.name);
+  const iconUrl = cat?.icon || cat?.image_url || cat?.image;
+  if (iconUrl) {
+    const imgSrc = (iconUrl.startsWith('http') || iconUrl.startsWith('/customer'))
+      ? iconUrl
+      : `${process.env.NEXT_PUBLIC_API_BASE_URL || ''}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+    return <img src={imgSrc} alt={cat.name || "Category"} className={`w-full h-full object-contain ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />;
   }
-  if (cat.icon) {
-    const imgSrc = cat.icon.startsWith('http') ? cat.icon : `${process.env.NEXT_PUBLIC_API_BASE_URL || ''}${cat.icon}`;
-    return <img src={imgSrc} alt={cat.name} className={`w-full h-full object-contain ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />;
-  }
-  return getCategoryIcon(cat.name);
+  return getCategoryIcon(cat?.name || "");
 };
