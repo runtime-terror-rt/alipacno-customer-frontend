@@ -10,7 +10,9 @@ import { useGetCartQuery, useUpdateCartItemMutation, useRemoveCartItemMutation, 
 import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
 import { useCreateOrderMutation } from "../../../redux/features/api/ordersApi";
 import { useGetBranchesQuery } from "@/redux/features/api/branchesApi";
+import { useMatchDeliveryFeeTierQuery } from "@/redux/features/api/deliveryFeeApi";
 import { useBranchSelection } from "@/hooks/useBranchSelection";
+import { kmToMiles } from "@/utils/location";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/authApi";
@@ -178,7 +180,7 @@ export default function CheckoutPage() {
     const myRequestId = ++requestIdRef.current;
 
     const calculateDistance = async () => {
-  const { forwardGeocode, calculateDistanceKm, getBranchCoordinates, getGoogleRouteInfo } = await import("@/utils/location");
+      const { forwardGeocode, calculateDistanceKm, getBranchCoordinates, getGoogleRouteInfo, getUserLocation } = await import("@/utils/location");
   const branch = currentBranch as any;
   if (!branch) return;
 
@@ -188,6 +190,10 @@ export default function CheckoutPage() {
     coords = gpsCoordsRef.current;
   } else if (debouncedAddress && debouncedAddress.trim()) {
     coords = await forwardGeocode(debouncedAddress);
+  }
+
+  if (!coords && !debouncedAddress) {
+    coords = gpsCoordsRef.current || (await getUserLocation());
   }
 
   if (!isMounted || myRequestId !== requestIdRef.current) return;
@@ -225,11 +231,18 @@ export default function CheckoutPage() {
   const distanceText = routeInfo?.formattedDistance || (distanceKm != null ? formatDistance(distanceKm) : (currentBranch as any)?.dist || "Distance N/A");
   const deliveryTimeText = routeInfo?.formattedDeliveryTime || (distanceKm != null ? formatDeliveryTime(distanceKm) : (currentBranch as any)?.time || "Est. delivery time");
 
+  const { cartObj, items: rawCartItems } = extractCartData(cartData);
 
+  const distanceMiles = (distanceKm != null ? kmToMiles(distanceKm) : null) ?? 0;
+  const { data: feeTierRes } = useMatchDeliveryFeeTierQuery({ distance: distanceMiles });
+
+  const matchedFee = feeTierRes?.data?.fee;
+  const isDeliveryOrder = (cartObj?.order_type || "delivery").toLowerCase() === "delivery";
+  const deliveryFeeAmount = isDeliveryOrder
+    ? (matchedFee != null ? parseFloat(String(matchedFee)) : parseFloat(String(cartObj?.delivery_fee || 0)))
+    : 0;
 
   const [createOrderMut, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
-
-  const { cartObj, items: rawCartItems } = extractCartData(cartData);
 
   const cartItems = rawCartItems.map((item: any) => {
     const descArr = [
@@ -289,7 +302,7 @@ export default function CheckoutPage() {
 
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const successUrl = `${origin}/order/success?session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = `${origin}/checkout`;
+      const cancelUrl = `${origin}/menu`;
 
       const currentUser = (() => {
         if (meRes?.data?.id) return meRes.data;
@@ -321,6 +334,7 @@ export default function CheckoutPage() {
         customer_name: customerName,
         customer_phone: customerPhone,
         delivery_address: deliveryAddress,
+        delivery_fee: deliveryFeeAmount,
         latitude: userLocation?.latitude ?? (gpsCoordsRef.current?.latitude || null),
         longitude: userLocation?.longitude ?? (gpsCoordsRef.current?.longitude || null),
         table_id: null,
@@ -359,7 +373,7 @@ export default function CheckoutPage() {
   const vat = parseFloat(cartObj?.vat || 0);
   const loyaltyDiscount = parseFloat(cartObj?.discount || 0);
   const baseTotal = parseFloat(cartObj?.total || 0);
-  const total = baseTotal + tipAmt;
+  const total = baseTotal + deliveryFeeAmount + tipAmt;
 
   const getCategoryIcon = (name: string) => {
     switch (name) {
@@ -801,7 +815,7 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-3 mb-5">
                 {[
                   ["Subtotal", `£${subtotal.toFixed(2)}`],
-                  ["Delivery", "Free"],
+                  ["Delivery fee", deliveryFeeAmount === 0 ? "Free" : `£${deliveryFeeAmount.toFixed(2)}`],
                   ["Incl. VAT", `£${vat.toFixed(2)}`],
                   ["Rider's Tip", tipAmt > 0 ? `£${tipAmt.toFixed(2)}` : "00.00"],
                   ["Loyalty discount", loyaltyDiscount > 0 ? `-£${loyaltyDiscount.toFixed(2)}` : "00.00"]

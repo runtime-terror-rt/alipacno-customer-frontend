@@ -5,7 +5,7 @@ interface EditProfileFormProps {
   profilePhoto: string;
   handleProfileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   formData: any;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   isUpdating: boolean;
   handleSaveProfile: () => void;
   setIsEditing: (isEditing: boolean) => void;
@@ -71,7 +71,17 @@ export default function EditProfileForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="text-[13.5px] font-medium text-white">Gender</label>
-            <input name="gender" value={formData.gender || ""} onChange={handleInputChange} placeholder="e.g. female / male" className="w-full bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner" />
+            <div className="relative">
+            <select name="gender" value={formData.gender || ""} onChange={handleInputChange} className="w-full appearance-none bg-[#252527] rounded-[10px] px-4 py-3.5 text-[14px] text-white outline-none focus:ring-1 focus:ring-[#F9671A]/50 transition-all shadow-inner">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m7 10 5 5 5-5" /></svg>
+            </div>
+
+            </div>
+            
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-[13.5px] font-medium text-white">Phone Number</label>
