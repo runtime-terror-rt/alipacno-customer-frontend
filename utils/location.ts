@@ -62,6 +62,12 @@ export function calculateDistanceKm(lat1: NumericInput, lon1: NumericInput, lat2
   return Math.round(R * c * 10) / 10; // 1 decimal place
 }
 
+/** Convert distance in kilometers to miles (1 km ≈ 0.621371 miles). */
+export function kmToMiles(km: number | null | undefined): number | null {
+  if (km == null || isNaN(km)) return null;
+  return Math.round(km * 0.621371 * 10) / 10;
+}
+
 /** Estimate delivery time in minutes from distance in km (~3 min/km + 10 min prep, min 15 mins). */
 export function calculateDeliveryMins(km: number | null | undefined): number | null {
   if (km == null || isNaN(km)) return null;
@@ -145,30 +151,44 @@ export async function forwardGeocode(
   });
   if (opts.regionBias) params.set("region", opts.regionBias);
 
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === "OK" && Array.isArray(data.results) && data.results.length > 0) {
+          const best = data.results[0];
+          const loc = best?.geometry?.location;
+          if (loc && typeof loc.lat === "number" && typeof loc.lng === "number") {
+            return { latitude: loc.lat, longitude: loc.lng };
+          }
+        } else {
+          console.warn("[Geocoding] Google status:", data.status, normalizedAddress);
+        }
+      }
+    } catch (error) {
+      console.warn("[Geocoding] Google forward geocode failed:", error);
+    }
+
+  // 2. Fallback to OpenStreetMap Nominatim (Free)
   try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn("[Geocoding] Google response:", res.status, res.statusText);
-      return null;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedAddress)}&format=json&limit=1`;
+    const res = await fetch(url, { headers: { "User-Agent": "PacinosCustomerApp/1.0" } });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          return { latitude: lat, longitude: lon };
+        }
+      }
     }
-
-    const data = await res.json();
-
-    if (data.status !== "OK" || !Array.isArray(data.results) || data.results.length === 0) {
-      console.warn("[Geocoding] Google status:", data.status, normalizedAddress);
-      return null;
-    }
-
-    const best = data.results[0];
-    const loc = best?.geometry?.location;
-    if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") return null;
-
-    return { latitude: loc.lat, longitude: loc.lng };
-  } catch (error) {
-    console.warn("[Geocoding] Google forward geocode failed:", error);
-    return null;
+  } catch (e) {
+    console.warn("[Geocoding] Nominatim forward geocode failed:", e);
   }
+
+  return null;
 }
 
 /** Reverse geocode lat/lng to a human-readable address string. */

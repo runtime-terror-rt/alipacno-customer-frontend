@@ -10,6 +10,9 @@ import { useGetSubcategoriesQuery } from "../../../redux/features/api/subcategor
 import { useGetMenuItemsQuery, useGetMenuItemQuery } from "../../../redux/features/api/menuItemsApi";
 import { useGetCartQuery, useCreateCartMutation, useAddCartItemMutation, useUpdateCartItemMutation, useRemoveCartItemMutation, extractCartData } from "../../../redux/features/api/cartApi";
 import { useGetWishlistQuery, useToggleWishlistMutation } from "../../../redux/features/api/wishlistApi";
+import { useBranchSelection } from "@/hooks/useBranchSelection";
+import { useMatchDeliveryFeeTierQuery } from "@/redux/features/api/deliveryFeeApi";
+import { kmToMiles } from "@/utils/location";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation } from "../../../redux/features/api/authApi";
@@ -41,6 +44,20 @@ export default function MenuPage() {
   const [selectedCookingPref, setSelectedCookingPref] = useState<any>(null);
   const [selectedSpiceLevel, setSelectedSpiceLevel] = useState<any>(null);
   const [selectedToppings, setSelectedToppings] = useState<any[]>([]);
+
+  // Live countdown timer for Happy Hour section (e.g. 03h : 22m : 31s)
+  const [happyHourTimeLeft, setHappyHourTimeLeft] = useState(3 * 3600 + 22 * 60 + 31);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHappyHourTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const hhHours = Math.floor(happyHourTimeLeft / 3600);
+  const hhMins = Math.floor((happyHourTimeLeft % 3600) / 60);
+  const hhSecs = happyHourTimeLeft % 60;
+  const formattedHappyHourTime = `${String(hhHours).padStart(2, "0")}h : ${String(hhMins).padStart(2, "0")}m : ${String(hhSecs).padStart(2, "0")}s`;
 
   useEffect(() => {
     setSelectedSize(null);
@@ -176,9 +193,21 @@ export default function MenuPage() {
     }
   };
 
+  const { selectedBranch } = useBranchSelection();
+  const distanceKm = selectedBranch?.distanceKm;
+  const effectiveKm = distanceKm ?? (selectedBranch as any)?.dist ?? null;
+  const distanceMiles = (distanceKm != null ? kmToMiles(distanceKm) : null) ?? 0;
+  const { data: feeTierRes } = useMatchDeliveryFeeTierQuery({ distance: distanceMiles });
+
+  const matchedFee = feeTierRes?.data?.fee;
+  const deliveryFeeAmount = cartItems.length > 0
+    ? (matchedFee != null ? parseFloat(String(matchedFee)) : parseFloat(String(cartObj?.delivery_fee || 0)))
+    : 0;
+
   const subtotal = parseFloat(cartObj.subtotal || 0);
   const vat = parseFloat(cartObj.vat || 0);
-  const total = parseFloat(cartObj.total || 0);
+  const baseTotal = parseFloat(cartObj.total || 0);
+  const total = cartItems.length > 0 ? baseTotal + deliveryFeeAmount : 0;
   const loyaltyPointsEarned = cartObj.loyalty_points || 0;
   const loyaltyDiscount = parseFloat(cartObj.discount || 0);
   const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.qty, 0);
@@ -581,47 +610,43 @@ export default function MenuPage() {
               </div>
             ) : (
               <>
-                {/* Happy Hour Section */}
-                <div className="flex flex-row items-center justify-between sm:justify-start gap-2 sm:gap-4 mb-6">
-                  <h2 className="text-[12px] min-[375px]:text-[13px] min-[400px]:text-[15px] sm:text-[17px] font-bold text-white flex items-center whitespace-nowrap">
-                    Happy hour pricing: <span className="text-[#F9671A] ml-1 sm:ml-2">03h : 22m : 31s</span>
-                  </h2>
-                  <div className="bg-[#3a2016] text-[#F9671A] border border-[#F9671A]/20 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full whitespace-nowrap">
-                    35% OFF
-                  </div>
-                </div>
-
-                {/* Happy Hour Grid */}
-                {happyHourItems.length > 0 ? (
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-                    {happyHourItems.map((item: any) => (
-                      <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
-                        <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
-                          <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
-                            <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
-                          </div>
-
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
-                        </div>
-                        <div className="p-4 flex flex-col flex-1">
-                          <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
-                          <div className="flex items-center gap-1.5 text-xs mb-4">
-                            <span className="font-extrabold text-[#F9671A]">{item.price}</span>
-                            <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
-                            <span className="text-zinc-400 text-[11px]">/portion</span>
-                          </div>
-                          <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-                            Add to cart
-                          </button>
-                        </div>
+                {/* Happy Hour Section - Only displayed when happy hour items are available */}
+                {happyHourItems.length > 0 && (
+                  <div className="mb-10">
+                    <div className="flex flex-row items-center justify-between sm:justify-start gap-2 sm:gap-4 mb-6">
+                      <h2 className="text-[12px] min-[375px]:text-[13px] min-[400px]:text-[15px] sm:text-[17px] font-bold text-white flex items-center whitespace-nowrap">
+                        Happy hour pricing: <span className="text-[#F9671A] ml-1 sm:ml-2 font-mono">{formattedHappyHourTime}</span>
+                      </h2>
+                      <div className="bg-[#3a2016] text-[#F9671A] border border-[#F9671A]/20 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full whitespace-nowrap">
+                        35% OFF
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-10 mb-10 border border-white/5 rounded-[16px] bg-[#1a1a1c]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 mb-3"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <p className="text-zinc-400 font-medium text-sm">No happy hour items available.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {happyHourItems.map((item: any) => (
+                        <div key={`happy-${item.id}`} className="bg-[#212124] rounded-[16px] overflow-hidden flex flex-col border border-white/5 group hover:border-[#F9671A]/30 transition-colors shadow-lg">
+                          <div className="relative w-full aspect-[4/3] bg-[#1a1a1c] overflow-hidden">
+                            <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold text-white z-10 shadow-md">
+                              <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
+                            </div>
+
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                          </div>
+                          <div className="p-4 flex flex-col flex-1">
+                            <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
+                            <div className="flex items-center gap-1.5 text-xs mb-4">
+                              <span className="font-extrabold text-[#F9671A]">{item.price}</span>
+                              <span className="text-zinc-500 line-through text-[11px]">{item.oldPrice}</span>
+                              <span className="text-zinc-400 text-[11px]">/portion</span>
+                            </div>
+                            <button onClick={() => { setSelectedProduct(item); setModalQty(1); }} className="mt-auto w-full py-2 bg-[#F9671A] hover:bg-[#ff7a33] text-white rounded-full text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                              Add to cart
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -748,7 +773,7 @@ export default function MenuPage() {
                 </div>
                 <div className="flex justify-between items-center text-[13px]">
                   <span className="text-zinc-400">Delivery fee</span>
-                  <span className="font-medium text-white">{cartItems.length > 0 ? "Free" : "£0.00"}</span>
+                  <span className="font-medium text-white">{cartItems.length === 0 ? "£0.00" : deliveryFeeAmount > 0 ? `£${deliveryFeeAmount.toFixed(2)}` : "Free"}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px]">
                   <span className="text-zinc-400">Incl. VAT</span>
@@ -759,7 +784,7 @@ export default function MenuPage() {
                   <span className="font-medium text-white">{loyaltyDiscount > 0 ? `-£${loyaltyDiscount.toFixed(2)}` : "00.00"}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] mt-1">
-                  <span className="text-zinc-400">Use loyalty ponints</span>
+                  <span className="text-zinc-400">Use loyalty points</span>
                   <div className="w-8 h-4 bg-zinc-700 rounded-full relative cursor-pointer">
                     <div className="w-3 h-3 bg-zinc-400 rounded-full absolute left-0.5 top-0.5"></div>
                   </div>
