@@ -36,7 +36,7 @@ export type CheckoutMapProps = {
   userAvatar?: string | null;
 };
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyD65cza7lynnmbhCN44gs7HupKMnuoU-bo";
 
 // Custom Ultra-Sleek Dark Theme for Google Maps
 const googleDarkMapStyle = [
