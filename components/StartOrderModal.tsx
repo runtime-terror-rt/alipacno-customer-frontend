@@ -188,15 +188,15 @@ export default function StartOrderModal({ onClose, initialMode }: { onClose: () 
         {/* Postcode Input */}
         <div className="mb-6 text-left">
           <label className="text-xs font-semibold text-zinc-400 mb-1.5 flex items-center justify-between">
-            <span>Delivery Postcode / Address</span>
-            <button
+            <span>Postcode</span>
+            {/* <button
               type="button"
               onClick={handleDetectLocation}
               disabled={isDetecting}
               className="text-[#F9671A] hover:underline text-[11px] font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50"
             >
               {isDetecting ? "Detecting..." : "Detect my location"}
-            </button>
+            </button> */}
           </label>
           <input
             ref={inputRef}

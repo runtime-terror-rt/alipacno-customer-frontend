@@ -9,6 +9,7 @@ import { useAppSelector } from "../../../redux/hooks";
 import { useGetMenuItemsQuery } from "../../../redux/features/api/menuItemsApi";
 import { useCreateCartMutation } from "../../../redux/features/api/cartApi";
 import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
+import FoodItemImage from "@/components/FoodItemImage";
 
 const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
   try {
@@ -489,11 +490,10 @@ export default function CustomerHome() {
                   <div className="absolute top-2.5 left-2.5 bg-[#1E1E20]/90 backdrop-blur-md border border-white/10 px-2 sm:px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-white z-10 shadow-md">
                     <span className="text-[#F9671A] text-xs">★</span> {dish.rating}
                   </div>
-                  <Image
+                  <FoodItemImage
                     src={dish.image}
                     alt={dish.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <div className="p-3 sm:p-4 flex flex-col space-y-1 bg-[#2a2a2c]">

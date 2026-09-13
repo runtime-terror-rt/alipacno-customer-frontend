@@ -18,6 +18,7 @@ import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation } from "../../../redux/features/api/authApi";
 import { toast } from "react-hot-toast";
 import Header from "../components/Header";
+import FoodItemImage from "@/components/FoodItemImage";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -581,7 +582,7 @@ export default function MenuPage() {
                               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
                             </svg>
                           </button>
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                          <FoodItemImage src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
                         </div>
                         <div className="p-4 flex flex-col flex-1">
                           <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
@@ -630,7 +631,7 @@ export default function MenuPage() {
                               <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {item.rating}
                             </div>
 
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                            <FoodItemImage src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
                           </div>
                           <div className="p-4 flex flex-col flex-1">
                             <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
@@ -673,7 +674,7 @@ export default function MenuPage() {
                               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
                             </svg>
                           </button>
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
+                          <FoodItemImage src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 z-0" />
                         </div>
                         <div className="p-4 flex flex-col flex-1">
                           <h3 className="text-[14px] font-bold text-white mb-1.5 truncate">{item.name}</h3>
@@ -726,7 +727,7 @@ export default function MenuPage() {
                 {cartItems.map((item: any) => (
                   <div key={`cart-${item.id}`} className="flex gap-3">
                     <div className="w-[60px] h-[60px] rounded-[12px] bg-[#2a2a2c] overflow-hidden flex-shrink-0 relative">
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <FoodItemImage src={item.image} alt={item.name} className="w-full h-full object-cover" iconSize={20} />
                     </div>
                     <div className="flex-1 flex flex-col justify-between">
                       <div className="flex justify-between items-start gap-2">
@@ -819,7 +820,7 @@ export default function MenuPage() {
               {/* Header */}
               <div className="flex flex-col sm:flex-row gap-5 mb-8">
                 <div className="relative w-full sm:w-[220px] h-[160px] rounded-[16px] overflow-hidden flex-shrink-0 bg-[#212124]">
-                  <img src={selectedProduct.image} className="w-full h-full object-cover" alt={selectedProduct.name} />
+                  <FoodItemImage src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" iconSize={40} />
                   <div className="absolute top-3 left-3 bg-[#1E1E20]/90 backdrop-blur-md px-2 py-1 rounded-full text-white text-[11px] font-bold flex items-center gap-1 border border-white/10">
                     <Star size={12} className="text-[#F9671A] fill-[#F9671A]" /> {selectedProduct.rating}
                   </div>

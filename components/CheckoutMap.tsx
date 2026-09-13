@@ -36,7 +36,9 @@ export type CheckoutMapProps = {
   userAvatar?: string | null;
 };
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+// const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyB9_tz3lQeimk5hxrfnOcDO_ksaKVcYIcU";
+const GOOGLE_MAPS_API_KEY ="AIzaSyB9_tz3lQeimk5hxrfnOcDO_ksaKVcYIcU";
+
 
 // Custom Ultra-Sleek Dark Theme for Google Maps
 const googleDarkMapStyle = [
@@ -310,7 +312,7 @@ export default function CheckoutMap({
             <OverlayViewF
               key={b.id}
               position={{ lat: coords.latitude, lng: coords.longitude }}
-              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+              mapPaneName="overlayMouseTarget"
             >
               <div
                 onClick={() => onBranchSelect && onBranchSelect(b.id)}
@@ -362,7 +364,7 @@ export default function CheckoutMap({
         {userLoc && (
           <OverlayViewF
             position={{ lat: userLoc.latitude, lng: userLoc.longitude }}
-            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            mapPaneName="overlayMouseTarget"
           >
             <div className="flex flex-col items-center -translate-x-1/2 -translate-y-full transition-transform duration-300 hover:scale-110 z-20">
               <div className="bg-[#202124]/95 border border-emerald-500 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold mb-1 shadow-[0_4px_20px_rgba(0,0,0,0.6)] backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap">
@@ -400,7 +402,7 @@ export default function CheckoutMap({
         {riderLoc && (
           <OverlayViewF
             position={{ lat: riderLoc.latitude, lng: riderLoc.longitude }}
-            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            mapPaneName="overlayMouseTarget"
           >
             <div className="flex flex-col items-center -translate-x-1/2 -translate-y-1/2 z-30 transition-all duration-500 ease-out">
               <div className="bg-[#F9671A] text-white px-2.5 py-1 rounded-xl text-[10px] font-extrabold mb-1 shadow-2xl border border-white/20 flex items-center gap-1.5 whitespace-nowrap animate-bounce">

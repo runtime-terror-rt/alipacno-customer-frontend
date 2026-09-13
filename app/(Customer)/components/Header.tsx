@@ -11,6 +11,7 @@ import { useGetMeQuery } from "../../../redux/features/api/authApi";
 import { useGetConversationsQuery } from "../../../redux/features/api/chatApi";
 import { useBranchSelection } from "@/hooks/useBranchSelection";
 import type { ConversationListItem } from "@/types/chat/chatTypes";
+import FoodItemImage from "@/components/FoodItemImage";
 
 interface HeaderProps {
   onProductClick?: (product: any) => void;
@@ -335,7 +336,7 @@ export default function Header({ onProductClick }: HeaderProps) {
                         <div key={item.id || p.id} className="p-3.5 flex items-center justify-between hover:bg-white/5 transition-colors">
                           <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => handleProductClick(p)}>
                             <div className="w-10 h-10 rounded-lg overflow-hidden relative flex-shrink-0 bg-zinc-800 border border-white/10">
-                              <Image src={pImg} alt={pName} fill className="object-cover" />
+                              <FoodItemImage src={pImg} alt={pName} className="w-full h-full object-cover" iconSize={18} />
                             </div>
                             <div className="min-w-0">
                               <h4 className="text-xs font-bold text-white truncate max-w-[140px]">{pName}</h4>

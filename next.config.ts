@@ -26,6 +26,22 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "api.pacinos.uk",
       },
+      {
+        protocol: "https",
+        hostname: "example.com",
+      },
+      {
+        protocol: "http",
+        hostname: "example.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
     ],
   },
 };
