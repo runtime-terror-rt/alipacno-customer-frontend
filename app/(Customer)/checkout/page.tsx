@@ -12,7 +12,7 @@ import { useCreateOrderMutation } from "../../../redux/features/api/ordersApi";
 import { useGetBranchesQuery } from "@/redux/features/api/branchesApi";
 import { useMatchDeliveryFeeTierQuery } from "@/redux/features/api/deliveryFeeApi";
 import { useBranchSelection } from "@/hooks/useBranchSelection";
-import { kmToMiles } from "@/utils/location";
+import { kmToMiles, formatDistance, formatDeliveryTime, calculateDistanceKm } from "@/utils/location";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/slice/authSlice";
 import { useLogoutMutation, useGetMeQuery } from "../../../redux/features/api/authApi";
@@ -227,7 +227,6 @@ export default function CheckoutPage() {
     };
   }, [currentBranch?.id, (currentBranch as any)?.name, (currentBranch as any)?.address, debouncedAddress]);
 
-  const { formatDistance, formatDeliveryTime } = require("@/utils/location");
   const distanceText = routeInfo?.formattedDistance || (distanceKm != null ? formatDistance(distanceKm) : (currentBranch as any)?.dist || "Distance N/A");
   const deliveryTimeText = routeInfo?.formattedDeliveryTime || (distanceKm != null ? formatDeliveryTime(distanceKm) : (currentBranch as any)?.time || "Est. delivery time");
 
@@ -870,7 +869,6 @@ export default function CheckoutPage() {
                 // Calculate per-branch distance if user location and branch coords are available
                 let branchDistText = b.dist || "";
                 if (userLocation && b.latitude && b.longitude) {
-                  const { calculateDistanceKm } = require("@/utils/location");
                   const km = calculateDistanceKm(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude);
                   if (km != null) {
                     const mins = Math.max(15, Math.round(km * 3) + 10);

@@ -8,6 +8,7 @@ import { useGetWishlistQuery, useToggleWishlistMutation } from "../../../redux/f
 import { useAddCartItemMutation, useGetCartQuery } from "../../../redux/features/api/cartApi";
 import { toast } from "react-hot-toast";
 import Header from "../components/Header";
+import FoodItemImage from "@/components/FoodItemImage";
 
 export default function WishlistPage() {
   const router = useRouter();
@@ -113,7 +114,7 @@ export default function WishlistPage() {
                     >
                       <Trash2 size={18} />
                     </button>
-                    <img src={image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500" />
+                    <FoodItemImage src={image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500" />
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <h3 className="text-[16px] font-bold text-white mb-2 line-clamp-1">{item.name}</h3>
