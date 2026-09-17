@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../redux/store/store";
+import { logout } from "../../redux/features/slice/authSlice";
+import { useGetMeQuery } from "../../redux/features/api/authApi";
+import { isCustomerUser } from "@/utils/auth";
+import { toast } from "react-hot-toast";
 
 export default function CustomerLayout({
   children,
@@ -12,19 +16,32 @@ export default function CustomerLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { token } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const { token, user } = useSelector((state: RootState) => state.auth);
   const [isReady, setIsReady] = useState(false);
+
+  const { data: meRes } = useGetMeQuery(undefined, { skip: !token });
+  const fetchedUser = meRes?.user || meRes?.data || meRes;
 
   useEffect(() => {
     // If there is no token, redirect to login
     if (!token) {
       router.push("/login");
-    } else {
-      setIsReady(true);
+      return;
     }
-  }, [token, router, pathname]);
 
-  // Don't render children until we know user is authenticated
+    const currentUser = fetchedUser || user;
+    if (currentUser && !isCustomerUser(currentUser)) {
+      toast.error("Access denied. Only customer accounts can access this portal.");
+      dispatch(logout());
+      router.push("/login");
+      return;
+    }
+
+    setIsReady(true);
+  }, [token, user, fetchedUser, router, pathname, dispatch]);
+
+  // Don't render children until we know user is authenticated and authorized as customer
   if (!isReady) {
     return (
       <div className="h-[100dvh] w-full bg-[#1E1E20] flex items-center justify-center">
