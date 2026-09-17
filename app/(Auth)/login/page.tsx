@@ -10,6 +10,8 @@ import { setCredentials } from "@/redux/features/slice/authSlice";
 import { toast } from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 
+import { isCustomerUser } from "@/utils/auth";
+
 export default function Login() {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -31,6 +33,11 @@ export default function Login() {
       const res = await loginApi(formData).unwrap();
       const user = res?.data?.user || res?.user || res?.data;
       const token = res?.data?.token || res?.token || res?.access_token || res?.data?.access_token;
+
+      if (user && !isCustomerUser(user)) {
+        toast.error("Access denied. Only customer accounts can log in.");
+        return;
+      }
       
       if (token) {
         dispatch(setCredentials({ user, token }));

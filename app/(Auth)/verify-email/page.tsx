@@ -8,6 +8,8 @@ import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/redux/features/slice/authSlice";
 
+import { isCustomerUser } from "@/utils/auth";
+
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -158,6 +160,11 @@ function VerifyEmailContent() {
                 const res = await verifyOtpApi({ email, otp: otpCode }).unwrap();
                 const user = res?.data?.user || res?.user || res?.data;
                 const token = res?.data?.token || res?.token || res?.access_token || res?.data?.access_token;
+
+                if (user && !isCustomerUser(user)) {
+                  toast.error("Access denied. Only customer accounts can log in.");
+                  return;
+                }
                 
                 if (token) {
                   dispatch(setCredentials({ user, token }));
