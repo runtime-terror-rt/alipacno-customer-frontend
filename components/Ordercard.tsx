@@ -8,12 +8,73 @@ type Props = {
   orderId: string;
   qty: number;
   price: string;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
   showReorder?: boolean;
   onClick?: () => void;
   onReorder?: (e: React.MouseEvent) => void;
 };
 
-export default function OrderCard({ image, badge, title, deliveredText, orderId, qty, price, showReorder, onClick, onReorder }: Props) {
+const formatPaymentMethod = (method?: string | null) => {
+  if (!method) return null;
+  const m = method.toLowerCase();
+  if (m === "cash" || m === "cod") return "Cash";
+  if (m === "stripe") return "Stripe";
+  if (m === "card") return "Card";
+  if (m === "paypal") return "PayPal";
+  return method.charAt(0).toUpperCase() + method.slice(1);
+};
+
+const getPaymentStatusBadge = (status?: string | null) => {
+  if (!status) return null;
+  const s = status.toLowerCase();
+  if (s === "paid" || s === "successful" || s === "completed") {
+    return {
+      label: "Paid",
+      className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    };
+  }
+  if (s === "pending" || s === "unpaid") {
+    return {
+      label: "Pending",
+      className: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    };
+  }
+  if (s === "failed" || s === "cancelled") {
+    return {
+      label: "Failed",
+      className: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    };
+  }
+  if (s === "refunded") {
+    return {
+      label: "Refunded",
+      className: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    };
+  }
+  return {
+    label: status.charAt(0).toUpperCase() + status.slice(1),
+    className: "bg-zinc-500/10 text-zinc-300 border-zinc-500/20",
+  };
+};
+
+export default function OrderCard({
+  image,
+  badge,
+  title,
+  deliveredText,
+  orderId,
+  qty,
+  price,
+  paymentMethod,
+  paymentStatus,
+  showReorder,
+  onClick,
+  onReorder,
+}: Props) {
+  const methodLabel = formatPaymentMethod(paymentMethod);
+  const statusBadge = getPaymentStatusBadge(paymentStatus);
+
   return (
     <div
       onClick={onClick}
@@ -25,8 +86,22 @@ export default function OrderCard({ image, badge, title, deliveredText, orderId,
         <Image src={image} alt={title} fill className="object-cover" />
       </div>
       <div className="flex-1 min-w-0 w-full flex flex-col justify-center">
-        <div className="mb-1.5 flex items-center">
+        <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
           <span className="bg-zinc-700/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{badge}</span>
+          {methodLabel && (
+            <span className="bg-white/5 text-zinc-300 text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
+              <svg className="w-2.5 h-2.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect width="20" height="14" x="2" y="5" rx="2" strokeWidth="2" />
+                <line x1="2" x2="22" y1="10" y2="10" strokeWidth="2" />
+              </svg>
+              {methodLabel}
+            </span>
+          )}
+          {statusBadge && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusBadge.className}`}>
+              {statusBadge.label}
+            </span>
+          )}
         </div>
         <h3 className="text-[16px] font-bold text-white truncate">{title}</h3>
         <p className="text-[11px] text-zinc-400 mt-1">{deliveredText}</p>

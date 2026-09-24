@@ -122,12 +122,12 @@ export default function NotificationsPanel() {
     <div className="p-6 flex flex-col gap-4 overflow-y-auto">
       {notifications.map((n) => (
         <div key={n.id} className="bg-[#2a2a2c] rounded-[16px] p-4 flex gap-3 relative shadow-lg">
-          <button className="absolute top-3 right-3 text-zinc-500 hover:text-white cursor-pointer">
+          {/* <button className="absolute top-3 right-3 text-zinc-500 hover:text-white cursor-pointer">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
             </svg>
-          </button>
+          </button> */}
           <div className="w-10 h-10 rounded-full bg-[#3a2016] flex items-center justify-center flex-shrink-0 mt-0.5">{n.icon}</div>
           <div className="pr-4">
             <h4 className="text-[12.5px] font-bold text-white mb-0.5 leading-tight">{n.title}</h4>
