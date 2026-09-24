@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVerifyOtpMutation, useResendOtpMutation } from "@/redux/features/api/authApi";
 import { toast } from "react-hot-toast";
@@ -18,9 +18,24 @@ function VerifyEmailContent() {
   const type = searchParams.get("type");
   
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
+  const [timer, setTimer] = useState(300); // 5 minutes in seconds
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [verifyOtpApi, { isLoading }] = useVerifyOtpMutation();
   const [resendOtp, { isLoading: isResending }] = useResendOtpMutation();
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const secs = (seconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -115,9 +130,34 @@ function VerifyEmailContent() {
           <h2 className="text-3xl font-bold text-white text-center mb-4">Check your email</h2>
 
           {/* Subtitle */}
-          <p className="text-center text-white text-base font-normal leading-[25.6px] mb-8">
+          <p className="text-center text-white text-base font-normal leading-[25.6px] mb-4">
             We sent a code to your email address {email || "@"}. Please check<br />your email for the 5 digit code.
           </p>
+
+          {/* Expiry Countdown Timer */}
+          <div className="flex justify-center mb-6">
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                timer > 60
+                  ? "bg-white/5 border-white/10 text-zinc-300"
+                  : timer > 0
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400 animate-pulse"
+                  : "bg-red-500/10 border-red-500/30 text-red-400"
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              {timer > 0 ? (
+                <span>
+                  Code expires in <span className="font-bold text-[#F9671A] font-mono tracking-wider ml-1">{formatTime(timer)}</span>
+                </span>
+              ) : (
+                <span className="font-semibold text-rose-400">Code expired! Please request a new OTP.</span>
+              )}
+            </div>
+          </div>
 
           {/* OTP Input Boxes — 5 digits */}
           <div className="flex justify-center gap-3 mb-8">
@@ -153,6 +193,10 @@ function VerifyEmailContent() {
               }
               if (!email) {
                 toast.error("Email address not found in URL");
+                return;
+              }
+              if (timer <= 0) {
+                toast.error("OTP has expired. Please click Resend to get a new code.");
                 return;
               }
               
@@ -209,14 +253,21 @@ function VerifyEmailContent() {
                 try {
                   const res = await resendOtp({ email, type: type === "forgot-password" ? "forgot_password" : "registration" }).unwrap();
                   toast.success(res?.message || "OTP resent successfully!");
+                  setTimer(300); // Reset timer to 5 minutes
+                  setOtp(["", "", "", "", ""]);
+                  inputRefs.current[0]?.focus();
                 } catch (err: any) {
                   toast.error(err?.data?.message || "Failed to resend OTP.");
                 }
               }}
-              disabled={isResending}
-              className="text-[#F9671A] text-sm font-medium leading-[16.8px] tracking-[0.14px] text-center hover:underline cursor-pointer transition-colors duration-300"
+              disabled={isResending || timer > 0}
+              className={`text-sm font-medium leading-[16.8px] tracking-[0.14px] text-center transition-colors duration-300 ${
+                isResending || timer > 0
+                  ? "text-zinc-500 cursor-not-allowed"
+                  : "text-[#F9671A] hover:underline cursor-pointer"
+              }`}
             >
-              Resend
+              {isResending ? "Resending..." : timer > 0 ? `Resend (${formatTime(timer)})` : "Resend"}
             </button>
           </p>
 

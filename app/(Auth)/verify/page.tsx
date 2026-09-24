@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 export default function VerifyPhone() {
   const router = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(54);
+  const [timer, setTimer] = useState(300);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Countdown timer
@@ -53,7 +53,7 @@ export default function VerifyPhone() {
   };
 
   const handleResend = () => {
-    setTimer(54);
+    setTimer(300);
     setOtp(["", "", "", "", "", ""]);
     inputRefs.current[0]?.focus();
   };
