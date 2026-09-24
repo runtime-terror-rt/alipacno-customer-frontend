@@ -1,6 +1,11 @@
-export default function CategoryIcon({ name }: { name: string }) {
+"use client";
+
+import React, { useState } from "react";
+
+export const getCategorySvg = (name: string) => {
   switch (name) {
     case "Steaks":
+    case "Streak":
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="w-full h-full">
           <path d="M13.6667 11.4168C14.3502 10.9031 14.9023 10.235 15.2781 9.46696C15.6538 8.69896 15.8424 7.85293 15.8284 6.99807C15.8144 6.1432 15.5983 5.30379 15.1977 4.54848C14.7971 3.79317 14.2233 3.14342 13.5234 2.65238C12.8235 2.16134 12.0173 1.84295 11.1707 1.72326C10.3242 1.60357 9.46132 1.68598 8.65272 1.96374C7.84411 2.2415 7.11275 2.70673 6.51844 3.32137C5.92413 3.93601 5.48375 4.68261 5.23334 5.50009C4.31667 8.10843 4.58334 8.7501 2.58334 10.5668C2.18481 10.8935 1.89698 11.3354 1.75926 11.832C1.62154 12.3286 1.64065 12.8556 1.81398 13.3409C1.98731 13.8263 2.30638 14.2462 2.72753 14.5432C3.14868 14.8402 3.65133 14.9998 4.16667 15.0001C7.5 15.0001 11.1667 13.5001 13.6667 11.4168Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -48,14 +53,14 @@ export default function CategoryIcon({ name }: { name: string }) {
     case "Lunch Special":
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="w-full h-full">
-          <g clipPath="url(#clip0_253_1448)">
+          <g clipPath="url(#clip0_253_1448_cat)">
             <path d="M9.18084 2.34488C9.21654 2.15372 9.31798 1.98106 9.46758 1.85681C9.61719 1.73256 9.80553 1.66455 10 1.66455C10.1945 1.66455 10.3828 1.73256 10.5324 1.85681C10.682 1.98106 10.7835 2.15372 10.8192 2.34488L11.695 6.97655C11.7572 7.30584 11.9172 7.60873 12.1542 7.84569C12.3912 8.08265 12.694 8.24267 13.0233 8.30488L17.655 9.18071C17.8462 9.21642 18.0188 9.31786 18.1431 9.46746C18.2673 9.61706 18.3353 9.80541 18.3353 9.99988C18.3353 10.1943 18.2673 10.3827 18.1431 10.5323C18.0188 10.6819 17.8462 10.7833 17.655 10.819L13.0233 11.6949C12.694 11.7571 12.3912 11.9171 12.1542 12.1541C11.9172 12.391 11.7572 12.6939 11.695 13.0232L10.8192 17.6549C10.7835 17.846 10.682 18.0187 10.5324 18.1429C10.3828 18.2672 10.1945 18.3352 10 18.3352C9.80553 18.3352 9.61719 18.2672 9.46758 18.1429C9.31798 18.0187 9.21654 17.846 9.18084 17.6549L8.305 13.0232C8.2428 12.6939 8.08277 12.391 7.84581 12.1541C7.60885 11.9171 7.30596 11.7571 6.97667 11.6949L2.345 10.819C2.15384 10.7833 1.98118 10.6819 1.85693 10.5323C1.73269 10.3827 1.66467 10.1943 1.66467 9.99988C1.66467 9.80541 1.73269 9.61706 1.85693 9.46746C1.98118 9.31786 2.15384 9.21642 2.345 9.18071L6.97667 8.30488C7.30596 8.24267 7.60885 8.08265 7.84581 7.84569C8.08277 7.60873 8.2428 7.30584 8.305 6.97655L9.18084 2.34488Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M16.6666 1.6665V4.99984" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M18.3333 3.3335H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M3.33329 18.3333C4.25377 18.3333 4.99996 17.5871 4.99996 16.6667C4.99996 15.7462 4.25377 15 3.33329 15C2.41282 15 1.66663 15.7462 1.66663 16.6667C1.66663 17.5871 2.41282 18.3333 3.33329 18.3333Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </g>
           <defs>
-            <clipPath id="clip0_253_1448">
+            <clipPath id="clip0_253_1448_cat">
               <rect width="20" height="20" fill="white" />
             </clipPath>
           </defs>
@@ -63,9 +68,104 @@ export default function CategoryIcon({ name }: { name: string }) {
       );
     default:
       return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-          <circle cx="12" cy="12" r="10" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
         </svg>
       );
   }
+};
+
+export const resolveImageUrl = (imgOrUrl: any): string | null => {
+  if (!imgOrUrl || typeof imgOrUrl !== "string") return null;
+  const trimmed = imgOrUrl.trim();
+  if (!trimmed || trimmed.includes("example.com") || trimmed.includes("placeholder")) return null;
+  if (trimmed.startsWith("http://api.pacinos.uk/")) {
+    return trimmed.replace("http://api.pacinos.uk/", "https://api.pacinos.uk/");
+  }
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+    return trimmed;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.pacinos.uk";
+  return `${baseUrl}/storage/${trimmed.replace(/^\/?storage\//, "")}`;
+};
+
+export function CategoryIcon({
+  name,
+  cat,
+  isActive = false,
+}: {
+  name?: string;
+  cat?: any;
+  isActive?: boolean;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  const catObj = typeof cat === "object" ? cat : { name: String(name || cat || "") };
+  const catName = catObj?.name || (typeof name === "string" ? name : "") || "";
+
+  // 1. Check if image exists ("image thakle image show korbe")
+  const validImageUrl = !imgError ? resolveImageUrl(catObj?.image_url || catObj?.image) : null;
+
+  if (validImageUrl) {
+    return (
+      <img
+        src={validImageUrl}
+        alt={catName || "Category"}
+        className={`w-full h-full object-cover rounded-full ${
+          isActive ? "" : "opacity-70 group-hover:opacity-100"
+        }`}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  // 2. Otherwise show icon ("otherwise icon")
+  const rawIcon = catObj?.icon;
+  if (rawIcon && typeof rawIcon === "string") {
+    // If it's inline SVG
+    if (rawIcon.trim().startsWith("<svg")) {
+      return (
+        <span
+          className={`w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${
+            isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"
+          }`}
+          dangerouslySetInnerHTML={{ __html: rawIcon.trim() }}
+        />
+      );
+    }
+
+    // If icon is a URL or file path (e.g. /customer/menu/steaks.svg)
+    const resolvedIconUrl = !imgError ? resolveImageUrl(rawIcon) : null;
+    if (resolvedIconUrl) {
+      return (
+        <img
+          src={resolvedIconUrl}
+          alt={catName || "Category"}
+          className={`w-full h-full object-contain ${
+            isActive ? "" : "opacity-70 group-hover:opacity-100"
+          }`}
+          onError={() => setImgError(true)}
+        />
+      );
+    }
+  }
+
+  // 3. Fallback to predefined SVG or generic category SVG
+  return (
+    <div
+      className={`w-full h-full flex items-center justify-center ${
+        isActive ? "text-[#F9671A]" : "text-zinc-500 group-hover:text-zinc-400"
+      }`}
+    >
+      {getCategorySvg(catName)}
+    </div>
+  );
 }
+
+export const renderCategoryIcon = (cat: any, isActive: boolean = false) => {
+  return <CategoryIcon cat={cat} isActive={isActive} />;
+};
+
+export default CategoryIcon;

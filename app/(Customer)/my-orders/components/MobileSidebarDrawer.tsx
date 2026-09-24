@@ -1,18 +1,47 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import CategoryIcon from "@/public/CategoryIcon";
+import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
 import { Category } from "@/components/categories";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  categories: Category[];
-  activeCategory: string;
-  onSelect: (name: string) => void;
+  categories?: Category[] | any[];
+  activeCategory?: string;
+  onSelect?: (name: string) => void;
 };
 
-export default function MobileSidebarDrawer({ isOpen, onClose, categories, activeCategory, onSelect }: Props) {
+export default function MobileSidebarDrawer({
+  isOpen,
+  onClose,
+  categories: propCategories,
+  activeCategory = "",
+  onSelect,
+}: Props) {
+  const router = useRouter();
+  const { data: categoriesData } = useGetCategoriesQuery(
+    { all: 1 },
+    { skip: !isOpen || Boolean(propCategories && propCategories.length > 0) }
+  );
+
   if (!isOpen) return null;
+
+  const categories: any[] = (propCategories && propCategories.length > 0)
+    ? propCategories
+    : (Array.isArray(categoriesData?.data) ? categoriesData.data : (Array.isArray(categoriesData) ? categoriesData : []));
+
+  const handleSelect = (name: string) => {
+    if (onSelect) {
+      onSelect(name);
+    } else {
+      router.push(`/menu?category=${encodeURIComponent(name)}`);
+    }
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden flex">
@@ -34,23 +63,21 @@ export default function MobileSidebarDrawer({ isOpen, onClose, categories, activ
         <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6">
           <h3 className="text-white font-bold text-[16px] mb-4 px-6 uppercase tracking-wider text-zinc-500">Menu Categories</h3>
           <div className="flex flex-col">
-            {categories.map((cat, i) => {
-              const isActive = activeCategory === cat.name;
+            {categories.map((cat: any, i: number) => {
+              const catName = cat?.name || "";
+              const isActive = activeCategory === catName;
               return (
                 <button
-                  key={i}
-                  onClick={() => {
-                    onSelect(cat.name);
-                    onClose();
-                  }}
+                  key={cat.id || i}
+                  onClick={() => handleSelect(catName)}
                   className={`flex items-center w-full px-6 py-4 transition-colors duration-200 group border-l-[4px] cursor-pointer ${
                     isActive ? "bg-[#EBE5E0] border-[#F9671A]" : "border-transparent hover:bg-white/5"
                   }`}
                 >
                   <div className={`w-[22px] h-[22px] mr-4 flex items-center justify-center ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>
-                    <CategoryIcon name={cat.name} />
+                    <CategoryIcon cat={cat} name={catName} isActive={isActive} />
                   </div>
-                  <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>{cat.name}</span>
+                  <span className={`text-[16px] font-medium flex-1 text-left ${isActive ? "text-[#F9671A]" : "text-zinc-500"}`}>{catName}</span>
                 </button>
               );
             })}
