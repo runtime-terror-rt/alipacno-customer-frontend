@@ -50,6 +50,55 @@ export default function OrderSummary({ order }: Props) {
     { l: "Rider's Tip", v: riderTip },
   ];
 
+  const paymentMethod = order?.payment_method || order?.payment?.payment_method;
+  const paymentStatus = order?.payment_status || order?.payment?.status;
+  const transactionId = order?.payment?.transaction_id;
+
+  const formatPaymentMethod = (method?: string | null) => {
+    if (!method) return "Not specified";
+    const m = method.toLowerCase();
+    if (m === "cash" || m === "cod") return "Cash on Delivery";
+    if (m === "stripe") return "Stripe / Card";
+    if (m === "card") return "Card";
+    if (m === "paypal") return "PayPal";
+    return method.charAt(0).toUpperCase() + method.slice(1);
+  };
+
+  const getPaymentStatusBadge = (status?: string | null) => {
+    if (!status) return null;
+    const s = status.toLowerCase();
+    if (s === "paid" || s === "successful" || s === "completed") {
+      return {
+        label: "Paid",
+        className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      };
+    }
+    if (s === "pending" || s === "unpaid") {
+      return {
+        label: "Pending",
+        className: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      };
+    }
+    if (s === "failed" || s === "cancelled") {
+      return {
+        label: "Failed",
+        className: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+      };
+    }
+    if (s === "refunded") {
+      return {
+        label: "Refunded",
+        className: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+      };
+    }
+    return {
+      label: status.charAt(0).toUpperCase() + status.slice(1),
+      className: "bg-zinc-500/10 text-zinc-300 border-zinc-500/20",
+    };
+  };
+
+  const paymentStatusBadge = getPaymentStatusBadge(paymentStatus);
+
   return (
     <div className="mb-10">
       <div className="flex items-center justify-between mb-5">
@@ -83,6 +132,29 @@ export default function OrderSummary({ order }: Props) {
             <span className={row.color || "text-white font-medium"}>{row.v}</span>
           </div>
         ))}
+
+        {paymentMethod && (
+          <div className="flex justify-between items-center text-[13.5px] pt-1 border-t border-white/5">
+            <span className="text-zinc-400">Payment method</span>
+            <span className="text-zinc-200 font-medium">{formatPaymentMethod(paymentMethod)}</span>
+          </div>
+        )}
+
+        {paymentStatusBadge && (
+          <div className="flex justify-between items-center text-[13.5px]">
+            <span className="text-zinc-400">Payment status</span>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${paymentStatusBadge.className}`}>
+              {paymentStatusBadge.label}
+            </span>
+          </div>
+        )}
+
+        {transactionId && (
+          <div className="flex justify-between items-center text-[12px]">
+            <span className="text-zinc-500">Transaction ID</span>
+            <span className="text-zinc-400 font-mono text-[11px]">{transactionId}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between items-center pt-2 border-t border-white/10">
