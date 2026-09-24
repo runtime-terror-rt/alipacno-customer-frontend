@@ -1,4 +1,12 @@
-export type Category = { name: string; icon: string; hasDropdown?: boolean };
+export type Category = {
+  id?: number | string;
+  name: string;
+  icon?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  hasDropdown?: boolean;
+  [key: string]: any;
+};
 
 export const categories: Category[] = [
   { name: "Steaks", icon: "/customer/menu/steaks.svg" },
