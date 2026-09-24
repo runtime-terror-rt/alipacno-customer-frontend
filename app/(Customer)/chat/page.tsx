@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Header from "@/app/(Customer)/components/Header";
 import CategorySidebar from "@/app/(Customer)/my-orders/components/CategorySidebar";
-import { categories } from "@/components/categories";
+import MobileSidebarDrawer from "@/app/(Customer)/my-orders/components/MobileSidebarDrawer";
 import {
   useGetConversationsQuery,
   useGetConversationDetailQuery,
@@ -691,7 +691,8 @@ function ChatPageInner() {
   const [page, setPage] = useState(1);
   const [isNewChatOpen, setIsNewChatOpen] = useState(openNew);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
-  const [activeCategory, setActiveCategory] = useState("Steaks");
+  const [activeCategory, setActiveCategory] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const router = useRouter();
 
   const { data: convsRes, isLoading: isLoadingConvs } = useGetConversationsQuery(undefined, {
@@ -764,7 +765,6 @@ function ChatPageInner() {
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex text-white overflow-hidden font-sans select-none relative">
       {/* Left: Category Sidebar (same as other pages) */}
       <CategorySidebar
-        categories={categories}
         activeCategory={activeCategory}
         onSelect={(name) => {
           setActiveCategory(name);
@@ -773,9 +773,9 @@ function ChatPageInner() {
       />
 
       {/* Right column */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#1e1e20] ]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#1e1e20]">
         {/* Header */}
-        <Header />
+        <Header onMenuClick={() => setIsMobileSidebarOpen(true)} />
 
         {/* Chat panels row */}
         <div className="flex-1 flex overflow-hidden rounded-xl border border-gray-500/30 m-6">
@@ -845,6 +845,17 @@ function ChatPageInner() {
           isCreating={isCreating}
         />
       )}
+
+      {/* Mobile Sidebar Drawer */}
+      <MobileSidebarDrawer
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        activeCategory={activeCategory}
+        onSelect={(name) => {
+          setActiveCategory(name);
+          router.push(`/menu?category=${encodeURIComponent(name)}`);
+        }}
+      />
     </div>
   );
 }
