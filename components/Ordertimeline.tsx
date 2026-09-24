@@ -61,11 +61,11 @@ export default function OrderTimeline({ order, mapboxEstTimeText }: Props) {
 
   const status = (order?.order_status || "pending").toLowerCase();
 
-  const isPendingActive = ["pending", "preparing", "ready_for_delivery", "out_for_delivery", "delivered"].includes(status);
-  const isPreparingActive = ["preparing", "ready_for_delivery", "out_for_delivery", "delivered"].includes(status);
-  const isReadyActive = ["ready_for_delivery", "out_for_delivery", "delivered"].includes(status);
-  const isOutActive = ["out_for_delivery", "delivered"].includes(status);
-  const isDeliveredActive = status === "delivered";
+  const isPendingActive = ["pending", "accepted", "preparing", "ready", "out_for_delivery", "delivered", "completed", "cancelled", "refunded"].includes(status);
+  const isPreparingActive = ["preparing", "ready", "out_for_delivery", "delivered", "completed", "cancelled", "refunded"].includes(status);
+  const isReadyActive = ["ready", "out_for_delivery", "delivered", "completed", "cancelled", "refunded"].includes(status);
+  const isOutActive = ["out_for_delivery", "delivered", "completed", "cancelled", "refunded"].includes(status);
+  const isDeliveredActive = status === "delivered" || status === "completed";
 
   const branchName = order?.branch?.name || "Branch";
   const driverName = order?.assigned_driver?.name ? `Driver (${order.assigned_driver.name}) is on the way to you.` : "Delivery Driver is on the way to you.";

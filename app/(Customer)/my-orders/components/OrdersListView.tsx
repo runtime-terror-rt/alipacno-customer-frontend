@@ -16,6 +16,8 @@ export type OrderSummaryItem = {
   qty: number;
   price: string;
   date: string;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
   rawOrder: Order;
   estimatedTimeText?: string;
 };
@@ -116,6 +118,8 @@ function ActiveOrderCard({
         orderId={order.orderId}
         qty={order.qty}
         price={order.price}
+        paymentMethod={order.paymentMethod}
+        paymentStatus={order.paymentStatus}
         onClick={onSelect}
       />
     </div>
@@ -154,6 +158,8 @@ export default function OrdersListView({ onSelectOrder }: Props) {
           minute: "2-digit",
         })
       : "May 05, 12:45 PM";
+    const paymentMethod = order.payment_method || order.payment?.payment_method || null;
+    const paymentStatus = order.payment_status || order.payment?.status || null;
 
     return {
       id: String(order.id),
@@ -166,6 +172,8 @@ export default function OrdersListView({ onSelectOrder }: Props) {
       qty,
       price,
       date,
+      paymentMethod,
+      paymentStatus,
       rawOrder: order,
     };
   };
@@ -340,6 +348,8 @@ export default function OrdersListView({ onSelectOrder }: Props) {
                 orderId={order.orderId}
                 qty={order.qty}
                 price={order.price}
+                paymentMethod={order.paymentMethod}
+                paymentStatus={order.paymentStatus}
                 showReorder
                 onClick={() => onSelectOrder(order.rawId)}
                 onReorder={() => handleReorder(order)}
