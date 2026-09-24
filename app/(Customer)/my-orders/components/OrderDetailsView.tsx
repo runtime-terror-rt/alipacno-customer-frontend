@@ -37,6 +37,54 @@ export default function OrderDetailsView({ orderId, order: propOrder }: Props) {
     : "Delivered on Sunday, May 04, 4:30 PM";
 
   const orderNum = order?.order_number || "t7ml-2542-c4kj";
+  const paymentMethod = order?.payment_method || order?.payment?.payment_method;
+  const paymentStatus = order?.payment_status || order?.payment?.status;
+
+  const formatPaymentMethod = (method?: string | null) => {
+    if (!method) return null;
+    const m = method.toLowerCase();
+    if (m === "cash" || m === "cod") return "Cash on Delivery";
+    if (m === "stripe") return "Stripe / Card";
+    if (m === "card") return "Card";
+    if (m === "paypal") return "PayPal";
+    return method.charAt(0).toUpperCase() + method.slice(1);
+  };
+
+  const getPaymentStatusBadge = (status?: string | null) => {
+    if (!status) return null;
+    const s = status.toLowerCase();
+    if (s === "paid" || s === "successful" || s === "completed") {
+      return {
+        label: "Paid",
+        className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      };
+    }
+    if (s === "pending" || s === "unpaid") {
+      return {
+        label: "Pending Payment",
+        className: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      };
+    }
+    if (s === "failed" || s === "cancelled") {
+      return {
+        label: "Payment Failed",
+        className: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+      };
+    }
+    if (s === "refunded") {
+      return {
+        label: "Refunded",
+        className: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+      };
+    }
+    return {
+      label: status.charAt(0).toUpperCase() + status.slice(1),
+      className: "bg-zinc-500/10 text-zinc-300 border-zinc-500/20",
+    };
+  };
+
+  const methodLabel = formatPaymentMethod(paymentMethod);
+  const statusBadge = getPaymentStatusBadge(paymentStatus);
 
   return (
     <div className="max-w-[700px]">
@@ -49,7 +97,23 @@ export default function OrderDetailsView({ orderId, order: propOrder }: Props) {
           <div className="flex-1 min-w-0">
             <h3 className="text-[18px] font-bold text-white truncate">{itemTitle}</h3>
             <p className="text-[12px] text-zinc-400 mt-0.5">{formattedDate}</p>
-            <p className="text-[12px] text-zinc-500">Order #{orderNum}</p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="text-[12px] text-zinc-500">Order #{orderNum}</span>
+              {methodLabel && (
+                <span className="bg-white/5 text-zinc-300 text-[11px] font-medium px-2.5 py-0.5 rounded-full border border-white/10 flex items-center gap-1.5">
+                  <svg className="w-3 h-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect width="20" height="14" x="2" y="5" rx="2" strokeWidth="2" />
+                    <line x1="2" x2="22" y1="10" y2="10" strokeWidth="2" />
+                  </svg>
+                  {methodLabel}
+                </span>
+              )}
+              {statusBadge && (
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge.className}`}>
+                  {statusBadge.label}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
