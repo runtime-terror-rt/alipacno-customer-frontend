@@ -10,14 +10,21 @@ import OrdersListView from "./components/OrdersListView";
 import OrderDetailsView from "./components/OrderDetailsView";
 import NotificationsPanel from "./components/NotificationsPanel";
 import OrderDetailsSidebar from "./components/OrderDetailsSidebar";
-import { categories } from "@/components/categories";
+import { useGetCategoriesQuery } from "@/redux/features/api/categoriesApi";
 
 export default function MyOrdersPage() {
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState("Steaks");
+  const [activeCategory, setActiveCategory] = useState("");
   const [view, setView] = useState<"list" | "details">("list");
   const [selectedOrderId, setSelectedOrderId] = useState<string | number | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const { data: categoriesRes } = useGetCategoriesQuery({ all: 1 });
+  const categoriesList = Array.isArray(categoriesRes?.data)
+    ? categoriesRes.data
+    : Array.isArray(categoriesRes)
+    ? categoriesRes
+    : [];
 
   const handleSelectOrder = (orderId: string | number) => {
     setSelectedOrderId(orderId);
@@ -31,7 +38,7 @@ export default function MyOrdersPage() {
 
   return (
     <div className="h-[100dvh] w-full bg-[#1E1E20] flex flex-col lg:flex-row text-white overflow-hidden font-sans select-none relative">
-      <CategorySidebar categories={categories} activeCategory={activeCategory} onSelect={handleSelectCategory} />
+      <CategorySidebar categories={categoriesList} activeCategory={activeCategory} onSelect={handleSelectCategory} />
 
       <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <Header onMenuClick={() => setIsMobileSidebarOpen(true)} />
@@ -69,7 +76,7 @@ export default function MyOrdersPage() {
       <MobileSidebarDrawer
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
-        categories={categories}
+        categories={categoriesList}
         activeCategory={activeCategory}
         onSelect={handleSelectCategory}
       />
