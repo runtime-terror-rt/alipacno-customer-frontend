@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRegisterMutation } from "@/redux/features/api/authApi";
 import { toast } from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -22,6 +22,51 @@ export default function SignUp() {
   const [optIn, setOptIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Restore form draft from storage on mount (e.g. after navigating back from Terms & Conditions)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedDraft =
+          localStorage.getItem("signup_form_draft") ||
+          sessionStorage.getItem("signup_form_draft");
+        if (savedDraft) {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed && typeof parsed === "object") {
+            setFormData({
+              name: parsed.name || "",
+              email: parsed.email || "",
+              phone: parsed.phone || "",
+              password: parsed.password || "",
+              password_confirmation: parsed.password_confirmation || "",
+            });
+            if (typeof parsed.optIn === "boolean") {
+              setOptIn(parsed.optIn);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore signup draft:", e);
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+  }, []);
+
+  // Save form draft whenever formData or optIn changes (only after draft has been restored)
+  useEffect(() => {
+    if (!isLoaded || typeof window === "undefined") return;
+    try {
+      const dataToSave = JSON.stringify({
+        ...formData,
+        optIn,
+      });
+      localStorage.setItem("signup_form_draft", dataToSave);
+      sessionStorage.setItem("signup_form_draft", dataToSave);
+    } catch (e) {}
+  }, [formData, optIn, isLoaded]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -47,6 +92,10 @@ export default function SignUp() {
       };
 
       const res = await registerApi(payload).unwrap();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("signup_form_draft");
+        sessionStorage.removeItem("signup_form_draft");
+      }
       toast.success(res?.message || "Registration successful!");
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
