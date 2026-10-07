@@ -2,84 +2,36 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import StartOrderModal from "../../../components/StartOrderModal";
 import { useAppSelector } from "../../../redux/hooks";
 import { useGetMenuItemsQuery } from "../../../redux/features/api/menuItemsApi";
-import { useCreateCartMutation } from "../../../redux/features/api/cartApi";
-import { useGetBranchesQuery } from "../../../redux/features/api/branchesApi";
 import FoodItemImage from "@/components/FoodItemImage";
-
-const getLocationSilently = async (): Promise<{latitude: number, longitude: number} | null> => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const response = await fetch("https://get.geojs.io/v1/ip/geo.json", {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    const data = await response.json();
-    if (data && data.latitude && data.longitude) {
-      return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
-    }
-  } catch (e) {
-    // Ignore timeout or other errors silently
-  }
-  return null;
-};
 
 
 export default function CustomerHome() {
   const router = useRouter();
+  const pathname = usePathname();
   const { token } = useAppSelector((state) => state.auth);
   const [selectedMealType, setSelectedMealType] = useState("delivery");
-  const [pendingOrderType, setPendingOrderType] = useState("");
+  const [pendingOrderType, setPendingOrderType] = useState("delivery");
   const [showModal, setShowModal] = useState(false);
-
-  const [createCart] = useCreateCartMutation();
-  const { data: branchesResponse } = useGetBranchesQuery();
-  const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch by waiting until mounted to render token-dependent UI
+  // and auto-open modal if on the root "/" route
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  const handleMealTypeClick = async (mealId: string) => {
-    if (isProcessing) return;
-    setSelectedMealType(mealId);
-
-    if (token) {
-      // Already logged in → skip modal, call API directly and go to menu
-      setIsProcessing(true);
-      const loc = await getLocationSilently();
-      const branches = branchesResponse?.data || [];
-      const branchId = branches.length > 0 ? branches[0].id : 1;
-      try {
-        const result = await createCart({
-          order_type: mealId,
-          branch_id: branchId,
-          latitude: loc?.latitude ?? null,
-          longitude: loc?.longitude ?? null,
-        }).unwrap();
-
-        // Save cart_id to localStorage for later use when adding items
-        const cartId = result?.data?.id || result?.id;
-        if (cartId) {
-          localStorage.setItem("cart_id", String(cartId));
-        }
-      } catch (e) {
-        console.error("Failed to create cart:", e);
-      }
-      setIsProcessing(false);
-      router.push("/menu");
-    } else {
-      // Not logged in → show modal
-      setPendingOrderType(mealId);
+    if (pathname === "/") {
       setShowModal(true);
     }
+  }, [pathname]);
+
+  const handleMealTypeClick = (mealId: string) => {
+    setSelectedMealType(mealId);
+    setPendingOrderType(mealId);
+    setShowModal(true);
   };
 
   const mealTypes = [
