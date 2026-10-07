@@ -292,17 +292,33 @@ export default function OrdersListView({ onSelectOrder }: Props) {
         special_instructions: item.special_instructions || null,
       }));
 
-      await createOrderMut({
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const deliveryFee = parseFloat(String(order.delivery_fee ?? 0)) || 0;
+      const tip = parseFloat(String(order.tip ?? 0)) || 0;
+      const riderTip = parseFloat(String(order.rider_tip ?? 0)) || 0;
+
+      const res = await createOrderMut({
         branch_id: order.branch_id || 1,
+        user_id: order.user_id ? Number(order.user_id) : undefined,
         order_type: order.order_type || "delivery",
-        payment_method: order.payment_method || "stripe",
+        payment_method: order.payment_method || "card",
         customer_name: order.customer_name || "",
         customer_phone: order.customer_phone || "",
         delivery_address: order.delivery_address || "",
+        delivery_fee: deliveryFee,
+        tip: tip,
+        rider_tip: riderTip,
         items: itemsPayload.length > 0 ? itemsPayload : undefined,
+        success_url: `${origin}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/my-orders`,
       }).unwrap();
 
       toast.success("Order placed successfully!");
+
+      const stripeUrl = res?.stripe?.url || res?.data?.stripe?.url;
+      if (stripeUrl && (order.payment_method === "stripe" || order.payment_method === "card")) {
+        window.location.href = stripeUrl;
+      }
     } catch (err: any) {
       console.error("Reorder error:", err);
       toast.error(err?.data?.message || "Failed to re-order item.");

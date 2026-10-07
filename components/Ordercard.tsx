@@ -87,7 +87,7 @@ export default function OrderCard({
       </div>
       <div className="flex-1 min-w-0 w-full flex flex-col justify-center">
         <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
-          <span className="bg-zinc-700/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{badge}</span>
+          <span className="bg-zinc-700/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full capitalize">{badge}</span>
           {methodLabel && (
             <span className="bg-white/5 text-zinc-300 text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
               <svg className="w-2.5 h-2.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">

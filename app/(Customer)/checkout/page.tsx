@@ -33,8 +33,8 @@ export default function CheckoutPage() {
   const [loyalty, setLoyalty] = useState(false);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [activeBranchId, setActiveBranchId] = useState<number | null>(null);
-  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
+  const [manualBranchId, setManualBranchId] = useState<number | null>(null);
+  const [modalTempBranchId, setModalTempBranchId] = useState<number | null>(null);
   const [showCvc, setShowCvc] = useState(false);
 
   const { data: cartData } = useGetCartQuery();
@@ -148,16 +148,16 @@ export default function CheckoutPage() {
 
   const branches = branchesWithDistance;
 
-  const currentBranch = branches.find((b: any) => b.id === (activeBranchId || selectedBranch?.id || nearestBranch?.id)) || selectedBranch || nearestBranch || branches[0];
-  const modalSelectedBranch = branches.find((b: any) => b.id === (selectedBranchId || currentBranch?.id)) || currentBranch;
+  // The branch to fulfill the order from: Default to nearest branch!
+  // If user explicitly changed branch in the Change Branch modal, use that manual choice.
+  const currentBranch =
+    (manualBranchId ? branches.find((b: any) => b.id === manualBranchId) : null) ||
+    nearestBranch ||
+    selectedBranch ||
+    branches[0];
 
-  // Sync active branch to selected/nearest branch automatically
-  useEffect(() => {
-    if (selectedBranch?.id) {
-      setActiveBranchId(selectedBranch.id);
-      setSelectedBranchId(selectedBranch.id);
-    }
-  }, [selectedBranch?.id]);
+  const modalSelectedBranch =
+    branches.find((b: any) => b.id === (modalTempBranchId || currentBranch?.id)) || currentBranch;
 
   // Persist the currently selected branch to localStorage so the order success
   // page can show the correct branch on the map without hardcoded coordinates.
@@ -463,9 +463,20 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-white text-[13px] font-bold">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" /><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" /><path d="M2 7h20" /><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7" /></svg>
-                    Your Order from
+                    <span>Your Order from</span>
+                    {(currentBranch?.isNearest || currentBranch?.id === nearestBranch?.id) && (
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold ml-1">
+                        📍 Nearest
+                      </span>
+                    )}
                   </div>
-                  <button onClick={() => setIsBranchModalOpen(true)} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md shadow-orange-600/20 transition-all cursor-pointer">
+                  <button
+                    onClick={() => {
+                      setModalTempBranchId(currentBranch?.id || null);
+                      setIsBranchModalOpen(true);
+                    }}
+                    className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md shadow-orange-600/20 transition-all cursor-pointer"
+                  >
                     Change Branch
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                   </button>
@@ -497,7 +508,12 @@ export default function CheckoutPage() {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-2 text-zinc-400 text-[12px] font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                    Your Order from
+                    <span>Your Order from</span>
+                    {(currentBranch?.isNearest || currentBranch?.id === nearestBranch?.id) && (
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold ml-1">
+                        📍 Nearest Branch
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-[20px] font-bold text-white leading-tight">{currentBranch?.name || "Loading..."}</h2>
                   <div className="flex items-center gap-1.5 text-zinc-300 text-[13px] mt-0.5">
@@ -515,7 +531,13 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 </div>
-                <button onClick={() => setIsBranchModalOpen(true)} className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[13px] font-bold px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-lg shadow-orange-600/20 transition-all cursor-pointer flex-shrink-0">
+                <button
+                  onClick={() => {
+                    setModalTempBranchId(currentBranch?.id || null);
+                    setIsBranchModalOpen(true);
+                  }}
+                  className="bg-[#F9671A] hover:bg-[#ff7a33] text-white text-[13px] font-bold px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-lg shadow-orange-600/20 transition-all cursor-pointer flex-shrink-0"
+                >
                   Change Branch
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                 </button>
@@ -788,6 +810,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col gap-3 mb-6">
               {branches.map((b: any) => {
                 const sel = modalSelectedBranch?.id === b.id;
+                const isNearest = b.isNearest || b.id === nearestBranch?.id;
                 // Calculate per-branch distance if user location and branch coords are available
                 let branchDistText = b.dist || "";
                 if (userLocation && b.latitude && b.longitude) {
@@ -796,12 +819,33 @@ export default function CheckoutPage() {
                     const mins = Math.max(15, Math.round(km * 3) + 10);
                     branchDistText = `${km} km away · ${mins} mins delivery`;
                   }
+                } else if (b.formattedDistance) {
+                  branchDistText = `${b.formattedDistance} · ${b.formattedDeliveryTime || "Est. delivery time"}`;
                 }
                 return (
-                  <div key={b.id} onClick={() => setSelectedBranchId(b.id)} className={`p-5 rounded-[20px] cursor-pointer relative flex flex-col gap-1.5 transition-all ${sel ? "bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] shadow-lg" : "bg-[#212124] hover:bg-[#252528]"}`}>
+                  <div
+                    key={b.id}
+                    onClick={() => setModalTempBranchId(b.id)}
+                    className={`p-5 rounded-[20px] cursor-pointer relative flex flex-col gap-1.5 transition-all ${
+                      sel
+                        ? "bg-gradient-to-r from-[#2b2b2d] via-[#322724] to-[#5c301c] shadow-lg border border-[#F9671A]/40"
+                        : "bg-[#212124] hover:bg-[#252528] border border-transparent"
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <h4 className="text-[16px] font-bold text-white pr-8">{b.name}</h4>
-                      {sel && <div className="absolute top-5 right-5 w-5 h-5 bg-[#F9671A] rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>}
+                      <div className="flex items-center gap-2 pr-8">
+                        <h4 className="text-[16px] font-bold text-white">{b.name}</h4>
+                        {isNearest && (
+                          <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                            📍 Nearest
+                          </span>
+                        )}
+                      </div>
+                      {sel && (
+                        <div className="absolute top-5 right-5 w-5 h-5 bg-[#F9671A] rounded-full flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 text-zinc-300 text-[13px]">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
@@ -820,9 +864,9 @@ export default function CheckoutPage() {
             
             <button
               onClick={() => {
-                if (selectedBranchId) {
-                  setActiveBranchId(selectedBranchId);
-                  selectBranch(selectedBranchId);
+                if (modalTempBranchId) {
+                  setManualBranchId(modalTempBranchId);
+                  selectBranch(modalTempBranchId);
                 }
                 setIsBranchModalOpen(false);
               }}
