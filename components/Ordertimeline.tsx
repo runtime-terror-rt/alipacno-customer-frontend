@@ -151,10 +151,10 @@ export default function OrderTimeline({ order, mapboxEstTimeText }: Props) {
     <div className="flex flex-col gap-0 relative">
       {steps.map((step, i) => {
         const isLast = i === steps.length - 1;
-        const lineClass =
-          i === 0
-            ? "absolute left-[15px] top-8 bottom-0 w-[1.5px] bg-[#F9671A]"
-            : "absolute left-[15px] top-8 bottom-0 w-[1.5px] border-l border-dashed border-white/10";
+        const isLineActive = Boolean(steps[i + 1]?.active);
+        const lineClass = isLineActive
+          ? "absolute left-[15px] top-8 bottom-0 w-[1.5px] bg-[#F9671A] transition-colors duration-300"
+          : "absolute left-[15px] top-8 bottom-0 w-[1.5px] border-l border-dashed border-white/10 transition-colors duration-300";
 
         return (
           <div key={i} className="flex gap-4 relative pb-7 last:pb-0">
