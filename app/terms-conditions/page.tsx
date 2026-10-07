@@ -47,7 +47,7 @@ export default function TermsAndConditions() {
 
         <div className="p-8 md:p-12">
           <button 
-            onClick={() => router.back()}
+            onClick={() => router.push("/signup")}
             className="flex items-center gap-2 text-zinc-400 hover:text-[#F9671A] transition-colors duration-200 mb-6 group cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
