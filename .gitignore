@@ -39,10 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-branch_structure.json
-temp_auto_push.bat
-temp_interactive_push.bat
 
 # serwist generated sw
 public/sw.js
 public/sw.js.map
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
